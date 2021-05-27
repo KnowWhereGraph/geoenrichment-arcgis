@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31313.79
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeoenrichmentTool", "GeoenrichmentTool\GeoenrichmentTool.csproj", "{2C67F191-2703-4291-BCE4-994CF0016027}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2C67F191-2703-4291-BCE4-994CF0016027}.Debug|x64.ActiveCfg = Debug|x64
+		{2C67F191-2703-4291-BCE4-994CF0016027}.Debug|x64.Build.0 = Debug|x64
+		{2C67F191-2703-4291-BCE4-994CF0016027}.Release|x64.ActiveCfg = Release|x64
+		{2C67F191-2703-4291-BCE4-994CF0016027}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {052A45A8-61E3-42CF-8D6C-F865CD4B9F62}
+	EndGlobalSection
+EndGlobal
