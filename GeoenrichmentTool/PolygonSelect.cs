@@ -22,8 +22,6 @@ namespace GeoenrichmentTool
 {
     internal class PolygonSelect : MapTool
     {
-        protected Geometry currentGeometry;
-
         public PolygonSelect()
         {
             IsSketchTool = true;
@@ -38,8 +36,8 @@ namespace GeoenrichmentTool
 
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
-            currentGeometry = geometry;
-            Form geoForm = new GeoSPARQL_Query();
+
+            Form geoForm = new GeoSPARQL_Query(geometry);
             geoForm.ShowDialog();
             return base.OnSketchCompleteAsync(geometry);
         }

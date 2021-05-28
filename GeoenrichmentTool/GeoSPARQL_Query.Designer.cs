@@ -37,16 +37,19 @@ namespace GeoenrichmentTool
             this.subclassReasoning = new System.Windows.Forms.CheckBox();
             this.calculatorLabel = new System.Windows.Forms.Label();
             this.calculator = new System.Windows.Forms.ComboBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.submitFormBtn = new System.Windows.Forms.Button();
             this.resultFolderLabel = new System.Windows.Forms.Label();
             this.classNameLabel = new System.Windows.Forms.Label();
             this.className = new System.Windows.Forms.TextBox();
+            this.requiredEndpoint = new System.Windows.Forms.Label();
+            this.requiredClassName = new System.Windows.Forms.Label();
+            this.formError = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // endPointLabel
             // 
             this.endPointLabel.AutoSize = true;
-            this.endPointLabel.Location = new System.Drawing.Point(15, 95);
+            this.endPointLabel.Location = new System.Drawing.Point(25, 95);
             this.endPointLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.endPointLabel.Name = "endPointLabel";
             this.endPointLabel.Size = new System.Drawing.Size(196, 20);
@@ -123,14 +126,15 @@ namespace GeoenrichmentTool
             this.calculator.Size = new System.Drawing.Size(740, 28);
             this.calculator.TabIndex = 7;
             // 
-            // button1
+            // submitFormBtn
             // 
-            this.button1.Location = new System.Drawing.Point(691, 424);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 29);
-            this.button1.TabIndex = 8;
-            this.button1.Text = "Run";
-            this.button1.UseVisualStyleBackColor = true;
+            this.submitFormBtn.Location = new System.Drawing.Point(691, 424);
+            this.submitFormBtn.Name = "submitFormBtn";
+            this.submitFormBtn.Size = new System.Drawing.Size(75, 29);
+            this.submitFormBtn.TabIndex = 8;
+            this.submitFormBtn.Text = "Run";
+            this.submitFormBtn.UseVisualStyleBackColor = true;
+            this.submitFormBtn.Click += new System.EventHandler(this.submitGeoQueryForm);
             // 
             // resultFolderLabel
             // 
@@ -145,7 +149,7 @@ namespace GeoenrichmentTool
             // classNameLabel
             // 
             this.classNameLabel.AutoSize = true;
-            this.classNameLabel.Location = new System.Drawing.Point(15, 305);
+            this.classNameLabel.Location = new System.Drawing.Point(25, 305);
             this.classNameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.classNameLabel.Name = "classNameLabel";
             this.classNameLabel.Size = new System.Drawing.Size(172, 20);
@@ -160,16 +164,50 @@ namespace GeoenrichmentTool
             this.className.Size = new System.Drawing.Size(740, 26);
             this.className.TabIndex = 11;
             // 
+            // requiredEndpoint
+            // 
+            this.requiredEndpoint.AutoSize = true;
+            this.requiredEndpoint.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.requiredEndpoint.ForeColor = System.Drawing.Color.Red;
+            this.requiredEndpoint.Location = new System.Drawing.Point(15, 95);
+            this.requiredEndpoint.Name = "requiredEndpoint";
+            this.requiredEndpoint.Size = new System.Drawing.Size(15, 20);
+            this.requiredEndpoint.TabIndex = 14;
+            this.requiredEndpoint.Text = "*";
+            // 
+            // requiredClassName
+            // 
+            this.requiredClassName.AutoSize = true;
+            this.requiredClassName.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.requiredClassName.ForeColor = System.Drawing.Color.Red;
+            this.requiredClassName.Location = new System.Drawing.Point(15, 305);
+            this.requiredClassName.Name = "requiredClassName";
+            this.requiredClassName.Size = new System.Drawing.Size(15, 20);
+            this.requiredClassName.TabIndex = 15;
+            this.requiredClassName.Text = "*";
+            // 
+            // formError
+            // 
+            this.formError.AutoSize = true;
+            this.formError.ForeColor = System.Drawing.Color.Red;
+            this.formError.Location = new System.Drawing.Point(473, 428);
+            this.formError.Name = "formError";
+            this.formError.Size = new System.Drawing.Size(0, 20);
+            this.formError.TabIndex = 16;
+            // 
             // GeoSPARQL_Query
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(778, 465);
+            this.Controls.Add(this.formError);
+            this.Controls.Add(this.requiredClassName);
+            this.Controls.Add(this.requiredEndpoint);
             this.Controls.Add(this.className);
             this.Controls.Add(this.classNameLabel);
             this.Controls.Add(this.resultFolderLabel);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.submitFormBtn);
             this.Controls.Add(this.calculator);
             this.Controls.Add(this.calculatorLabel);
             this.Controls.Add(this.subclassReasoning);
@@ -182,7 +220,6 @@ namespace GeoenrichmentTool
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "GeoSPARQL_Query";
             this.Text = "Form1";
-            this.Load += new System.EventHandler(this.GeoSPARQL_Query_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -198,9 +235,12 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.CheckBox subclassReasoning;
         private System.Windows.Forms.Label calculatorLabel;
         private System.Windows.Forms.ComboBox calculator;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button submitFormBtn;
         private System.Windows.Forms.Label resultFolderLabel;
         private System.Windows.Forms.Label classNameLabel;
         private System.Windows.Forms.TextBox className;
+        private System.Windows.Forms.Label requiredEndpoint;
+        private System.Windows.Forms.Label requiredClassName;
+        private System.Windows.Forms.Label formError;
     }
 }
