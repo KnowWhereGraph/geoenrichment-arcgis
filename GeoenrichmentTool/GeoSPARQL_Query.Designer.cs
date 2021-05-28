@@ -63,7 +63,7 @@ namespace GeoenrichmentTool
             this.endPoint.Name = "endPoint";
             this.endPoint.Size = new System.Drawing.Size(740, 26);
             this.endPoint.TabIndex = 1;
-            this.endPoint.Text = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire";
+            this.endPoint.Text = "";
             // 
             // geoFormName
             // 
