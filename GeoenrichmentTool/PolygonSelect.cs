@@ -37,8 +37,9 @@ namespace GeoenrichmentTool
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
             var mv = MapView.Active;
-            
+
             //TODO::Turn geometry into a feature class layer
+            GroupLayer gp = LayerFactory.Instance.CreateGroupLayer(mv.Map, 0, "GeoSPARQL Layer");
 
             Form geoForm = new GeoSPARQL_Query();
             geoForm.ShowDialog();

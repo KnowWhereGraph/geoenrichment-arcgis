@@ -24,7 +24,6 @@
         <group id="GeoenrichmentTool_Group1" caption="KWG Geoenrichment Tool" appearsOnAddInTab="true">
           <!-- host controls within groups -->
           <tool refID="GeoenrichmentTool_PolygonSelect" size="large" />
-          <tool refID="GeoenrichmentTool_MapTool1" size="large" />
         </group>
       </groups>
       <controls>
