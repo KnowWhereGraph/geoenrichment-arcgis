@@ -38,7 +38,7 @@ namespace GeoenrichmentTool
         {
             var mv = MapView.Active;
             
-            
+            //TODO::Turn geometry into a feature class layer
 
             Form geoForm = new GeoSPARQL_Query();
             geoForm.ShowDialog();

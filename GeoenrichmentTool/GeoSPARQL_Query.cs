@@ -32,16 +32,28 @@ namespace GeoenrichmentTool
             }
             else
             {
-                this.Close();
-                ChooseFolder();
+                if(ChooseFolder())
+                {
+                    this.Close();
+
+                    //TODO:: Process form data
+
+                    //TODO:: Call and create function to hit SPAQRL endpoint
+                }
             }
         }
 
-        public void ChooseFolder()
+        public bool ChooseFolder()
         {
-            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            if (outputLocation.ShowDialog() == DialogResult.OK)
             {
-                fileSavePath = folderBrowserDialog1.SelectedPath;
+                fileSavePath = outputLocation.SelectedPath;
+
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
     }

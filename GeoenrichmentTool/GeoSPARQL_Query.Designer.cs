@@ -43,7 +43,8 @@ namespace GeoenrichmentTool
             this.requiredEndpoint = new System.Windows.Forms.Label();
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
-            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.outputLocation = new System.Windows.Forms.FolderBrowserDialog();
+            this.outputLocation.SelectedPath = System.IO.Directory.GetCurrentDirectory();
             this.SuspendLayout();
             // 
             // endPointLabel
@@ -184,6 +185,10 @@ namespace GeoenrichmentTool
             this.formError.Size = new System.Drawing.Size(0, 20);
             this.formError.TabIndex = 16;
             // 
+            // outputLocation
+            // 
+            this.outputLocation.SelectedPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE";
+            // 
             // GeoSPARQL_Query
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
@@ -229,6 +234,6 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label requiredEndpoint;
         private System.Windows.Forms.Label requiredClassName;
         private System.Windows.Forms.Label formError;
-        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.FolderBrowserDialog outputLocation;
     }
 }
