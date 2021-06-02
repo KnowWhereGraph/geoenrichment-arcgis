@@ -13,13 +13,12 @@ namespace GeoenrichmentTool
 {
     public partial class GeoSPARQL_Query : Form
     {
-        protected Geometry currentGeometry;
         protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/";
         protected string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire";
+        protected string fileSavePath = "";
 
-        public GeoSPARQL_Query(Geometry geometry)
+        public GeoSPARQL_Query()
         {
-            this.currentGeometry = geometry;
             InitializeComponent();
             this.endPoint.Text = defaultEndpoint;
         }
@@ -33,7 +32,16 @@ namespace GeoenrichmentTool
             }
             else
             {
+                this.Close();
+                ChooseFolder();
+            }
+        }
 
+        public void ChooseFolder()
+        {
+            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            {
+                fileSavePath = folderBrowserDialog1.SelectedPath;
             }
         }
     }

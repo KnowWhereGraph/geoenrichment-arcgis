@@ -36,8 +36,11 @@ namespace GeoenrichmentTool
 
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
+            var mv = MapView.Active;
+            
+            
 
-            Form geoForm = new GeoSPARQL_Query(geometry);
+            Form geoForm = new GeoSPARQL_Query();
             geoForm.ShowDialog();
             return base.OnSketchCompleteAsync(geometry);
         }

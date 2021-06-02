@@ -38,12 +38,12 @@ namespace GeoenrichmentTool
             this.calculatorLabel = new System.Windows.Forms.Label();
             this.calculator = new System.Windows.Forms.ComboBox();
             this.submitFormBtn = new System.Windows.Forms.Button();
-            this.resultFolderLabel = new System.Windows.Forms.Label();
             this.classNameLabel = new System.Windows.Forms.Label();
             this.className = new System.Windows.Forms.TextBox();
             this.requiredEndpoint = new System.Windows.Forms.Label();
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.SuspendLayout();
             // 
             // endPointLabel
@@ -63,7 +63,6 @@ namespace GeoenrichmentTool
             this.endPoint.Name = "endPoint";
             this.endPoint.Size = new System.Drawing.Size(740, 26);
             this.endPoint.TabIndex = 1;
-            this.endPoint.Text = "";
             // 
             // geoFormName
             // 
@@ -136,20 +135,10 @@ namespace GeoenrichmentTool
             this.submitFormBtn.UseVisualStyleBackColor = true;
             this.submitFormBtn.Click += new System.EventHandler(this.submitGeoQueryForm);
             // 
-            // resultFolderLabel
-            // 
-            this.resultFolderLabel.AutoSize = true;
-            this.resultFolderLabel.Location = new System.Drawing.Point(15, 285);
-            this.resultFolderLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.resultFolderLabel.Name = "resultFolderLabel";
-            this.resultFolderLabel.Size = new System.Drawing.Size(169, 20);
-            this.resultFolderLabel.TabIndex = 9;
-            this.resultFolderLabel.Text = "Query Result Folder";
-            // 
             // classNameLabel
             // 
             this.classNameLabel.AutoSize = true;
-            this.classNameLabel.Location = new System.Drawing.Point(25, 305);
+            this.classNameLabel.Location = new System.Drawing.Point(25, 285);
             this.classNameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.classNameLabel.Name = "classNameLabel";
             this.classNameLabel.Size = new System.Drawing.Size(172, 20);
@@ -159,7 +148,7 @@ namespace GeoenrichmentTool
             // className
             // 
             this.className.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.className.Location = new System.Drawing.Point(19, 328);
+            this.className.Location = new System.Drawing.Point(19, 308);
             this.className.Name = "className";
             this.className.Size = new System.Drawing.Size(740, 26);
             this.className.TabIndex = 11;
@@ -180,7 +169,7 @@ namespace GeoenrichmentTool
             this.requiredClassName.AutoSize = true;
             this.requiredClassName.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.requiredClassName.ForeColor = System.Drawing.Color.Red;
-            this.requiredClassName.Location = new System.Drawing.Point(15, 305);
+            this.requiredClassName.Location = new System.Drawing.Point(15, 285);
             this.requiredClassName.Name = "requiredClassName";
             this.requiredClassName.Size = new System.Drawing.Size(15, 20);
             this.requiredClassName.TabIndex = 15;
@@ -206,7 +195,6 @@ namespace GeoenrichmentTool
             this.Controls.Add(this.requiredEndpoint);
             this.Controls.Add(this.className);
             this.Controls.Add(this.classNameLabel);
-            this.Controls.Add(this.resultFolderLabel);
             this.Controls.Add(this.submitFormBtn);
             this.Controls.Add(this.calculator);
             this.Controls.Add(this.calculatorLabel);
@@ -236,11 +224,11 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label calculatorLabel;
         private System.Windows.Forms.ComboBox calculator;
         private System.Windows.Forms.Button submitFormBtn;
-        private System.Windows.Forms.Label resultFolderLabel;
         private System.Windows.Forms.Label classNameLabel;
         private System.Windows.Forms.TextBox className;
         private System.Windows.Forms.Label requiredEndpoint;
         private System.Windows.Forms.Label requiredClassName;
         private System.Windows.Forms.Label formError;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
     }
 }
