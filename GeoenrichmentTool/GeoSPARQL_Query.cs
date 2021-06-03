@@ -13,8 +13,36 @@ namespace GeoenrichmentTool
 {
     public partial class GeoSPARQL_Query : Form
     {
-        protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/";
-        protected string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire";
+        protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/"; //Change URLs below if changed
+        protected string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire"; //http://stko-roy.geog.ucsb.edu:7200/repositories/kwg-seed-graph-v2
+        protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
+            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"}, //Change URL if defaultNameSpace changes
+            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"}, //Change URL if defaultNameSpace changes
+            {"geo", "http://www.opengis.net/ont/geosparql#"},
+            {"geof", "http://www.opengis.net/def/function/geosparql/"},
+            {"wd", "http://www.wikidata.org/entity/"},
+            {"wdt", "http://www.wikidata.org/prop/direct/"},
+            {"wikibase", "http://wikiba.se/ontology#"},
+            {"bd", "http://www.bigdata.com/rdf#"},
+            {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
+            {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
+            {"xsd", "http://www.w3.org/2001/XMLSchema#"},
+            {"owl", "http://www.w3.org/2002/07/owl#"},
+            {"time", "http://www.w3.org/2006/time#"},
+            {"dbo", "http://dbpedia.org/ontology/"},
+            {"dbr", "http://dbpedia.org/resource/"},
+            {"time", "http://www.w3.org/2006/time#"},
+            {"ssn", "http://www.w3.org/ns/ssn/"},
+            {"sosa", "http://www.w3.org/ns/sosa/"},
+            {"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
+            {"omgeo", "http://www.ontotext.com/owlim/geo#"},
+            {"ff", "http://factforge.net/"},
+            {"om", "http://www.ontotext.com/owlim/"},
+            {"schema", "http://schema.org/"},
+            {"p", "http://www.wikidata.org/prop/"},
+            {"wdtn", "http://www.wikidata.org/prop/direct-normalized/" }
+        };
+
         protected string fileSavePath = "";
         protected Geometry geometry;
 
@@ -110,5 +138,238 @@ namespace GeoenrichmentTool
                 return false;
             }
         }
+
+
+
+
+
+        /**
+         * def get_geometrywkt_from_interactive_featureclass_by_idx(queryGeoExtent):
+        '''
+        Given a interactive feature class (the one we are drawing), we go to one of its row and get its geometry wkt
+        Args:
+            queryGeoExtent: an input feature class, "FeatureLayer"
+            queryGeoExtent_idx: int, the row index of the geometry column we want to get, from [1, N]
+        '''
+        assert arcpy.Describe(queryGeoExtent).dataType == "FeatureLayer"
+        query_geo_wkt = None
+        cursor = arcpy.da.SearchCursor(queryGeoExtent, ["SHAPE@WKT"])
+        for row in cursor:
+            query_geo_wkt = row[0]
+            break
+        return query_geo_wkt
+         **/
+
+
+
+
+
+        /**
+         * def project_wkt_to_wgs84(queryGeoExtent, query_geo_wkt):
+        '''
+        We need to project query_geo_wkt into WGS84 if necessary
+        Args:
+            queryGeoExtent: an input feature class, "FeatureLayer" or "FeatureClass"
+            query_geo_wkt: the geometry WKT extracted from queryGeoExtent
+        '''
+        spa_ref = arcpy.Describe(queryGeoExtent).spatialReference
+        if spa_ref.name != "GCS_WGS_1984":
+            query_geometry = arcpy.FromWKT(query_geo_wkt,spa_ref)
+            query_geometry_wgs84 = query_geometry.projectAs(arcpy.SpatialReference(4326))
+            query_geo_wkt = query_geometry_wgs84.WKT
+            arcpy.AddMessage("query_geo_wkt PROJECTED: {0}".format(query_geo_wkt))
+        return query_geo_wkt
+         **/
+
+
+
+
+
+        /**
+         * Format GeoSPARQL query by given query_geo_wkt and type
+         * 
+         * query_geo_wkt: the wkt literal //TODO::Variable - this is DEFINITELY probably not a string I think
+         * selectedURL: the user spercified type IRI
+         * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
+         * geosparql_func: a list of geosparql functions
+         * sparql_endpoint:
+         **/
+        private void TypeAndGeoSPARQLQuery(string query_geo_wkt, string selectedURL, bool isDirectInstance, string[] geosparql_func, string sparql_endpoint)
+        {
+            string queryPrefix = makeSPARQLPrefix();
+            string query = queryPrefix + "select distinct ?place ?placeLabel ?placeFlatType ?wkt" +
+                "where" +
+                "{" +
+                "?place geo:hasGeometry ?geometry ." +
+                "?place rdfs:label ?placeLabel ." +
+                "?geometry geo:asWKT ?wkt ." +
+                "{ '''" +
+                "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
+                query_geo_wkt + "'''^^geo:wktLiteral " +
+                geosparql_func[0] + "  ?geometry .}";
+
+            if(geosparql_func.Length==2)
+            {
+                query += " union" +
+                    "{ '''" +
+                    "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
+                    query_geo_wkt + "'''^^geo:wktLiteral  " +
+                    geosparql_func[1] + "   ?geometry .}";
+            }
+
+            if(selectedURL != "")
+            {
+                if(!isDirectInstance)
+                {
+                    query += "?place rdf:type ?placeFlatType ." +
+                    "?placeFlatType rdfs:subClassOf* <" + selectedURL + ">.";
+                } 
+                else
+                {
+                    query += "?place rdf:type  <" + selectedURL + ">.";
+                }
+                
+            }
+
+            query += "}";
+
+            //var GeoQueryResult = SPARQLUtil.sparql_requests(query, sparql_endpoint, false); //TODO::function
+            //return GeoQueryResult["results"]["bindings"];
+        }
+
+
+
+
+
+        private string makeSPARQLPrefix()
+        {
+            string queryPrefix = "";
+            foreach (var prefix in _PREFIX)
+            {
+                queryPrefix += "PREFIX " + prefix.Key + ": <" + prefix.Value + ">\n";
+            }
+
+            return queryPrefix;
+        }
+
+
+
+
+
+        private void sparql_requests(string query, string sparql_endpoint, bool doInference=false, string request_method="post")
+        {
+
+        }
+        /**
+         * def sparql_requests(query, sparql_endpoint, doInference = False, request_method = 'post'):
+        # sparqlParam = {'query':'SELECT ?item ?itemLabel WHERE{ ?item wdt:P31 wd:Q146 . SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }}', 'format':'json'}
+        print(query)
+        sparqlParam = {'query': query,'format': 'json', 'infer':"true" if doInference else "false"}
+        headers = { 'Accept': 'application/sparql-results+json'}
+        # headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        if request_method == 'post':
+            sparqlRequest = requests.post(sparql_endpoint, data= sparqlParam, headers = headers )
+        elif request_method == 'get':
+            sparqlRequest = requests.get(sparql_endpoint, params = sparqlParam, headers = headers)
+        else:
+            raise Exception(f"request method {request_method} noy find")
+        print(sparqlRequest.url)
+        arcpy.AddMessage("SPARQL URL: {0}".format(sparqlRequest.url))
+
+        entityTypeJson = sparqlRequest.json() #["results"]["bindings"]
+        return entityTypeJson
+         **/
+
+
+
+
+
+        /**
+          * def createFeatureClassFromSPARQLResult(GeoQueryResult, out_path = "", inPlaceType = "", selectedURL = "", 
+                 isDirectInstance = False, viz_res = True):
+         '''
+         GeoQueryResult: a sparql query result json obj serialized as a list of dict()
+                     SPARQL query like this:
+                     select distinct ?place ?placeLabel ?placeFlatType ?wkt
+                     where
+                     {...}
+         out_path: the output path for the create geo feature class
+         inPlaceType: the label of user spercified type IRI
+         selectedURL: the user spercified type IRI
+         isDirectInstance: True: use placeFlatType as the type of geo-entity
+                           False: use selectedURL as the type of geo-entity
+         '''
+         # a set of unique WKT for each found places
+         placeIRISet = set()
+         placeList = []
+         geom_type = None
+         for idx, item in enumerate(GeoQueryResult):
+             wkt_literal = item["wkt"]["value"]
+             # for now, make sure all geom has the same geometry type 
+             if idx == 0:
+                 geom_type = UTIL.get_geometry_type_from_wkt(wkt_literal)
+             else:
+                 assert geom_type == UTIL.get_geometry_type_from_wkt(wkt_literal)
+
+             if isDirectInstance == False:
+                 placeType = item["placeFlatType"]["value"]
+             else:
+                 placeType = selectedURL
+             print("{}\t{}\t{}".format(
+                 item["place"]["value"], item["placeLabel"]["value"], placeType))
+             if len(placeIRISet) == 0 or item["place"]["value"] not in placeIRISet:
+                 placeIRISet.add(item["place"]["value"])
+                 placeList.append(
+                     [ item["place"]["value"], item["placeLabel"]["value"], placeType, wkt_literal ])
+         
+         if geom_type is None:
+             raise Exception("geometry type not find")
+
+         if len(placeList) == 0:
+             arcpy.AddMessage("No {0} within the provided polygon can be finded!".format(inPlaceType))
+         else:
+             
+
+             if out_path == None:
+                 arcpy.AddMessage("No data will be added to the map document.")
+                 # pythonaddins.MessageBox("No data will be added to the map document.", "Warning Message", 0)
+             else:
+                 geo_feature_class = arcpy.CreateFeatureclass_management(
+                                     os.path.dirname(out_path), 
+                                     os.path.basename(out_path), 
+                                     geometry_type = geom_type,
+                                     spatial_reference = arcpy.SpatialReference(4326) )
+
+                 labelFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "placeLabel")
+                 arcpy.AddMessage("labelFieldLength: {0}".format(labelFieldLength))
+                 urlFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "place")
+                 arcpy.AddMessage("urlFieldLength: {0}".format(urlFieldLength))
+                 if isDirectInstance == False: 
+                     classFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "placeFlatType")
+                 else:
+                     classFieldLength = len(selectedURL) + 50
+                 arcpy.AddMessage("classFieldLength: {0}".format(classFieldLength))
+                 
+                 # add field to this point feature class
+                 arcpy.AddField_management(geo_feature_class, "Label", "TEXT", field_length=labelFieldLength)
+                 arcpy.AddField_management(geo_feature_class, "URL", "TEXT", field_length=urlFieldLength)
+                 arcpy.AddField_management(geo_feature_class, "Class", "TEXT", field_length=classFieldLength)
+
+
+                 insertCursor = arcpy.da.InsertCursor(out_path, ['URL', 'Label', "Class", 'SHAPE@WKT',])
+                 for item in placeList:
+                     place_iri, label, type_iri, wkt_literal = item
+                     wkt = wkt_literal.replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "")
+                     try:
+                         insertCursor.insertRow( (place_iri, label, type_iri, wkt ) )
+                     except Error:
+                         arcpy.AddMessage("Error inserting geo data: {} {} {}".format(place_iri, label, type_iri))
+
+                 del insertCursor
+
+                 if viz_res:
+                     ArcpyViz.visualize_current_layer(out_path)
+         return
+          **/
     }
 }
