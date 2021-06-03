@@ -16,11 +16,13 @@ namespace GeoenrichmentTool
         protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/";
         protected string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire";
         protected string fileSavePath = "";
+        protected Geometry geometry;
 
-        public GeoSPARQL_Query()
+        public GeoSPARQL_Query(Geometry geo)
         {
             InitializeComponent();
             this.endPoint.Text = defaultEndpoint;
+            this.geometry = geo;
         }
 
         private void submitGeoQueryForm(object sender, EventArgs e)
@@ -36,9 +38,61 @@ namespace GeoenrichmentTool
                 {
                     this.Close();
 
-                    //TODO:: Process form data
+                    var gfEndPoint = this.endPoint.Text; //sparql_endpoint
+                    var queryGeoExtent = ""; //TODO::Variable - queryGeoExtent
+                    var gfPlaceType = this.placeType.Text; //inPlaceType
+                    var gfSubclassReasoning = this.subclassReasoning.Checked; //isDirectInstance
+                    var gfCalculator = this.calculator.SelectedItem; //inTopoCal
+                    var gfFileSavePath = this.fileSavePath; //outLocation
+                    var gfClassName = this.className.Text; //outFeatureClassName
+                    var selectedURL = ""; //TODO::Variable - selectedURL
 
-                    //TODO:: Call and create function to hit SPAQRL endpoint
+                    string[] geosparql_func;
+                    switch (gfCalculator)
+                    {
+                        case "Contain + Intersect":
+                            geosparql_func = new string[] { "geo:sfContains", "geo:sfIntersects" };
+                            break;
+                        case "Contain":
+                            geosparql_func = new string[] { "geo:sfContains" };
+                            break;
+                        case "Within":
+                            geosparql_func = new string[] { "geo:sfWithin" };
+                            break;
+                        case "Intersect":
+                            geosparql_func = new string[] { "geo:sfIntersects" };
+                            break;
+                        default:
+                            //arcpy.AddError("The spatial relation is not supported!") //TODO::Reporting
+                            break;
+                    }
+
+                    //query_geo_wkt = UTIL.get_geometrywkt_from_interactive_featureclass_by_idx(queryGeoExtent) //TODO::Function
+
+                    //messages.addMessage("query_geo_wkt: {0}".format(query_geo_wkt)) //TODO::Reporting
+
+                    //query_geo_wkt = UTIL.project_wkt_to_wgs84(queryGeoExtent, query_geo_wkt) //TODO::Function
+
+                    string out_path = "";
+                    if(gfFileSavePath.Contains(".gdb"))
+                    {
+                        //if the outputLocation is a file geodatabase, cancatnate the outputlocation with gfClassName to create a feature class in current geodatabase
+                        //out_path = os.path.join(gfFileSavePath, gfClassName) //TODO::Variable
+                    }
+                    else
+                    {
+                        //if the outputLocation is a folder, creats a shapefile in this folder
+                        //out_path = os.path.join(gfFileSavePath,gfClassName) + ".shp" //TODO::Variable
+                        //however, Relationship Class must be created in a geodatabase, so we forbid to create a shapfile
+                        //messages.addErrorMessage("Please enter a file geodatabase as output location in order to create a relation class")
+                        //raise arcpy.ExecuteError
+                    }
+
+                    //messages.addMessage("outpath: {0}".format(out_path)) //TODO::Reporting
+
+                    //GeoQueryResult = SPARQLQuery.TypeAndGeoSPARQLQuery(query_geo_wkt, selectedURL, gfSubclassReasoning, geosparql_func, gfEndPoint); //TODO::Function
+
+                    //Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult, out_path, gfPlaceType, selectedURL, gfSubclassReasoning) //TODO::Function
                 }
             }
         }

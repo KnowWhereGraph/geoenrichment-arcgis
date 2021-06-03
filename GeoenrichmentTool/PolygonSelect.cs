@@ -44,7 +44,7 @@ namespace GeoenrichmentTool
                 return LayerFactory.Instance.CreateGroupLayer(mv.Map, 0, "GeoSPARQL Layer");
             });
             
-            Form geoForm = new GeoSPARQL_Query();
+            Form geoForm = new GeoSPARQL_Query(geometry);
             geoForm.ShowDialog();
             return base.OnSketchCompleteAsync(geometry);
         }
