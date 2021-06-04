@@ -1,14 +1,8 @@
 ﻿using ArcGIS.Core.Geometry;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GeoenrichmentTool
@@ -138,21 +132,14 @@ namespace GeoenrichmentTool
                             geoFunc = new string[] { "geo:sfWithin" };
                             break;
                         case "Intersect":
-                            geoFunc = new string[] { "geo:sfIntersects" };
-                            break;
                         default:
-                            //arcpy.AddError("The spatial relation is not supported!") //TODO::Reporting
+                            geoFunc = new string[] { "geo:sfIntersects" };
                             break;
                     }
 
-                    //query_geo_wkt = UTIL.get_geometrywkt_from_interactive_featureclass_by_idx(queryGeoExtent) //TODO::Function
+                    var geoWKT = geometry.SpatialReference.Wkt;
 
-                    //messages.addMessage("query_geo_wkt: {0}".format(query_geo_wkt)) //TODO::Reporting
-
-                    //query_geo_wkt = UTIL.project_wkt_to_wgs84(queryGeoExtent, query_geo_wkt) //TODO::Function
-                    var query_geo_wkt = "WKT_VARIABLE_GOES_HERE";
-
-                    string out_path = "";
+                    string out_path = ""; //TODO::Variable
                     if(gfFileSavePath.Contains(".gdb"))
                     {
                         //if the outputLocation is a file geodatabase, cancatnate the outputlocation with gfClassName to create a feature class in current geodatabase
@@ -167,15 +154,13 @@ namespace GeoenrichmentTool
                         //raise arcpy.ExecuteError
                     }
 
-                    //messages.addMessage("outpath: {0}".format(out_path)) //TODO::Reporting
-
-                    var GeoQueryResult = TypeAndGeoSPARQLQuery(query_geo_wkt, selectedURL, gfSubclassReasoning, geoFunc, gfEndPoint); //TODO::Function
+                    var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, selectedURL, gfSubclassReasoning, geoFunc, gfEndPoint);
 
                     //Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult, out_path, gfPlaceType, selectedURL, gfSubclassReasoning) //TODO::Function
                 }
             }
         }
-
+        
         public bool ChooseFolder()
         {
             if (outputLocation.ShowDialog() == DialogResult.OK)
@@ -189,52 +174,6 @@ namespace GeoenrichmentTool
                 return false;
             }
         }
-
-
-
-
-
-        /**
-         * def get_geometrywkt_from_interactive_featureclass_by_idx(queryGeoExtent):
-        '''
-        Given a interactive feature class (the one we are drawing), we go to one of its row and get its geometry wkt
-        Args:
-            queryGeoExtent: an input feature class, "FeatureLayer"
-            queryGeoExtent_idx: int, the row index of the geometry column we want to get, from [1, N]
-        '''
-        assert arcpy.Describe(queryGeoExtent).dataType == "FeatureLayer"
-        query_geo_wkt = None
-        cursor = arcpy.da.SearchCursor(queryGeoExtent, ["SHAPE@WKT"])
-        for row in cursor:
-            query_geo_wkt = row[0]
-            break
-        return query_geo_wkt
-         **/
-
-
-
-
-
-        /**
-         * def project_wkt_to_wgs84(queryGeoExtent, query_geo_wkt):
-        '''
-        We need to project query_geo_wkt into WGS84 if necessary
-        Args:
-            queryGeoExtent: an input feature class, "FeatureLayer" or "FeatureClass"
-            query_geo_wkt: the geometry WKT extracted from queryGeoExtent
-        '''
-        spa_ref = arcpy.Describe(queryGeoExtent).spatialReference
-        if spa_ref.name != "GCS_WGS_1984":
-            query_geometry = arcpy.FromWKT(query_geo_wkt,spa_ref)
-            query_geometry_wgs84 = query_geometry.projectAs(arcpy.SpatialReference(4326))
-            query_geo_wkt = query_geometry_wgs84.WKT
-            arcpy.AddMessage("query_geo_wkt PROJECTED: {0}".format(query_geo_wkt))
-        return query_geo_wkt
-         **/
-
-
-
-
 
         /**
          * Format GeoSPARQL query by given query_geo_wkt and type
@@ -289,10 +228,6 @@ namespace GeoenrichmentTool
             //return GeoQueryResult["results"]["bindings"];
         }
 
-
-
-
-
         private string MakeSPARQLPrefix()
         {
             string queryPrefix = "";
@@ -303,10 +238,6 @@ namespace GeoenrichmentTool
 
             return queryPrefix;
         }
-
-
-
-
 
         private string QuerySPARQL(string query, string endPoint, bool doInference=false, string requestMethod="post")
         {
@@ -332,9 +263,6 @@ namespace GeoenrichmentTool
             return result;
         }
         /**
-        iprint(sparqlRequest.url)
-        arcpy.AddMessage("SPARQL URL: {0}".format(sparqlRequest.url))
-
         entityTypeJson = sparqlRequest.json() #["results"]["bindings"]
         return entityTypeJson
          **/
