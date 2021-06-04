@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,31 +18,30 @@ namespace GeoenrichmentTool
         protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/"; //Change URLs below if changed
         protected string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire"; //http://stko-roy.geog.ucsb.edu:7200/repositories/kwg-seed-graph-v2
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
-            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"}, //Change URL if defaultNameSpace changes
-            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"}, //Change URL if defaultNameSpace changes
-            {"geo", "http://www.opengis.net/ont/geosparql#"},
-            {"geof", "http://www.opengis.net/def/function/geosparql/"},
-            {"wd", "http://www.wikidata.org/entity/"},
-            {"wdt", "http://www.wikidata.org/prop/direct/"},
-            {"wikibase", "http://wikiba.se/ontology#"},
             {"bd", "http://www.bigdata.com/rdf#"},
-            {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
-            {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
-            {"xsd", "http://www.w3.org/2001/XMLSchema#"},
-            {"owl", "http://www.w3.org/2002/07/owl#"},
-            {"time", "http://www.w3.org/2006/time#"},
             {"dbo", "http://dbpedia.org/ontology/"},
             {"dbr", "http://dbpedia.org/resource/"},
-            {"time", "http://www.w3.org/2006/time#"},
-            {"ssn", "http://www.w3.org/ns/ssn/"},
-            {"sosa", "http://www.w3.org/ns/sosa/"},
-            {"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
-            {"omgeo", "http://www.ontotext.com/owlim/geo#"},
             {"ff", "http://factforge.net/"},
+            {"geo", "http://www.opengis.net/ont/geosparql#"},
+            {"geof", "http://www.opengis.net/def/function/geosparql/"},
+            {"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
+            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"}, //Change URL if defaultNameSpace changes
+            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"}, //Change URL if defaultNameSpace changes
             {"om", "http://www.ontotext.com/owlim/"},
-            {"schema", "http://schema.org/"},
+            {"omgeo", "http://www.ontotext.com/owlim/geo#"},
+            {"owl", "http://www.w3.org/2002/07/owl#"},
             {"p", "http://www.wikidata.org/prop/"},
-            {"wdtn", "http://www.wikidata.org/prop/direct-normalized/" }
+            {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
+            {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
+            {"schema", "http://schema.org/"},
+            {"sosa", "http://www.w3.org/ns/sosa/"},
+            {"ssn", "http://www.w3.org/ns/ssn/"},
+            {"time", "http://www.w3.org/2006/time#"},
+            {"xsd", "http://www.w3.org/2001/XMLSchema#"},
+            {"wd", "http://www.wikidata.org/entity/"},
+            {"wdt", "http://www.wikidata.org/prop/direct/"},
+            {"wdtn", "http://www.wikidata.org/prop/direct-normalized/"},
+            {"wikibase", "http://wikiba.se/ontology#"}
         };
 
         protected string fileSavePath = "";
@@ -75,20 +76,20 @@ namespace GeoenrichmentTool
                     var gfClassName = this.className.Text; //outFeatureClassName
                     var selectedURL = ""; //TODO::Variable - selectedURL
 
-                    string[] geosparql_func;
+                    string[] geoFunc = new string[] { };
                     switch (gfCalculator)
                     {
                         case "Contain + Intersect":
-                            geosparql_func = new string[] { "geo:sfContains", "geo:sfIntersects" };
+                            geoFunc = new string[] { "geo:sfContains", "geo:sfIntersects" };
                             break;
                         case "Contain":
-                            geosparql_func = new string[] { "geo:sfContains" };
+                            geoFunc = new string[] { "geo:sfContains" };
                             break;
                         case "Within":
-                            geosparql_func = new string[] { "geo:sfWithin" };
+                            geoFunc = new string[] { "geo:sfWithin" };
                             break;
                         case "Intersect":
-                            geosparql_func = new string[] { "geo:sfIntersects" };
+                            geoFunc = new string[] { "geo:sfIntersects" };
                             break;
                         default:
                             //arcpy.AddError("The spatial relation is not supported!") //TODO::Reporting
@@ -100,6 +101,7 @@ namespace GeoenrichmentTool
                     //messages.addMessage("query_geo_wkt: {0}".format(query_geo_wkt)) //TODO::Reporting
 
                     //query_geo_wkt = UTIL.project_wkt_to_wgs84(queryGeoExtent, query_geo_wkt) //TODO::Function
+                    var query_geo_wkt = "WKT_VARIABLE_GOES_HERE";
 
                     string out_path = "";
                     if(gfFileSavePath.Contains(".gdb"))
@@ -118,7 +120,7 @@ namespace GeoenrichmentTool
 
                     //messages.addMessage("outpath: {0}".format(out_path)) //TODO::Reporting
 
-                    //GeoQueryResult = SPARQLQuery.TypeAndGeoSPARQLQuery(query_geo_wkt, selectedURL, gfSubclassReasoning, geosparql_func, gfEndPoint); //TODO::Function
+                    var GeoQueryResult = TypeAndGeoSPARQLQuery(query_geo_wkt, selectedURL, gfSubclassReasoning, geoFunc, gfEndPoint); //TODO::Function
 
                     //Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult, out_path, gfPlaceType, selectedURL, gfSubclassReasoning) //TODO::Function
                 }
@@ -188,33 +190,33 @@ namespace GeoenrichmentTool
         /**
          * Format GeoSPARQL query by given query_geo_wkt and type
          * 
-         * query_geo_wkt: the wkt literal //TODO::Variable - this is DEFINITELY probably not a string I think
+         * queryGeoWKT: the wkt literal //TODO::Variable - this is DEFINITELY probably not a string I think
          * selectedURL: the user spercified type IRI
          * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
-         * geosparql_func: a list of geosparql functions
-         * sparql_endpoint:
+         * geoFunc: a list of geosparql functions
+         * endPoint: URL for SPARQL endpoint
          **/
-        private void TypeAndGeoSPARQLQuery(string query_geo_wkt, string selectedURL, bool isDirectInstance, string[] geosparql_func, string sparql_endpoint)
+        private string TypeAndGeoSPARQLQuery(string queryGeoWKT, string selectedURL, bool isDirectInstance, string[] geoFunc, string endPoint)
         {
-            string queryPrefix = makeSPARQLPrefix();
-            string query = queryPrefix + "select distinct ?place ?placeLabel ?placeFlatType ?wkt" +
+            string queryPrefix = MakeSPARQLPrefix();
+            string query = queryPrefix + "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
                 "where" +
                 "{" +
-                "?place geo:hasGeometry ?geometry ." +
-                "?place rdfs:label ?placeLabel ." +
-                "?geometry geo:asWKT ?wkt ." +
+                "?place geo:hasGeometry ?geometry . " +
+                "?place rdfs:label ?placeLabel . " +
+                "?geometry geo:asWKT ?wkt . " +
                 "{ '''" +
                 "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
-                query_geo_wkt + "'''^^geo:wktLiteral " +
-                geosparql_func[0] + "  ?geometry .}";
+                queryGeoWKT + "'''^^geo:wktLiteral " +
+                geoFunc[0] + "  ?geometry .}";
 
-            if(geosparql_func.Length==2)
+            if(geoFunc.Length==2)
             {
                 query += " union" +
                     "{ '''" +
                     "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
-                    query_geo_wkt + "'''^^geo:wktLiteral  " +
-                    geosparql_func[1] + "   ?geometry .}";
+                    queryGeoWKT + "'''^^geo:wktLiteral  " +
+                    geoFunc[1] + "   ?geometry . }";
             }
 
             if(selectedURL != "")
@@ -233,7 +235,8 @@ namespace GeoenrichmentTool
 
             query += "}";
 
-            //var GeoQueryResult = SPARQLUtil.sparql_requests(query, sparql_endpoint, false); //TODO::function
+            var geoQueryResult = QuerySPARQL(query, endPoint, false); //TODO::function
+            return geoQueryResult;
             //return GeoQueryResult["results"]["bindings"];
         }
 
@@ -241,7 +244,7 @@ namespace GeoenrichmentTool
 
 
 
-        private string makeSPARQLPrefix()
+        private string MakeSPARQLPrefix()
         {
             string queryPrefix = "";
             foreach (var prefix in _PREFIX)
@@ -256,24 +259,31 @@ namespace GeoenrichmentTool
 
 
 
-        private void sparql_requests(string query, string sparql_endpoint, bool doInference=false, string request_method="post")
+        private string QuerySPARQL(string query, string endPoint, bool doInference=false, string requestMethod="post")
         {
+            var httpWebRequest = (HttpWebRequest)WebRequest.Create(endPoint);
+            string result = "";
+            httpWebRequest.ContentType = "application/json";
+            httpWebRequest.Accept = "'application/sparql-results+json";
+            httpWebRequest.Method = "POST";
 
+            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+            {
+                string json = "{\"query\":\""+ query + "\", \"format\":\"json\", \"infer\":\"" + doInference + "\"}";
+
+                streamWriter.Write(json);
+            }
+
+            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+            {
+                result = streamReader.ReadToEnd();
+            }
+
+            return result;
         }
         /**
-         * def sparql_requests(query, sparql_endpoint, doInference = False, request_method = 'post'):
-        # sparqlParam = {'query':'SELECT ?item ?itemLabel WHERE{ ?item wdt:P31 wd:Q146 . SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }}', 'format':'json'}
-        print(query)
-        sparqlParam = {'query': query,'format': 'json', 'infer':"true" if doInference else "false"}
-        headers = { 'Accept': 'application/sparql-results+json'}
-        # headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        if request_method == 'post':
-            sparqlRequest = requests.post(sparql_endpoint, data= sparqlParam, headers = headers )
-        elif request_method == 'get':
-            sparqlRequest = requests.get(sparql_endpoint, params = sparqlParam, headers = headers)
-        else:
-            raise Exception(f"request method {request_method} noy find")
-        print(sparqlRequest.url)
+        iprint(sparqlRequest.url)
         arcpy.AddMessage("SPARQL URL: {0}".format(sparqlRequest.url))
 
         entityTypeJson = sparqlRequest.json() #["results"]["bindings"]
