@@ -69,12 +69,61 @@ namespace GeoenrichmentTool
 
                     var gfEndPoint = this.endPoint.Text; //sparql_endpoint
                     var queryGeoExtent = ""; //TODO::Variable - queryGeoExtent
-                    var gfPlaceType = this.placeType.Text; //inPlaceType
+                    string gfPlaceType = this.placeType.Text; //inPlaceType
                     var gfSubclassReasoning = this.subclassReasoning.Checked; //isDirectInstance
                     var gfCalculator = this.calculator.SelectedItem; //inTopoCal
                     var gfFileSavePath = this.fileSavePath; //outLocation
                     var gfClassName = this.className.Text; //outFeatureClassName
                     var selectedURL = ""; //TODO::Variable - selectedURL
+
+                    if(gfPlaceType!="")
+                    {
+                        string formattedPlaceType = gfPlaceType;
+
+                        if(gfPlaceType.Contains("("))
+                        {
+                            int lastIndex = gfPlaceType.LastIndexOf("(");
+                            formattedPlaceType = gfPlaceType.Substring(0,lastIndex-1);
+                        }
+                    }
+
+                    string queryPrefix = MakeSPARQLPrefix();
+                    /** //TODO:: Uses the SPARQL endpoint to get a formatted place type? Probably should be its own function
+                        entityTypeQuery = queryPrefix + """select distinct ?entityType ?entityTypeLabel where { 
+                                                ?entity rdf:type ?entityType .
+                                                ?entity geo:hasGeometry ?aGeom .
+                                                ?entityType rdfs:label ?entityTypeLabel .
+                                                FILTER REGEX(?entityTypeLabel, '""" + placeType + """', "i")
+                                            } 
+                                            """
+
+                        entityTypeJson = SPARQLUtil.sparql_requests(query = entityTypeQuery, 
+                                                                    sparql_endpoint = sparql_endpoint, 
+                                                                    doInference = False)
+                        entityTypeJson = entityTypeJson["results"]["bindings"]
+
+                        if len(entityTypeJson) == 0:
+                            arcpy.AddError("No entity type matches the user's input.")
+                            raise arcpy.ExecuteError
+                        else:
+                            in_place_type.filter.list = [gfPlaceType]
+                            self.entityTypeLabel = []
+                            self.entityTypeURLList = []
+                            for jsonItem in entityTypeJson:
+                                label = jsonItem["entityTypeLabel"]["value"]
+                                typeIRI = jsonItem["entityType"]["value"]
+                                type_prefixed_iri = SPARQLUtil.make_prefixed_iri(typeIRI)
+                                self.entityTypeLabel.append(f"{label}({type_prefixed_iri})")
+                                self.entityTypeURLList.append(typeIRI)
+                    
+
+                            in_place_type.filter.list = in_place_type.filter.list + self.entityTypeLabel
+
+                        for i in range(len(self.entityTypeLabel)):
+                            # messages.addMessage("Label: {0}".format(self.entityTypeLabel[i]))
+                            if in_place_type.valueAsText == self.entityTypeLabel[i]:
+                                out_place_type_url.value = self.entityTypeURLList[i]
+                     **/
 
                     string[] geoFunc = new string[] { };
                     switch (gfCalculator)
