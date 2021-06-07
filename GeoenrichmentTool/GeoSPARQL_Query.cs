@@ -62,7 +62,6 @@ namespace GeoenrichmentTool
                     this.Close();
 
                     var gfEndPoint = this.endPoint.Text; //sparql_endpoint
-                    var queryGeoExtent = ""; //TODO::Variable - queryGeoExtent
                     string gfPlaceType = this.placeType.Text; //inPlaceType
                     var gfSubclassReasoning = this.subclassReasoning.Checked; //isDirectInstance
                     var gfCalculator = this.calculator.SelectedItem; //inTopoCal
@@ -79,22 +78,15 @@ namespace GeoenrichmentTool
                             int lastIndex = gfPlaceType.LastIndexOf("(");
                             formattedPlaceType = gfPlaceType.Substring(0,lastIndex-1);
                         }
-                    }
 
-                    string queryPrefix = MakeSPARQLPrefix();
-                    /** //TODO:: Uses the SPARQL endpoint to get a formatted place type? Probably should be its own function
-                        entityTypeQuery = queryPrefix + """select distinct ?entityType ?entityTypeLabel where { 
-                                                ?entity rdf:type ?entityType .
-                                                ?entity geo:hasGeometry ?aGeom .
-                                                ?entityType rdfs:label ?entityTypeLabel .
-                                                FILTER REGEX(?entityTypeLabel, '""" + placeType + """', "i")
-                                            } 
-                                            """
+                        string queryPrefix = MakeSPARQLPrefix();
+                        var entityTypeQuery = queryPrefix + "select distinct ?entityType ?entityTypeLabel where { " +
+                            "? entity rdf:type? entityType . ?entity geo:hasGeometry? aGeom . ?entityType rdfs:label? entityTypeLabel . " +
+                            "FILTER REGEX(?entityTypeLabel, '" + formattedPlaceType + "', \"i\") }";
 
-                        entityTypeJson = SPARQLUtil.sparql_requests(query = entityTypeQuery, 
-                                                                    sparql_endpoint = sparql_endpoint, 
-                                                                    doInference = False)
-                        entityTypeJson = entityTypeJson["results"]["bindings"]
+                        var entityTypeJson = QuerySPARQL(entityTypeQuery, gfEndPoint, false);
+
+                        /** //TODO:: Uses the SPARQL endpoint to get a formatted place type? Probably should be its own function
 
                         if len(entityTypeJson) == 0:
                             arcpy.AddError("No entity type matches the user's input.")
@@ -117,7 +109,8 @@ namespace GeoenrichmentTool
                             # messages.addMessage("Label: {0}".format(self.entityTypeLabel[i]))
                             if in_place_type.valueAsText == self.entityTypeLabel[i]:
                                 out_place_type_url.value = self.entityTypeURLList[i]
-                     **/
+                        **/
+                    }
 
                     string[] geoFunc = new string[] { };
                     switch (gfCalculator)

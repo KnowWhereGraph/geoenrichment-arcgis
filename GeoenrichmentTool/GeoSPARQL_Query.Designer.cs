@@ -29,6 +29,7 @@ namespace GeoenrichmentTool
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GeoSPARQL_Query));
             this.endPointLabel = new System.Windows.Forms.Label();
             this.endPoint = new System.Windows.Forms.TextBox();
             this.geoFormName = new System.Windows.Forms.Label();
@@ -44,22 +45,24 @@ namespace GeoenrichmentTool
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
             this.outputLocation = new System.Windows.Forms.FolderBrowserDialog();
-            this.outputLocation.SelectedPath = System.IO.Directory.GetCurrentDirectory();
             this.SuspendLayout();
             // 
             // endPointLabel
             // 
             this.endPointLabel.AutoSize = true;
+            this.endPointLabel.BackColor = System.Drawing.Color.Transparent;
+            this.endPointLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.endPointLabel.ForeColor = System.Drawing.Color.White;
             this.endPointLabel.Location = new System.Drawing.Point(25, 95);
             this.endPointLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.endPointLabel.Name = "endPointLabel";
-            this.endPointLabel.Size = new System.Drawing.Size(196, 20);
+            this.endPointLabel.Size = new System.Drawing.Size(186, 19);
             this.endPointLabel.TabIndex = 0;
             this.endPointLabel.Text = "GeoSPARQL Endpoint:";
             // 
             // endPoint
             // 
-            this.endPoint.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.endPoint.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.endPoint.Location = new System.Drawing.Point(19, 118);
             this.endPoint.Name = "endPoint";
             this.endPoint.Size = new System.Drawing.Size(740, 26);
@@ -68,27 +71,32 @@ namespace GeoenrichmentTool
             // geoFormName
             // 
             this.geoFormName.AutoSize = true;
-            this.geoFormName.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.geoFormName.BackColor = System.Drawing.Color.Transparent;
+            this.geoFormName.Font = new System.Drawing.Font("Arial", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.geoFormName.ForeColor = System.Drawing.Color.White;
             this.geoFormName.Location = new System.Drawing.Point(12, 9);
             this.geoFormName.Name = "geoFormName";
-            this.geoFormName.Size = new System.Drawing.Size(316, 37);
+            this.geoFormName.Size = new System.Drawing.Size(306, 37);
             this.geoFormName.TabIndex = 2;
             this.geoFormName.Text = "GeoSPARQL Query";
             // 
             // placeTypeLabel
             // 
             this.placeTypeLabel.AutoSize = true;
-            this.placeTypeLabel.Location = new System.Drawing.Point(15, 147);
+            this.placeTypeLabel.BackColor = System.Drawing.Color.Transparent;
+            this.placeTypeLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.placeTypeLabel.ForeColor = System.Drawing.Color.White;
+            this.placeTypeLabel.Location = new System.Drawing.Point(15, 160);
             this.placeTypeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.placeTypeLabel.Name = "placeTypeLabel";
-            this.placeTypeLabel.Size = new System.Drawing.Size(101, 20);
+            this.placeTypeLabel.Size = new System.Drawing.Size(98, 19);
             this.placeTypeLabel.TabIndex = 3;
             this.placeTypeLabel.Text = "Place Type:";
             // 
             // placeType
             // 
-            this.placeType.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.placeType.Location = new System.Drawing.Point(19, 170);
+            this.placeType.Font = new System.Drawing.Font("Arial", 12F);
+            this.placeType.Location = new System.Drawing.Point(19, 183);
             this.placeType.Name = "placeType";
             this.placeType.Size = new System.Drawing.Size(740, 26);
             this.placeType.TabIndex = 4;
@@ -96,60 +104,72 @@ namespace GeoenrichmentTool
             // subclassReasoning
             // 
             this.subclassReasoning.AutoSize = true;
-            this.subclassReasoning.Location = new System.Drawing.Point(19, 203);
+            this.subclassReasoning.BackColor = System.Drawing.Color.Transparent;
+            this.subclassReasoning.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.subclassReasoning.ForeColor = System.Drawing.Color.White;
+            this.subclassReasoning.Location = new System.Drawing.Point(19, 232);
             this.subclassReasoning.Name = "subclassReasoning";
-            this.subclassReasoning.Size = new System.Drawing.Size(348, 24);
+            this.subclassReasoning.Size = new System.Drawing.Size(334, 23);
             this.subclassReasoning.TabIndex = 5;
             this.subclassReasoning.Text = "Disable Transistive Subclass Reasoning";
-            this.subclassReasoning.UseVisualStyleBackColor = true;
+            this.subclassReasoning.UseVisualStyleBackColor = false;
             // 
             // calculatorLabel
             // 
             this.calculatorLabel.AutoSize = true;
-            this.calculatorLabel.Location = new System.Drawing.Point(15, 230);
+            this.calculatorLabel.BackColor = System.Drawing.Color.Transparent;
+            this.calculatorLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.calculatorLabel.ForeColor = System.Drawing.Color.White;
+            this.calculatorLabel.Location = new System.Drawing.Point(15, 275);
             this.calculatorLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.calculatorLabel.Name = "calculatorLabel";
-            this.calculatorLabel.Size = new System.Drawing.Size(228, 20);
+            this.calculatorLabel.Size = new System.Drawing.Size(216, 19);
             this.calculatorLabel.TabIndex = 6;
             this.calculatorLabel.Text = "Spatial Relation Calculator:";
             // 
             // calculator
             // 
+            this.calculator.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.calculator.FormattingEnabled = true;
             this.calculator.Items.AddRange(new object[] {
             "Contain + Intersect",
             "Contain",
             "Within",
             "Intersect"});
-            this.calculator.Location = new System.Drawing.Point(19, 254);
+            this.calculator.Location = new System.Drawing.Point(19, 299);
             this.calculator.Name = "calculator";
-            this.calculator.Size = new System.Drawing.Size(740, 28);
+            this.calculator.Size = new System.Drawing.Size(740, 27);
             this.calculator.TabIndex = 7;
             // 
             // submitFormBtn
             // 
-            this.submitFormBtn.Location = new System.Drawing.Point(691, 424);
+            this.submitFormBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(214)))), ((int)(((byte)(237)))));
+            this.submitFormBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.submitFormBtn.Location = new System.Drawing.Point(647, 409);
             this.submitFormBtn.Name = "submitFormBtn";
-            this.submitFormBtn.Size = new System.Drawing.Size(75, 29);
+            this.submitFormBtn.Size = new System.Drawing.Size(119, 44);
             this.submitFormBtn.TabIndex = 8;
             this.submitFormBtn.Text = "Run";
-            this.submitFormBtn.UseVisualStyleBackColor = true;
+            this.submitFormBtn.UseVisualStyleBackColor = false;
             this.submitFormBtn.Click += new System.EventHandler(this.submitGeoQueryForm);
             // 
             // classNameLabel
             // 
             this.classNameLabel.AutoSize = true;
-            this.classNameLabel.Location = new System.Drawing.Point(25, 285);
+            this.classNameLabel.BackColor = System.Drawing.Color.Transparent;
+            this.classNameLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.classNameLabel.ForeColor = System.Drawing.Color.White;
+            this.classNameLabel.Location = new System.Drawing.Point(25, 343);
             this.classNameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.classNameLabel.Name = "classNameLabel";
-            this.classNameLabel.Size = new System.Drawing.Size(172, 20);
+            this.classNameLabel.Size = new System.Drawing.Size(162, 19);
             this.classNameLabel.TabIndex = 10;
             this.classNameLabel.Text = "Feature Class Name";
             // 
             // className
             // 
-            this.className.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.className.Location = new System.Drawing.Point(19, 308);
+            this.className.Font = new System.Drawing.Font("Arial", 12F);
+            this.className.Location = new System.Drawing.Point(19, 366);
             this.className.Name = "className";
             this.className.Size = new System.Drawing.Size(740, 26);
             this.className.TabIndex = 11;
@@ -157,6 +177,7 @@ namespace GeoenrichmentTool
             // requiredEndpoint
             // 
             this.requiredEndpoint.AutoSize = true;
+            this.requiredEndpoint.BackColor = System.Drawing.Color.Transparent;
             this.requiredEndpoint.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.requiredEndpoint.ForeColor = System.Drawing.Color.Red;
             this.requiredEndpoint.Location = new System.Drawing.Point(15, 95);
@@ -168,9 +189,10 @@ namespace GeoenrichmentTool
             // requiredClassName
             // 
             this.requiredClassName.AutoSize = true;
+            this.requiredClassName.BackColor = System.Drawing.Color.Transparent;
             this.requiredClassName.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.requiredClassName.ForeColor = System.Drawing.Color.Red;
-            this.requiredClassName.Location = new System.Drawing.Point(15, 285);
+            this.requiredClassName.Location = new System.Drawing.Point(15, 343);
             this.requiredClassName.Name = "requiredClassName";
             this.requiredClassName.Size = new System.Drawing.Size(15, 20);
             this.requiredClassName.TabIndex = 15;
@@ -193,7 +215,9 @@ namespace GeoenrichmentTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Control;
+            this.BackColor = System.Drawing.Color.White;
+            this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(778, 465);
             this.Controls.Add(this.formError);
             this.Controls.Add(this.requiredClassName);
@@ -209,6 +233,7 @@ namespace GeoenrichmentTool
             this.Controls.Add(this.geoFormName);
             this.Controls.Add(this.endPoint);
             this.Controls.Add(this.endPointLabel);
+            this.DoubleBuffered = true;
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "GeoSPARQL_Query";
