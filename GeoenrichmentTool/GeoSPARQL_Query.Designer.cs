@@ -62,6 +62,7 @@ namespace GeoenrichmentTool
             // 
             // endPoint
             // 
+            this.endPoint.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.endPoint.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.endPoint.Location = new System.Drawing.Point(19, 118);
             this.endPoint.Name = "endPoint";
@@ -95,6 +96,7 @@ namespace GeoenrichmentTool
             // 
             // placeType
             // 
+            this.placeType.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.placeType.Font = new System.Drawing.Font("Arial", 12F);
             this.placeType.Location = new System.Drawing.Point(19, 183);
             this.placeType.Name = "placeType";
@@ -144,6 +146,8 @@ namespace GeoenrichmentTool
             // submitFormBtn
             // 
             this.submitFormBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(214)))), ((int)(((byte)(237)))));
+            this.submitFormBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.submitFormBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.submitFormBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.submitFormBtn.Location = new System.Drawing.Point(647, 409);
             this.submitFormBtn.Name = "submitFormBtn";
@@ -168,6 +172,7 @@ namespace GeoenrichmentTool
             // 
             // className
             // 
+            this.className.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.className.Font = new System.Drawing.Font("Arial", 12F);
             this.className.Location = new System.Drawing.Point(19, 366);
             this.className.Name = "className";
