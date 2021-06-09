@@ -91,6 +91,32 @@ namespace GeoenrichmentTool
             return json["results"]["bindings"];
         }
 
+        public string MakeIRIPrefix(string iri)
+        {
+            string result = "";
+            foreach (var prefix in _PREFIX)
+            {
+                if(iri.Contains(prefix.Value))
+                {
+                    result = iri.Replace(prefix.Value, prefix.Key + ":");
+                }
+            }
+
+            return (result!="") ? result : iri;
+        }
+        /**
+         * def make_prefixed_iri(iri):
+        prefixed_iri = ""
+        for prefix in SPARQLUtil._PREFIX:
+            if SPARQLUtil._PREFIX[prefix] in iri:
+                prefixed_iri = iri.replace(SPARQLUtil._PREFIX[prefix], prefix + ":")
+                break
+        if prefixed_iri == "":
+            return iri
+        else:
+            return prefixed_iri
+         **/
+
         private string MakeSPARQLPrefix()
         {
             string queryPrefix = "";

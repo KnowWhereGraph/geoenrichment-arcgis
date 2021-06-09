@@ -1,7 +1,9 @@
 ﻿using ArcGIS.Core.Geometry;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 
@@ -58,32 +60,18 @@ namespace GeoenrichmentTool
 
                         var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel . FILTER REGEX(?entityTypeLabel, '" + formattedPlaceType + "', 'i') }";
 
-                        var entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
+                        JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
 
-                        /** //TODO:: Uses the SPARQL endpoint to get a formatted place type? Probably should be its own function
-
-                        if len(entityTypeJson) == 0:
-                            arcpy.AddError("No entity type matches the user's input.")
-                            raise arcpy.ExecuteError
-                        else:
-                            in_place_type.filter.list = [gfPlaceType]
-                            self.entityTypeLabel = []
-                            self.entityTypeURLList = []
-                            for jsonItem in entityTypeJson:
-                                label = jsonItem["entityTypeLabel"]["value"]
-                                typeIRI = jsonItem["entityType"]["value"]
-                                type_prefixed_iri = SPARQLUtil.make_prefixed_iri(typeIRI)
-                                self.entityTypeLabel.append(f"{label}({type_prefixed_iri})")
-                                self.entityTypeURLList.append(typeIRI)
-                    
-
-                            in_place_type.filter.list = in_place_type.filter.list + self.entityTypeLabel
-
-                        for i in range(len(self.entityTypeLabel)):
-                            # messages.addMessage("Label: {0}".format(self.entityTypeLabel[i]))
-                            if in_place_type.valueAsText == self.entityTypeLabel[i]:
-                                out_place_type_url.value = self.entityTypeURLList[i]
-                        **/
+                        if(entityTypeJson.Count() > 0)
+                        {
+                            var firstResult = entityTypeJson.First();
+                            selectedURL = firstResult["entityType"]["value"].ToString();
+                            string actualPlaceType = firstResult["entityTypeLabel"]["value"].ToString();
+                            gfPlaceType = actualPlaceType + "(" + queryClass.MakeIRIPrefix(selectedURL) + ")";
+                        } else
+                        {
+                            gfPlaceType = "";
+                        }
                     }
 
                     string[] geoFunc = new string[] { };
@@ -187,7 +175,7 @@ namespace GeoenrichmentTool
             query += "}";
 
             var geoQueryResult = queryClass.SubmitQuery(query); //TODO::function
-            return geoQueryResult;
+            return "";
             //return GeoQueryResult["results"]["bindings"];
         }
 
