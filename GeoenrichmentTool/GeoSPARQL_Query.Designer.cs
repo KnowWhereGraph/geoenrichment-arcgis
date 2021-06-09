@@ -44,7 +44,7 @@ namespace GeoenrichmentTool
             this.requiredEndpoint = new System.Windows.Forms.Label();
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
-            this.outputLocation = new System.Windows.Forms.FolderBrowserDialog();
+            this.outputLocation = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
             // 
             // endPointLabel
@@ -147,9 +147,10 @@ namespace GeoenrichmentTool
             // 
             this.submitFormBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(214)))), ((int)(((byte)(237)))));
             this.submitFormBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.submitFormBtn.FlatAppearance.BorderSize = 0;
             this.submitFormBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.submitFormBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.submitFormBtn.Location = new System.Drawing.Point(647, 409);
+            this.submitFormBtn.Location = new System.Drawing.Point(640, 416);
             this.submitFormBtn.Name = "submitFormBtn";
             this.submitFormBtn.Size = new System.Drawing.Size(119, 44);
             this.submitFormBtn.TabIndex = 8;
@@ -214,7 +215,8 @@ namespace GeoenrichmentTool
             // 
             // outputLocation
             // 
-            this.outputLocation.SelectedPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE";
+            this.outputLocation.Filter = "All|*.*|File Geodatabases|*.gdb";
+            this.outputLocation.Title = "Select a GDB file to save to...";
             // 
             // GeoSPARQL_Query
             // 
@@ -223,7 +225,7 @@ namespace GeoenrichmentTool
             this.BackColor = System.Drawing.Color.White;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.ClientSize = new System.Drawing.Size(778, 465);
+            this.ClientSize = new System.Drawing.Size(778, 471);
             this.Controls.Add(this.formError);
             this.Controls.Add(this.requiredClassName);
             this.Controls.Add(this.requiredEndpoint);
@@ -264,6 +266,6 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label requiredEndpoint;
         private System.Windows.Forms.Label requiredClassName;
         private System.Windows.Forms.Label formError;
-        private System.Windows.Forms.FolderBrowserDialog outputLocation;
+        private System.Windows.Forms.OpenFileDialog outputLocation;
     }
 }

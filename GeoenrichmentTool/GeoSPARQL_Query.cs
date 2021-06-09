@@ -9,65 +9,42 @@ namespace GeoenrichmentTool
 {
     public partial class GeoSPARQL_Query : Form
     {
-        protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/"; //Change URLs below if changed
-        protected string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire"; //http://stko-roy.geog.ucsb.edu:7200/repositories/kwg-seed-graph-v2
-        protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
-            {"bd", "http://www.bigdata.com/rdf#"},
-            {"dbo", "http://dbpedia.org/ontology/"},
-            {"dbr", "http://dbpedia.org/resource/"},
-            {"ff", "http://factforge.net/"},
-            {"geo", "http://www.opengis.net/ont/geosparql#"},
-            {"geof", "http://www.opengis.net/def/function/geosparql/"},
-            {"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
-            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"}, //Change URL if defaultNameSpace changes
-            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"}, //Change URL if defaultNameSpace changes
-            {"om", "http://www.ontotext.com/owlim/"},
-            {"omgeo", "http://www.ontotext.com/owlim/geo#"},
-            {"owl", "http://www.w3.org/2002/07/owl#"},
-            {"p", "http://www.wikidata.org/prop/"},
-            {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
-            {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
-            {"schema", "http://schema.org/"},
-            {"sosa", "http://www.w3.org/ns/sosa/"},
-            {"ssn", "http://www.w3.org/ns/ssn/"},
-            {"time", "http://www.w3.org/2006/time#"},
-            {"xsd", "http://www.w3.org/2001/XMLSchema#"},
-            {"wd", "http://www.wikidata.org/entity/"},
-            {"wdt", "http://www.wikidata.org/prop/direct/"},
-            {"wdtn", "http://www.wikidata.org/prop/direct-normalized/"},
-            {"wikibase", "http://wikiba.se/ontology#"}
-        };
+        
 
         protected string fileSavePath = "";
         protected Geometry geometry;
+        private readonly QuerySPARQL queryClass;
 
         public GeoSPARQL_Query(Geometry geo)
         {
             InitializeComponent();
-            this.endPoint.Text = defaultEndpoint;
-            this.geometry = geo;
+            endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
+            geometry = geo;
+            queryClass = new QuerySPARQL();
         }
 
         private void submitGeoQueryForm(object sender, EventArgs e)
         {
-            this.formError.Text = "";
-            if (this.endPoint.Text == "" | this.className.Text == "")
+            formError.Text = "";
+            if (endPoint.Text == "" | className.Text == "")
             {
-                this.formError.Text = "* Required fields missing!";
+                formError.Text = "* Required fields missing!";
             }
             else
             {
                 if(ChooseFolder())
                 {
-                    this.Close();
+                    Close();
 
-                    var gfEndPoint = this.endPoint.Text; //sparql_endpoint
-                    string gfPlaceType = this.placeType.Text; //inPlaceType
-                    var gfSubclassReasoning = this.subclassReasoning.Checked; //isDirectInstance
-                    var gfCalculator = this.calculator.SelectedItem; //inTopoCal
-                    var gfFileSavePath = this.fileSavePath; //outLocation
-                    var gfClassName = this.className.Text; //outFeatureClassName
+                    var gfEndPoint = endPoint.Text; //sparql_endpoint
+                    string gfPlaceType = placeType.Text; //inPlaceType
+                    var gfSubclassReasoning = subclassReasoning.Checked; //isDirectInstance
+                    var gfCalculator = calculator.SelectedItem; //inTopoCal
+                    var gfFileSavePath = fileSavePath; //outLocation
+                    var gfClassName = className.Text; //outFeatureClassName
                     var selectedURL = ""; //TODO::Variable - selectedURL
+
+                    queryClass.UpdateActiveEndPoint(gfEndPoint);
 
                     if(gfPlaceType!="")
                     {
@@ -79,12 +56,9 @@ namespace GeoenrichmentTool
                             formattedPlaceType = gfPlaceType.Substring(0,lastIndex-1);
                         }
 
-                        string queryPrefix = MakeSPARQLPrefix();
-                        var entityTypeQuery = queryPrefix + "select distinct ?entityType ?entityTypeLabel where { " +
-                            "? entity rdf:type? entityType . ?entity geo:hasGeometry? aGeom . ?entityType rdfs:label? entityTypeLabel . " +
-                            "FILTER REGEX(?entityTypeLabel, '" + formattedPlaceType + "', \"i\") }";
+                        var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel . FILTER REGEX(?entityTypeLabel, '" + formattedPlaceType + "', 'i') }";
 
-                        var entityTypeJson = QuerySPARQL(entityTypeQuery, gfEndPoint, false);
+                        var entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
 
                         /** //TODO:: Uses the SPARQL endpoint to get a formatted place type? Probably should be its own function
 
@@ -140,14 +114,11 @@ namespace GeoenrichmentTool
                     }
                     else
                     {
-                        //if the outputLocation is a folder, creats a shapefile in this folder
-                        //out_path = os.path.join(gfFileSavePath,gfClassName) + ".shp" //TODO::Variable
-                        //however, Relationship Class must be created in a geodatabase, so we forbid to create a shapfile
                         //messages.addErrorMessage("Please enter a file geodatabase as output location in order to create a relation class")
                         //raise arcpy.ExecuteError
                     }
 
-                    var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, selectedURL, gfSubclassReasoning, geoFunc, gfEndPoint);
+                    var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, selectedURL, gfSubclassReasoning, geoFunc, queryClass);
 
                     //Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult, out_path, gfPlaceType, selectedURL, gfSubclassReasoning) //TODO::Function
                 }
@@ -158,7 +129,7 @@ namespace GeoenrichmentTool
         {
             if (outputLocation.ShowDialog() == DialogResult.OK)
             {
-                fileSavePath = outputLocation.SelectedPath;
+                //fileSavePath = outputLocation.SelectedPath;
 
                 return true;
             }
@@ -177,10 +148,9 @@ namespace GeoenrichmentTool
          * geoFunc: a list of geosparql functions
          * endPoint: URL for SPARQL endpoint
          **/
-        private string TypeAndGeoSPARQLQuery(string queryGeoWKT, string selectedURL, bool isDirectInstance, string[] geoFunc, string endPoint)
+        private string TypeAndGeoSPARQLQuery(string queryGeoWKT, string selectedURL, bool isDirectInstance, string[] geoFunc, QuerySPARQL queryClass)
         {
-            string queryPrefix = MakeSPARQLPrefix();
-            string query = queryPrefix + "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
+            string query = "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
                 "where" +
                 "{" +
                 "?place geo:hasGeometry ?geometry . " +
@@ -216,49 +186,14 @@ namespace GeoenrichmentTool
 
             query += "}";
 
-            var geoQueryResult = QuerySPARQL(query, endPoint, false); //TODO::function
+            var geoQueryResult = queryClass.SubmitQuery(query); //TODO::function
             return geoQueryResult;
             //return GeoQueryResult["results"]["bindings"];
         }
 
-        private string MakeSPARQLPrefix()
-        {
-            string queryPrefix = "";
-            foreach (var prefix in _PREFIX)
-            {
-                queryPrefix += "PREFIX " + prefix.Key + ": <" + prefix.Value + ">\n";
-            }
+        
 
-            return queryPrefix;
-        }
-
-        private string QuerySPARQL(string query, string endPoint, bool doInference=false, string requestMethod="post")
-        {
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(endPoint);
-            string result = "";
-            httpWebRequest.ContentType = "application/json";
-            httpWebRequest.Accept = "'application/sparql-results+json";
-            httpWebRequest.Method = "POST";
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                string json = "{\"query\":\""+ query + "\", \"format\":\"json\", \"infer\":\"" + doInference + "\"}";
-
-                streamWriter.Write(json);
-            }
-
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                result = streamReader.ReadToEnd();
-            }
-
-            return result;
-        }
-        /**
-        entityTypeJson = sparqlRequest.json() #["results"]["bindings"]
-        return entityTypeJson
-         **/
+        
 
 
 
