@@ -25,7 +25,7 @@ namespace GeoenrichmentTool
             queryClass = new QuerySPARQL();
         }
 
-        private void submitGeoQueryForm(object sender, EventArgs e)
+        private void SubmitGeoQueryForm(object sender, EventArgs e)
         {
             formError.Text = "";
             if (endPoint.Text == "" | className.Text == "")
@@ -44,10 +44,12 @@ namespace GeoenrichmentTool
                     var gfCalculator = calculator.SelectedItem; //inTopoCal
                     var gfFileSavePath = fileSavePath; //outLocation
                     var gfClassName = className.Text; //outFeatureClassName
-                    var selectedURL = ""; //TODO::Variable - selectedURL
+                    var gfOutPath = outputLocation.FileName; //out_path
+                    var gfPlaceURI = "";
 
                     queryClass.UpdateActiveEndPoint(gfEndPoint);
 
+                    //TODO::Move this functionality over to pre-submit
                     if(gfPlaceType!="")
                     {
                         string formattedPlaceType = gfPlaceType;
@@ -65,9 +67,9 @@ namespace GeoenrichmentTool
                         if(entityTypeJson.Count() > 0)
                         {
                             var firstResult = entityTypeJson.First();
-                            selectedURL = firstResult["entityType"]["value"].ToString();
+                            gfPlaceURI = firstResult["entityType"]["value"].ToString();
                             string actualPlaceType = firstResult["entityTypeLabel"]["value"].ToString();
-                            gfPlaceType = actualPlaceType + "(" + queryClass.MakeIRIPrefix(selectedURL) + ")";
+                            gfPlaceType = actualPlaceType + "(" + queryClass.MakeIRIPrefix(gfPlaceURI) + ")";
                         } else
                         {
                             gfPlaceType = "";
@@ -94,21 +96,13 @@ namespace GeoenrichmentTool
 
                     var geoWKT = geometry.SpatialReference.Wkt;
 
-                    string out_path = ""; //TODO::Variable
-                    if(gfFileSavePath.Contains(".gdb"))
-                    {
-                        //if the outputLocation is a file geodatabase, cancatnate the outputlocation with gfClassName to create a feature class in current geodatabase
-                        //out_path = os.path.join(gfFileSavePath, gfClassName) //TODO::Variable
-                    }
-                    else
-                    {
-                        //messages.addErrorMessage("Please enter a file geodatabase as output location in order to create a relation class")
-                        //raise arcpy.ExecuteError
-                    }
+                    //TODO::Make a query that actual gives results
+                    var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
 
-                    var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, selectedURL, gfSubclassReasoning, geoFunc, queryClass);
+                    var tring = "";
 
-                    //Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult, out_path, gfPlaceType, selectedURL, gfSubclassReasoning) //TODO::Function
+                    //TODO::Build out this function
+                    //Json2Field.createFeatureClassFromSPARQLResult(geoQueryResult, gfOutPath, gfPlaceType, gfPlaceURI, gfSubclassReasoning) //TODO::Function
                 }
             }
         }
@@ -136,7 +130,7 @@ namespace GeoenrichmentTool
          * geoFunc: a list of geosparql functions
          * endPoint: URL for SPARQL endpoint
          **/
-        private string TypeAndGeoSPARQLQuery(string queryGeoWKT, string selectedURL, bool isDirectInstance, string[] geoFunc, QuerySPARQL queryClass)
+        private JToken TypeAndGeoSPARQLQuery(string queryGeoWKT, string selectedURL, bool isDirectInstance, string[] geoFunc, QuerySPARQL queryClass)
         {
             string query = "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
                 "where" +
@@ -174,9 +168,7 @@ namespace GeoenrichmentTool
 
             query += "}";
 
-            var geoQueryResult = queryClass.SubmitQuery(query); //TODO::function
-            return "";
-            //return GeoQueryResult["results"]["bindings"];
+            return queryClass.SubmitQuery(query);
         }
 
         

@@ -1,14 +1,6 @@
-﻿using Nancy.Json;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GeoenrichmentTool
 {
@@ -104,18 +96,6 @@ namespace GeoenrichmentTool
 
             return (result!="") ? result : iri;
         }
-        /**
-         * def make_prefixed_iri(iri):
-        prefixed_iri = ""
-        for prefix in SPARQLUtil._PREFIX:
-            if SPARQLUtil._PREFIX[prefix] in iri:
-                prefixed_iri = iri.replace(SPARQLUtil._PREFIX[prefix], prefix + ":")
-                break
-        if prefixed_iri == "":
-            return iri
-        else:
-            return prefixed_iri
-         **/
 
         private string MakeSPARQLPrefix()
         {

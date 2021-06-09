@@ -156,7 +156,7 @@ namespace GeoenrichmentTool
             this.submitFormBtn.TabIndex = 8;
             this.submitFormBtn.Text = "Run";
             this.submitFormBtn.UseVisualStyleBackColor = false;
-            this.submitFormBtn.Click += new System.EventHandler(this.submitGeoQueryForm);
+            this.submitFormBtn.Click += new System.EventHandler(this.SubmitGeoQueryForm);
             // 
             // classNameLabel
             // 
