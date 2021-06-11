@@ -15,6 +15,7 @@ namespace GeoenrichmentTool
 
         protected string fileSavePath = "";
         protected Geometry geometry;
+        protected Dictionary<string, string> ptArray;
         private readonly QuerySPARQL queryClass;
 
         public GeoSPARQL_Query(Geometry geo)
@@ -23,6 +24,28 @@ namespace GeoenrichmentTool
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
             geometry = geo;
             queryClass = new QuerySPARQL();
+            populatePlaceTypes();
+        }
+
+        private void populatePlaceTypes()
+        {
+            var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
+
+            JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
+
+            ptArray = new Dictionary<string, string>();
+            List<object> termsList = new List<object>();
+
+            foreach (var jsonResult in entityTypeJson)
+            {
+                string placeURI = jsonResult["entityType"]["value"].ToString();
+                string placeType = jsonResult["entityTypeLabel"]["value"].ToString();
+                string placeTypeFormatted = placeType + "(" + queryClass.MakeIRIPrefix(placeURI) + ")";
+                ptArray[placeTypeFormatted] = placeURI;
+                termsList.Add(placeTypeFormatted);
+            }
+
+            placeType.Items.AddRange(termsList.ToArray());
         }
 
         private void SubmitGeoQueryForm(object sender, EventArgs e)
@@ -45,36 +68,9 @@ namespace GeoenrichmentTool
                     var gfFileSavePath = fileSavePath; //outLocation
                     var gfClassName = className.Text; //outFeatureClassName
                     var gfOutPath = outputLocation.FileName; //out_path
-                    var gfPlaceURI = "";
+                    var gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
 
                     queryClass.UpdateActiveEndPoint(gfEndPoint);
-
-                    //TODO::Move this functionality over to pre-submit
-                    if(gfPlaceType!="")
-                    {
-                        string formattedPlaceType = gfPlaceType;
-
-                        if(gfPlaceType.Contains("("))
-                        {
-                            int lastIndex = gfPlaceType.LastIndexOf("(");
-                            formattedPlaceType = gfPlaceType.Substring(0,lastIndex-1);
-                        }
-
-                        var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel . FILTER REGEX(?entityTypeLabel, '" + formattedPlaceType + "', 'i') }";
-
-                        JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
-
-                        if(entityTypeJson.Count() > 0)
-                        {
-                            var firstResult = entityTypeJson.First();
-                            gfPlaceURI = firstResult["entityType"]["value"].ToString();
-                            string actualPlaceType = firstResult["entityTypeLabel"]["value"].ToString();
-                            gfPlaceType = actualPlaceType + "(" + queryClass.MakeIRIPrefix(gfPlaceURI) + ")";
-                        } else
-                        {
-                            gfPlaceType = "";
-                        }
-                    }
 
                     string[] geoFunc = new string[] { };
                     switch (gfCalculator)

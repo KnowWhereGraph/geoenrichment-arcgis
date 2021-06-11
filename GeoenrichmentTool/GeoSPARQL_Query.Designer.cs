@@ -34,7 +34,7 @@ namespace GeoenrichmentTool
             this.endPoint = new System.Windows.Forms.TextBox();
             this.geoFormName = new System.Windows.Forms.Label();
             this.placeTypeLabel = new System.Windows.Forms.Label();
-            this.placeType = new System.Windows.Forms.TextBox();
+            this.placeType = new System.Windows.Forms.ComboBox();
             this.subclassReasoning = new System.Windows.Forms.CheckBox();
             this.calculatorLabel = new System.Windows.Forms.Label();
             this.calculator = new System.Windows.Forms.ComboBox();
@@ -96,8 +96,8 @@ namespace GeoenrichmentTool
             // 
             // placeType
             // 
-            this.placeType.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.placeType.Font = new System.Drawing.Font("Arial", 12F);
+            this.placeType.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.placeType.FormattingEnabled = true;
             this.placeType.Location = new System.Drawing.Point(19, 183);
             this.placeType.Name = "placeType";
             this.placeType.Size = new System.Drawing.Size(740, 26);
@@ -256,7 +256,7 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.TextBox endPoint;
         private System.Windows.Forms.Label geoFormName;
         private System.Windows.Forms.Label placeTypeLabel;
-        private System.Windows.Forms.TextBox placeType;
+        private System.Windows.Forms.ComboBox placeType;
         private System.Windows.Forms.CheckBox subclassReasoning;
         private System.Windows.Forms.Label calculatorLabel;
         private System.Windows.Forms.ComboBox calculator;
