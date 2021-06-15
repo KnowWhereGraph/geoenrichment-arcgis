@@ -14,11 +14,11 @@ namespace GeoenrichmentTool
         
 
         protected string fileSavePath = "";
-        protected Geometry geometry;
+        protected Polygon geometry;
         protected Dictionary<string, string> ptArray;
         private readonly QuerySPARQL queryClass;
 
-        public GeoSPARQL_Query(Geometry geo)
+        public GeoSPARQL_Query(Polygon geo)
         {
             InitializeComponent();
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
@@ -90,6 +90,12 @@ namespace GeoenrichmentTool
                             break;
                     }
 
+                    //TODO:: Build proper WKT value
+                    var coordinates = geometry.Copy2DCoordinatesToList();
+                    foreach(var coor in coordinates)
+                    {
+                        var test = "test";
+                    }
                     var geoWKT = geometry.SpatialReference.Wkt;
 
                     //TODO::Make a query that actual gives results
@@ -136,7 +142,7 @@ namespace GeoenrichmentTool
                 "?geometry geo:asWKT ?wkt . " +
                 "{ '''" +
                 "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
-                queryGeoWKT + "'''^^geo:wktLiteral " +
+                queryGeoWKT + "''s'^^geo:wktLiteral " +
                 geoFunc[0] + "  ?geometry .}";
 
             if(geoFunc.Length==2)

@@ -133,6 +133,7 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class1.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="GeoSPARQL_Query.cs">
       <SubType>Form</SubType>
@@ -161,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <AddInContent Include="Images\logo-button.png" />
+    <AddInContent Include="Images\graph-query.png" />
     <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
   <ItemGroup>

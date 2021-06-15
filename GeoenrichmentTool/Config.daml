@@ -29,7 +29,7 @@
       <controls>
         <!-- add your controls here -->
 		<!-- <tool id="GeoenrichmentTool_PolygonSelect" caption="Select Area" className="PolygonSelect" loadOnClick="true" smallImage="pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GenericButtonRed16.png" largeImage="pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GenericButtonRed32.png" condition="esri_mapping_mapPane"> -->
-        <tool id="GeoenrichmentTool_PolygonSelect" caption="Select Area" className="PolygonSelect" loadOnClick="true" smallImage="Images\logo-button.png" largeImage="Images\logo-button.png" condition="esri_mapping_mapPane">
+        <tool id="GeoenrichmentTool_PolygonSelect" caption="Create Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
           <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
         </tool>
       </controls>
