@@ -1,4 +1,6 @@
-﻿using ArcGIS.Core.Geometry;
+﻿using ArcGIS.Core.Data;
+using ArcGIS.Core.Geometry;
+using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -11,9 +13,6 @@ namespace GeoenrichmentTool
 {
     public partial class GeoSPARQL_Query : Form
     {
-        
-
-        protected string fileSavePath = "";
         protected Polygon geometry;
         protected Dictionary<string, string> ptArray;
         private readonly QuerySPARQL queryClass;
@@ -57,69 +56,52 @@ namespace GeoenrichmentTool
             }
             else
             {
-                if(ChooseFolder())
+                Close();
+
+                var gfEndPoint = endPoint.Text; //sparql_endpoint
+                string gfPlaceType = placeType.Text; //inPlaceType
+                var gfSubclassReasoning = subclassReasoning.Checked; //isDirectInstance
+                var gfCalculator = calculator.SelectedItem; //inTopoCal
+                var gfClassName = className.Text; //outFeatureClassName
+                var gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
+
+                queryClass.UpdateActiveEndPoint(gfEndPoint);
+
+                string[] geoFunc = new string[] { };
+                switch (gfCalculator)
                 {
-                    Close();
-
-                    var gfEndPoint = endPoint.Text; //sparql_endpoint
-                    string gfPlaceType = placeType.Text; //inPlaceType
-                    var gfSubclassReasoning = subclassReasoning.Checked; //isDirectInstance
-                    var gfCalculator = calculator.SelectedItem; //inTopoCal
-                    var gfFileSavePath = fileSavePath; //outLocation
-                    var gfClassName = className.Text; //outFeatureClassName
-                    var gfOutPath = outputLocation.FileName; //out_path
-                    var gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
-
-                    queryClass.UpdateActiveEndPoint(gfEndPoint);
-
-                    string[] geoFunc = new string[] { };
-                    switch (gfCalculator)
-                    {
-                        case "Contain + Intersect":
-                            geoFunc = new string[] { "geo:sfContains", "geo:sfIntersects" };
-                            break;
-                        case "Contain":
-                            geoFunc = new string[] { "geo:sfContains" };
-                            break;
-                        case "Within":
-                            geoFunc = new string[] { "geo:sfWithin" };
-                            break;
-                        case "Intersect":
-                        default:
-                            geoFunc = new string[] { "geo:sfIntersects" };
-                            break;
-                    }
-
-                    //TODO:: Build proper WKT value
-                    var coordinates = geometry.Copy2DCoordinatesToList();
-                    foreach(var coor in coordinates)
-                    {
-                        var test = "test";
-                    }
-                    var geoWKT = geometry.SpatialReference.Wkt;
-
-                    //TODO::Make a query that actual gives results
-                    var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
-
-                    var tring = "";
-
-                    //TODO::Build out this function
-                    //Json2Field.createFeatureClassFromSPARQLResult(geoQueryResult, gfOutPath, gfPlaceType, gfPlaceURI, gfSubclassReasoning) //TODO::Function
+                    case "Contain + Intersect":
+                        geoFunc = new string[] { "geo:sfContains", "geo:sfIntersects" };
+                        break;
+                    case "Contain":
+                        geoFunc = new string[] { "geo:sfContains" };
+                        break;
+                    case "Within":
+                        geoFunc = new string[] { "geo:sfWithin" };
+                        break;
+                    case "Intersect":
+                    default:
+                        geoFunc = new string[] { "geo:sfIntersects" };
+                        break;
                 }
-            }
-        }
-        
-        public bool ChooseFolder()
-        {
-            if (outputLocation.ShowDialog() == DialogResult.OK)
-            {
-                //fileSavePath = outputLocation.SelectedPath;
 
-                return true;
-            }
-            else
-            {
-                return false;
+                //TODO:: Build proper WKT value
+                var coordinates = geometry.Copy2DCoordinatesToList();
+                    
+                List<string> coorArray = new List<string>();
+                foreach (Coordinate2D coor in coordinates)
+                {
+                    MapPoint geoCoor = coor.ToMapPoint();
+                    coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
+                }
+                string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((-83.4 34.0, -83.1 34.0, -83.1 34.2, -83.4 34.2, -83.4 34.0)) '''";
+                //string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((" + String.Join(", ", coorArray) + ")) '''";
+
+                //TODO::Make a query that actual gives results
+                var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
+
+                //TODO::Build out this function
+                CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
             }
         }
 
@@ -140,17 +122,13 @@ namespace GeoenrichmentTool
                 "?place geo:hasGeometry ?geometry . " +
                 "?place rdfs:label ?placeLabel . " +
                 "?geometry geo:asWKT ?wkt . " +
-                "{ '''" +
-                "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
-                queryGeoWKT + "''s'^^geo:wktLiteral " +
+                "{ " + queryGeoWKT + "^^geo:wktLiteral " +
                 geoFunc[0] + "  ?geometry .}";
 
             if(geoFunc.Length==2)
             {
                 query += " union" +
-                    "{ '''" +
-                    "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>" +
-                    queryGeoWKT + "'''^^geo:wktLiteral  " +
+                    "{ " + queryGeoWKT + "^^geo:wktLiteral " +
                     geoFunc[1] + "   ?geometry . }";
             }
 
@@ -173,100 +151,114 @@ namespace GeoenrichmentTool
             return queryClass.SubmitQuery(query);
         }
 
-        
-
-        
-
-
-
-
-
         /**
-          * def createFeatureClassFromSPARQLResult(GeoQueryResult, out_path = "", inPlaceType = "", selectedURL = "", 
-                 isDirectInstance = False, viz_res = True):
-         '''
-         GeoQueryResult: a sparql query result json obj serialized as a list of dict()
-                     SPARQL query like this:
-                     select distinct ?place ?placeLabel ?placeFlatType ?wkt
-                     where
-                     {...}
-         out_path: the output path for the create geo feature class
-         inPlaceType: the label of user spercified type IRI
-         selectedURL: the user spercified type IRI
-         isDirectInstance: True: use placeFlatType as the type of geo-entity
-                           False: use selectedURL as the type of geo-entity
-         '''
-         # a set of unique WKT for each found places
-         placeIRISet = set()
-         placeList = []
-         geom_type = None
-         for idx, item in enumerate(GeoQueryResult):
-             wkt_literal = item["wkt"]["value"]
-             # for now, make sure all geom has the same geometry type 
-             if idx == 0:
-                 geom_type = UTIL.get_geometry_type_from_wkt(wkt_literal)
-             else:
-                 assert geom_type == UTIL.get_geometry_type_from_wkt(wkt_literal)
+         * Format GeoSPARQL query by given query_geo_wkt and type
+         * 
+         * GeoQueryResult: a sparql query result json obj serialized as a list of dict()
+         *           SPARQL query like this:
+         *           select distinct ?place ?placeLabel ?placeFlatType ?wkt
+         *           where
+         *           {...}
+         * out_path: the output path for the create geo feature class
+         * inPlaceType: the label of user spercified type IRI
+         * selectedURL: the user spercified type IRI
+         * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
+         **/
+        private async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType, string selectedURL, bool isDirectInstance=false, bool vizRes=true)
+        {
+            List<string> placeIRISet = new List<string>();
+            List<string[]> placeList = new List<string[]>();
+            string geomType = "";
+            int index = 0;
+            foreach (var item in geoQueryResult)
+            {
+                string wktLiteral = item["wkt"]["value"].ToString();
+                if(index == 0)
+                {
+                    geomType = GetShapeFromWKT(wktLiteral);
+                }
+                else
+                {
+                    if(wktLiteral!=geomType)
+                    {
+                        continue;
+                    }
+                }
 
-             if isDirectInstance == False:
-                 placeType = item["placeFlatType"]["value"]
-             else:
-                 placeType = selectedURL
-             print("{}\t{}\t{}".format(
-                 item["place"]["value"], item["placeLabel"]["value"], placeType))
-             if len(placeIRISet) == 0 or item["place"]["value"] not in placeIRISet:
-                 placeIRISet.add(item["place"]["value"])
-                 placeList.append(
-                     [ item["place"]["value"], item["placeLabel"]["value"], placeType, wkt_literal ])
-         
-         if geom_type is None:
-             raise Exception("geometry type not find")
+                string placeType = (item["placeFlatType"] != null) ? item["placeFlatType"]["value"].ToString() : "";
+                if (isDirectInstance)
+                {
+                    placeType = selectedURL;
+                }
 
-         if len(placeList) == 0:
-             arcpy.AddMessage("No {0} within the provided polygon can be finded!".format(inPlaceType))
-         else:
-             
+                string place = item["place"]["value"].ToString();
+                if(!placeIRISet.Contains(place))
+                {
+                    placeIRISet.Add(place);
+                    placeList.Add(new string[] { place, item["placeLabel"]["value"].ToString(), placeType, wktLiteral });
+                }
 
-             if out_path == None:
-                 arcpy.AddMessage("No data will be added to the map document.")
-                 # pythonaddins.MessageBox("No data will be added to the map document.", "Warning Message", 0)
-             else:
-                 geo_feature_class = arcpy.CreateFeatureclass_management(
-                                     os.path.dirname(out_path), 
-                                     os.path.basename(out_path), 
-                                     geometry_type = geom_type,
-                                     spatial_reference = arcpy.SpatialReference(4326) )
+                index++;
+            }
 
-                 labelFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "placeLabel")
-                 arcpy.AddMessage("labelFieldLength: {0}".format(labelFieldLength))
-                 urlFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "place")
-                 arcpy.AddMessage("urlFieldLength: {0}".format(urlFieldLength))
-                 if isDirectInstance == False: 
-                     classFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "placeFlatType")
-                 else:
-                     classFieldLength = len(selectedURL) + 50
-                 arcpy.AddMessage("classFieldLength: {0}".format(classFieldLength))
-                 
-                 # add field to this point feature class
-                 arcpy.AddField_management(geo_feature_class, "Label", "TEXT", field_length=labelFieldLength)
-                 arcpy.AddField_management(geo_feature_class, "URL", "TEXT", field_length=urlFieldLength)
-                 arcpy.AddField_management(geo_feature_class, "Class", "TEXT", field_length=classFieldLength)
+            if(placeList.Count != 0)
+            {
+                await FeatureClassHelper.CreatePolygonFeatureLayer(className);
 
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == className).FirstOrDefault() as BasicFeatureLayer;
 
-                 insertCursor = arcpy.da.InsertCursor(out_path, ['URL', 'Label', "Class", 'SHAPE@WKT',])
-                 for item in placeList:
-                     place_iri, label, type_iri, wkt_literal = item
-                     wkt = wkt_literal.replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "")
-                     try:
-                         insertCursor.insertRow( (place_iri, label, type_iri, wkt ) )
-                     except Error:
-                         arcpy.AddMessage("Error inserting geo data: {} {} {}".format(place_iri, label, type_iri))
+                if (fcLayer == null)
+                {
+                    MessageBox.Show($@"Unable to find {className} in the active map");
+                }
+                else
+                {
+                    await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
+                    await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
+                    await FeatureClassHelper.AddField(fcLayer, "Class", "TEXT");
 
-                 del insertCursor
+                    InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor(); //TODO::Queue this?
 
-                 if viz_res:
-                     ArcpyViz.visualize_current_layer(out_path)
-         return
-          **/
+                    foreach (string[] item in placeList)
+                    {
+                        RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
+                        buff["URL"] = item[0];
+                        buff["Label"] = item[1];
+                        buff["Class"] = item[2];
+                        buff["SHAPE@WKT"] = item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                        cursor.Insert(buff);
+                    }
+
+                    cursor.Dispose();
+
+                    if (vizRes)
+                    {
+                        //TODO::ArcpyViz.visualize_current_layer(out_path)
+                    }
+                }
+            }
+        }
+
+        private string GetShapeFromWKT(string WKT)
+        {
+            if(WKT.ToLower().Contains("point"))
+            {
+                return "POINT";
+            } 
+            else if (WKT.ToLower().Contains("multipoint"))
+            {
+                return "MULTIPOINT";
+            }
+            else if (WKT.ToLower().Contains("linestring"))
+            {
+                return "POLYLINE";
+            }
+            else if (WKT.ToLower().Contains("polygon"))
+            {
+                return "polygon";
+            }
+
+            return "";
+        } 
     }
 }

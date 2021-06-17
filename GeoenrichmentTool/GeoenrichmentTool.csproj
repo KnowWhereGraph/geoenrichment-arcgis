@@ -133,7 +133,7 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="GeoSPARQL_Query.cs">
       <SubType>Form</SubType>
@@ -142,7 +142,7 @@
       <DependentUpon>GeoSPARQL_Query.cs</DependentUpon>
     </Compile>
     <Compile Include="PolygonSelect.cs" />
-    <Compile Include="Module1.cs" />
+    <Compile Include="GeoModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

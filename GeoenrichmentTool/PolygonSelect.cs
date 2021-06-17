@@ -1,23 +1,15 @@
-﻿using ArcGIS.Core.CIM;
-using ArcGIS.Core.Data;
-using ArcGIS.Core.Geometry;
-using ArcGIS.Desktop.Catalog;
+﻿using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Geoprocessing;
 using ArcGIS.Desktop.Editing;
-using ArcGIS.Desktop.Extensions;
-using ArcGIS.Desktop.Framework;
-using ArcGIS.Desktop.Framework.Contracts;
-using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
-using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 namespace GeoenrichmentTool
 {
@@ -29,13 +21,8 @@ namespace GeoenrichmentTool
             SketchType = SketchGeometryType.Polygon;
             SketchOutputMode = SketchOutputMode.Map;
         }
-        public enum EnumFeatureClassType
-        {
-            POINT,
-            MULTIPOINT,
-            POLYLINE,
-            POLYGON
-        }
+
+        private string defaultLayerPrefix = "GeoSPARQLQueryLayer_";
 
         protected override Task OnToolActivateAsync(bool active)
         {
@@ -46,51 +33,74 @@ namespace GeoenrichmentTool
         {
             //We only support polygons at the moment
             //Some things might need more significant changes were other shapes allowed
-            if(geometry.GetType().FullName == "ArcGIS.Core.Geometry.Polygon")
+            if (geometry.GetType().FullName == "ArcGIS.Core.Geometry.Polygon")
             {
                 Polygon polyGeo = (Polygon)geometry;
                 Form geoForm = new GeoSPARQL_Query(polyGeo);
 
-                await CreatePolygonFeatureLayer(polyGeo.SpatialReference);
+                Random gen = new Random();
+                string layerName = defaultLayerPrefix + gen.Next(999999).ToString();
+                await FeatureClassHelper.CreatePolygonFeatureLayer(layerName);
 
-                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == "GeoSPARQLQueryLayer").FirstOrDefault() as BasicFeatureLayer;
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
+
                 if (fcLayer == null)
                 {
-                    //MessageBox.Show($@"Unable to find {fcName} in the active map");
-                    string test = "";
+                    MessageBox.Show($@"Unable to find {layerName} in the active map");
                 }
+                else
                 {
+                    //TODO:: May need to figure out why layer isnt visible, but I think the polygon needs data first
+                    // make 5 points
+                    //var coordinates = polyGeo.Copy2DCoordinatesToList();
+
+                    //List<MapPoint> mapPoints = new List<MapPoint>();
+                    //foreach (Coordinate2D coor in coordinates)
+                    //{
+                    //    mapPoints.Add(coor.ToMapPoint());
+                    //}
+                    //  var editOp = new EditOperation
+                    //  {
+                    //    Name = "1. edit operation"
+                    //  };
+                    //  int iMap = 0;
+                    //  foreach (var mp in mapPoints)
+                    //  {
+                    //    var attributes = new Dictionary<string, object>
+                    //        {
+                    //          { "Shape", mp.Clone() },
+                    //          { "Description", $@"Map point: {++iMap}" }
+                    //        };
+                    //    editOp.Create(fcLayer, attributes);
+                    //  }
+                    //  var result1 = editOp.Execute();
+                    //  if (result1 != true || editOp.IsSucceeded != true)
+                    //    throw new Exception($@"Edit 1 failed: {editOp.ErrorMessage}");
+                    //  MessageBox.Show("1. edit operation complete");
+
+                    //editOp = new EditOperation
+                    //{
+                    //  Name = "2. edit operation"
+                    //};
+                    //foreach (var mp in mapPoints)
+                    //{
+                    //  var attributes = new Dictionary<string, object>
+                    //      {
+                    //        { "Shape", GeometryEngine.Instance.Buffer(mp, 50.0) },
+                    //        { "Description", $@"Polygon: {iMap--}" }
+                    //      };
+                    //  editOp.Create(polyLayer, attributes);
+                    //}
+                    ////Execute the operations
+                    //var result2 = editOp.Execute();
+                    //if (result2 != true || editOp.IsSucceeded != true)
+                    //  throw new Exception($@"Edit 2 failed: {editOp.ErrorMessage}");
+                    //MessageBox.Show("2. edit operation complete");
                     geoForm.ShowDialog();
                 }
             }
 
             return await base.OnSketchCompleteAsync(geometry);
-        }
-
-        public static async Task CreatePolygonFeatureLayer(SpatialReference polySR)
-        {
-            List<object> arguments = new List<object>
-              {
-                // store the results in the default geodatabase
-                CoreModule.CurrentProject.DefaultGeodatabasePath,
-                // name of the feature class
-                "GeoSPARQLQueryLayer",
-                // type of geometry
-                EnumFeatureClassType.POLYGON.ToString(),
-                // no template
-                "",
-                // no z values
-                "DISABLED",
-                // no m values
-                "DISABLED"
-              };
-
-            await QueuedTask.Run(() =>
-            {
-                // spatial reference
-                arguments.Add(polySR);
-            });
-            IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateFeatureclass_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
     }
 }

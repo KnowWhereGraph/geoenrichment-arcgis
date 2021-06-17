@@ -44,7 +44,6 @@ namespace GeoenrichmentTool
             this.requiredEndpoint = new System.Windows.Forms.Label();
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
-            this.outputLocation = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
             // 
             // endPointLabel
@@ -100,7 +99,7 @@ namespace GeoenrichmentTool
             this.placeType.FormattingEnabled = true;
             this.placeType.Location = new System.Drawing.Point(19, 183);
             this.placeType.Name = "placeType";
-            this.placeType.Size = new System.Drawing.Size(740, 26);
+            this.placeType.Size = new System.Drawing.Size(740, 27);
             this.placeType.TabIndex = 4;
             // 
             // subclassReasoning
@@ -213,11 +212,6 @@ namespace GeoenrichmentTool
             this.formError.Size = new System.Drawing.Size(0, 20);
             this.formError.TabIndex = 16;
             // 
-            // outputLocation
-            // 
-            this.outputLocation.Filter = "All|*.*|File Geodatabases|*.gdb";
-            this.outputLocation.Title = "Select a GDB file to save to...";
-            // 
             // GeoSPARQL_Query
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
@@ -244,7 +238,7 @@ namespace GeoenrichmentTool
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "GeoSPARQL_Query";
-            this.Text = "Form1";
+            this.Text = "GeoSPARQL Query";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -266,6 +260,5 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label requiredEndpoint;
         private System.Windows.Forms.Label requiredClassName;
         private System.Windows.Forms.Label formError;
-        private System.Windows.Forms.OpenFileDialog outputLocation;
     }
 }
