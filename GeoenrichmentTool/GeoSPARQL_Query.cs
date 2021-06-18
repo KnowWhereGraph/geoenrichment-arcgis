@@ -1,5 +1,6 @@
 ﻿using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
+using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
@@ -62,7 +63,7 @@ namespace GeoenrichmentTool
                 string gfPlaceType = placeType.Text; //inPlaceType
                 var gfSubclassReasoning = subclassReasoning.Checked; //isDirectInstance
                 var gfCalculator = calculator.SelectedItem; //inTopoCal
-                var gfClassName = className.Text; //outFeatureClassName
+                var gfClassName = className.Text.Replace(" ", "_"); //outFeatureClassName
                 var gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
 
                 queryClass.UpdateActiveEndPoint(gfEndPoint);
@@ -94,7 +95,7 @@ namespace GeoenrichmentTool
                     MapPoint geoCoor = coor.ToMapPoint();
                     coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
                 }
-                string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((-83.4 34.0, -83.1 34.0, -83.1 34.2, -83.4 34.2, -83.4 34.0)) '''";
+                string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((-119.79 34.46, -119.63 34.46, -119.63 34.38, -119.78 34.38, -119.79 34.46)) '''";
                 //string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((" + String.Join(", ", coorArray) + ")) '''";
 
                 //TODO::Make a query that actual gives results
@@ -217,19 +218,23 @@ namespace GeoenrichmentTool
                     await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
                     await FeatureClassHelper.AddField(fcLayer, "Class", "TEXT");
 
-                    InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor(); //TODO::Queue this?
-
-                    foreach (string[] item in placeList)
+                    
+                    await QueuedTask.Run(() =>
                     {
-                        RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
-                        buff["URL"] = item[0];
-                        buff["Label"] = item[1];
-                        buff["Class"] = item[2];
-                        buff["SHAPE@WKT"] = item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
-                        cursor.Insert(buff);
-                    }
+                        InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor(); //TODO::Queue this?
 
-                    cursor.Dispose();
+                        foreach (string[] item in placeList)
+                        {
+                            RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
+                            buff["URL"] = item[0];
+                            buff["Label"] = item[1];
+                            buff["Class"] = item[2];
+                            buff["SHAPE@WKT"] = item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                            cursor.Insert(buff);
+                        }
+
+                        cursor.Dispose();
+                    });
 
                     if (vizRes)
                     {
