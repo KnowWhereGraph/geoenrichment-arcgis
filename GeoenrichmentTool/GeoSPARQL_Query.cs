@@ -165,7 +165,7 @@ namespace GeoenrichmentTool
          * selectedURL: the user spercified type IRI
          * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
          **/
-        private async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType, string selectedURL, bool isDirectInstance=false, bool vizRes=true)
+        private async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType, string selectedURL, bool isDirectInstance=false)
         {
             List<string> placeIRISet = new List<string>();
             List<string[]> placeList = new List<string[]>();
@@ -173,6 +173,7 @@ namespace GeoenrichmentTool
             int index = 0;
             foreach (var item in geoQueryResult)
             {
+                /*
                 string wktLiteral = item["wkt"]["value"].ToString();
                 if(index == 0)
                 {
@@ -184,7 +185,7 @@ namespace GeoenrichmentTool
                     {
                         continue;
                     }
-                }
+                }*/
 
                 string placeType = (item["placeFlatType"] != null) ? item["placeFlatType"]["value"].ToString() : "";
                 if (isDirectInstance)
@@ -196,7 +197,7 @@ namespace GeoenrichmentTool
                 if(!placeIRISet.Contains(place))
                 {
                     placeIRISet.Add(place);
-                    placeList.Add(new string[] { place, item["placeLabel"]["value"].ToString(), placeType, wktLiteral });
+                    placeList.Add(new string[] { place, item["placeLabel"]["value"].ToString(), placeType, item["wkt"]["value"].ToString() });
                 }
 
                 index++;
@@ -226,20 +227,25 @@ namespace GeoenrichmentTool
                         foreach (string[] item in placeList)
                         {
                             RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
+                            IGeometryEngine geoEngine = GeometryEngine.Instance;
+                            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+                            Geometry geo = geoEngine.ImportFromWKT(0,item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", ""), sr);
+
+
                             buff["URL"] = item[0];
                             buff["Label"] = item[1];
                             buff["Class"] = item[2];
-                            buff["SHAPE@WKT"] = item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                            buff["Shape"] = geo;
                             cursor.Insert(buff);
                         }
 
                         cursor.Dispose();
                     });
 
-                    if (vizRes)
+                    await QueuedTask.Run(() =>
                     {
-                        //TODO::ArcpyViz.visualize_current_layer(out_path)
-                    }
+                        MapView.Active.Redraw(false);
+                    });
                 }
             }
         }
