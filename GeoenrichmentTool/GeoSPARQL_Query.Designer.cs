@@ -44,6 +44,8 @@ namespace GeoenrichmentTool
             this.requiredEndpoint = new System.Windows.Forms.Label();
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
+            this.requiredPlaceType = new System.Windows.Forms.Label();
+            this.requiredCalculator = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // endPointLabel
@@ -86,7 +88,7 @@ namespace GeoenrichmentTool
             this.placeTypeLabel.BackColor = System.Drawing.Color.Transparent;
             this.placeTypeLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.placeTypeLabel.ForeColor = System.Drawing.Color.White;
-            this.placeTypeLabel.Location = new System.Drawing.Point(15, 160);
+            this.placeTypeLabel.Location = new System.Drawing.Point(25, 161);
             this.placeTypeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.placeTypeLabel.Name = "placeTypeLabel";
             this.placeTypeLabel.Size = new System.Drawing.Size(98, 19);
@@ -95,11 +97,11 @@ namespace GeoenrichmentTool
             // 
             // placeType
             // 
-            this.placeType.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.placeType.Font = new System.Drawing.Font("Arial", 12F);
             this.placeType.FormattingEnabled = true;
             this.placeType.Location = new System.Drawing.Point(19, 183);
             this.placeType.Name = "placeType";
-            this.placeType.Size = new System.Drawing.Size(740, 27);
+            this.placeType.Size = new System.Drawing.Size(740, 26);
             this.placeType.TabIndex = 4;
             // 
             // subclassReasoning
@@ -121,7 +123,7 @@ namespace GeoenrichmentTool
             this.calculatorLabel.BackColor = System.Drawing.Color.Transparent;
             this.calculatorLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.calculatorLabel.ForeColor = System.Drawing.Color.White;
-            this.calculatorLabel.Location = new System.Drawing.Point(15, 275);
+            this.calculatorLabel.Location = new System.Drawing.Point(25, 277);
             this.calculatorLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.calculatorLabel.Name = "calculatorLabel";
             this.calculatorLabel.Size = new System.Drawing.Size(216, 19);
@@ -130,7 +132,7 @@ namespace GeoenrichmentTool
             // 
             // calculator
             // 
-            this.calculator.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.calculator.Font = new System.Drawing.Font("Arial", 12F);
             this.calculator.FormattingEnabled = true;
             this.calculator.Items.AddRange(new object[] {
             "Contain + Intersect",
@@ -139,7 +141,7 @@ namespace GeoenrichmentTool
             "Intersect"});
             this.calculator.Location = new System.Drawing.Point(19, 299);
             this.calculator.Name = "calculator";
-            this.calculator.Size = new System.Drawing.Size(740, 27);
+            this.calculator.Size = new System.Drawing.Size(740, 26);
             this.calculator.TabIndex = 7;
             // 
             // submitFormBtn
@@ -212,6 +214,30 @@ namespace GeoenrichmentTool
             this.formError.Size = new System.Drawing.Size(0, 20);
             this.formError.TabIndex = 16;
             // 
+            // requiredPlaceType
+            // 
+            this.requiredPlaceType.AutoSize = true;
+            this.requiredPlaceType.BackColor = System.Drawing.Color.Transparent;
+            this.requiredPlaceType.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.requiredPlaceType.ForeColor = System.Drawing.Color.Red;
+            this.requiredPlaceType.Location = new System.Drawing.Point(15, 160);
+            this.requiredPlaceType.Name = "requiredPlaceType";
+            this.requiredPlaceType.Size = new System.Drawing.Size(15, 20);
+            this.requiredPlaceType.TabIndex = 17;
+            this.requiredPlaceType.Text = "*";
+            // 
+            // requiredCalculator
+            // 
+            this.requiredCalculator.AutoSize = true;
+            this.requiredCalculator.BackColor = System.Drawing.Color.Transparent;
+            this.requiredCalculator.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.requiredCalculator.ForeColor = System.Drawing.Color.Red;
+            this.requiredCalculator.Location = new System.Drawing.Point(15, 276);
+            this.requiredCalculator.Name = "requiredCalculator";
+            this.requiredCalculator.Size = new System.Drawing.Size(15, 20);
+            this.requiredCalculator.TabIndex = 18;
+            this.requiredCalculator.Text = "*";
+            // 
             // GeoSPARQL_Query
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
@@ -220,6 +246,8 @@ namespace GeoenrichmentTool
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(778, 471);
+            this.Controls.Add(this.requiredCalculator);
+            this.Controls.Add(this.requiredPlaceType);
             this.Controls.Add(this.formError);
             this.Controls.Add(this.requiredClassName);
             this.Controls.Add(this.requiredEndpoint);
@@ -260,5 +288,7 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label requiredEndpoint;
         private System.Windows.Forms.Label requiredClassName;
         private System.Windows.Forms.Label formError;
+        private System.Windows.Forms.Label requiredPlaceType;
+        private System.Windows.Forms.Label requiredCalculator;
     }
 }

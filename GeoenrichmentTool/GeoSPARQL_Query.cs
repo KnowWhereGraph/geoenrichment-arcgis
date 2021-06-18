@@ -51,20 +51,20 @@ namespace GeoenrichmentTool
         private void SubmitGeoQueryForm(object sender, EventArgs e)
         {
             formError.Text = "";
-            if (endPoint.Text == "" | className.Text == "")
+            if (endPoint.Text == "" | className.Text == "" | placeType.Text == "" | calculator.Text == "")
             {
-                formError.Text = "* Required fields missing!";
+                MessageBox.Show($@"Required fields missing!");
             }
             else
             {
                 Close();
 
-                var gfEndPoint = endPoint.Text; //sparql_endpoint
-                string gfPlaceType = placeType.Text; //inPlaceType
-                var gfSubclassReasoning = subclassReasoning.Checked; //isDirectInstance
-                var gfCalculator = calculator.SelectedItem; //inTopoCal
-                var gfClassName = className.Text.Replace(" ", "_"); //outFeatureClassName
-                var gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
+                string gfEndPoint = endPoint.Text;
+                string gfPlaceType = placeType.Text;
+                bool gfSubclassReasoning = subclassReasoning.Checked;
+                string gfCalculator = calculator.Text;
+                string gfClassName = className.Text.Replace(" ", "_");
+                string gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
 
                 queryClass.UpdateActiveEndPoint(gfEndPoint);
 
@@ -98,10 +98,8 @@ namespace GeoenrichmentTool
                 string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((-119.79 34.46, -119.63 34.46, -119.63 34.38, -119.78 34.38, -119.79 34.46)) '''";
                 //string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((" + String.Join(", ", coorArray) + ")) '''";
 
-                //TODO::Make a query that actual gives results
                 var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
 
-                //TODO::Build out this function
                 CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
             }
         }
@@ -155,12 +153,12 @@ namespace GeoenrichmentTool
         /**
          * Format GeoSPARQL query by given query_geo_wkt and type
          * 
-         * GeoQueryResult: a sparql query result json obj serialized as a list of dict()
+         * geoQueryResult: a sparql query result json obj serialized as a list of dict()
          *           SPARQL query like this:
          *           select distinct ?place ?placeLabel ?placeFlatType ?wkt
          *           where
          *           {...}
-         * out_path: the output path for the create geo feature class
+         * className: Name of feature layer class
          * inPlaceType: the label of user spercified type IRI
          * selectedURL: the user spercified type IRI
          * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
@@ -246,6 +244,7 @@ namespace GeoenrichmentTool
                     {
                         MapView.Active.Redraw(false);
                     });
+                    
                 }
             }
         }
