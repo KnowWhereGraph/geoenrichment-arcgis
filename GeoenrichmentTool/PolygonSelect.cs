@@ -1,4 +1,5 @@
-﻿using ArcGIS.Core.Geometry;
+﻿using ArcGIS.Core.Data;
+using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Geoprocessing;
 using ArcGIS.Desktop.Editing;
@@ -42,60 +43,28 @@ namespace GeoenrichmentTool
                 string layerName = defaultLayerPrefix + gen.Next(999999).ToString();
                 await FeatureClassHelper.CreatePolygonFeatureLayer(layerName);
 
-                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
+                var mainLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
 
-                if (fcLayer == null)
+                if (mainLayer == null)
                 {
                     MessageBox.Show($@"Unable to find {layerName} in the active map");
                 }
                 else
                 {
-                    //TODO:: May need to figure out why layer isnt visible, but I think the polygon needs data first
-                    // make 5 points
-                    //var coordinates = polyGeo.Copy2DCoordinatesToList();
+                    await QueuedTask.Run(() =>
+                    {
+                        InsertCursor cursor = mainLayer.GetTable().CreateInsertCursor();
 
-                    //List<MapPoint> mapPoints = new List<MapPoint>();
-                    //foreach (Coordinate2D coor in coordinates)
-                    //{
-                    //    mapPoints.Add(coor.ToMapPoint());
-                    //}
-                    //  var editOp = new EditOperation
-                    //  {
-                    //    Name = "1. edit operation"
-                    //  };
-                    //  int iMap = 0;
-                    //  foreach (var mp in mapPoints)
-                    //  {
-                    //    var attributes = new Dictionary<string, object>
-                    //        {
-                    //          { "Shape", mp.Clone() },
-                    //          { "Description", $@"Map point: {++iMap}" }
-                    //        };
-                    //    editOp.Create(fcLayer, attributes);
-                    //  }
-                    //  var result1 = editOp.Execute();
-                    //  if (result1 != true || editOp.IsSucceeded != true)
-                    //    throw new Exception($@"Edit 1 failed: {editOp.ErrorMessage}");
-                    //  MessageBox.Show("1. edit operation complete");
+                        RowBuffer buff = mainLayer.GetTable().CreateRowBuffer();
 
-                    //editOp = new EditOperation
-                    //{
-                    //  Name = "2. edit operation"
-                    //};
-                    //foreach (var mp in mapPoints)
-                    //{
-                    //  var attributes = new Dictionary<string, object>
-                    //      {
-                    //        { "Shape", GeometryEngine.Instance.Buffer(mp, 50.0) },
-                    //        { "Description", $@"Polygon: {iMap--}" }
-                    //      };
-                    //  editOp.Create(polyLayer, attributes);
-                    //}
-                    ////Execute the operations
-                    //var result2 = editOp.Execute();
-                    //if (result2 != true || editOp.IsSucceeded != true)
-                    //  throw new Exception($@"Edit 2 failed: {editOp.ErrorMessage}");
-                    //MessageBox.Show("2. edit operation complete");
+                        buff["Shape"] = polyGeo;
+                        cursor.Insert(buff);
+
+                        cursor.Dispose();
+
+                        MapView.Active.Redraw(false);
+                    });
+
                     geoForm.ShowDialog();
                 }
             }

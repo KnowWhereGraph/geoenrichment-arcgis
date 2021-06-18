@@ -220,7 +220,7 @@ namespace GeoenrichmentTool
                     
                     await QueuedTask.Run(() =>
                     {
-                        InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor(); //TODO::Queue this?
+                        InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor();
 
                         foreach (string[] item in placeList)
                         {
@@ -238,13 +238,9 @@ namespace GeoenrichmentTool
                         }
 
                         cursor.Dispose();
-                    });
 
-                    await QueuedTask.Run(() =>
-                    {
                         MapView.Active.Redraw(false);
                     });
-                    
                 }
             }
         }
