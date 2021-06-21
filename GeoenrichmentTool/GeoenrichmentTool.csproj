@@ -133,6 +133,7 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PropertyEnrichment.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="GeoSPARQL_Query.cs">
@@ -163,6 +164,7 @@
   <ItemGroup>
     <AddInContent Include="Images\logo-button.png" />
     <AddInContent Include="Images\graph-query.png" />
+    <AddInContent Include="Images\enrich-data.png" />
     <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
   <ItemGroup>

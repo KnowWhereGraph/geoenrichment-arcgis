@@ -24,13 +24,17 @@
         <group id="GeoenrichmentTool_Group" caption="KWG Geoenrichment Tool" appearsOnAddInTab="true">
           <!-- host controls within groups -->
           <tool refID="GeoenrichmentTool_PolygonSelect" size="large" />
+          <button refID="GeoenrichmentTool_PropertyEnrichment" size="large" />
         </group>
       </groups>
       <controls>
         <!-- add your controls here -->
-        <tool id="GeoenrichmentTool_PolygonSelect" caption="Create Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
+        <tool id="GeoenrichmentTool_PolygonSelect" caption="Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
           <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
         </tool>
+        <button id="GeoenrichmentTool_PropertyEnrichment" caption="Enrich Data" className="PropertyEnrichment" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png">
+          <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
+        </button>
       </controls>
     </insertModule>
   </modules>
