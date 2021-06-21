@@ -20,18 +20,18 @@ using System.Windows.Input;
 
 namespace GeoenrichmentTool
 {
-    internal class Module1 : Module
+    internal class GeoModule : Module
     {
-        private static Module1 _this = null;
+        private static GeoModule _this = null;
 
         /// <summary>
         /// Retrieve the singleton instance to this module here
         /// </summary>
-        public static Module1 Current
+        public static GeoModule Current
         {
             get
             {
-                return _this ?? (_this = (Module1)FrameworkApplication.FindModule("GeoenrichmentTool_Module"));
+                return _this ?? (_this = (GeoModule)FrameworkApplication.FindModule("GeoenrichmentTool_Module"));
             }
         }
 
