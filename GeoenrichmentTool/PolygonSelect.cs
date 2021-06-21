@@ -24,9 +24,15 @@ namespace GeoenrichmentTool
         }
 
         private string defaultLayerPrefix = "GeoSPARQLQueryLayer_";
+        private SpatialReference sr;
 
         protected override Task OnToolActivateAsync(bool active)
         {
+            QueuedTask.Run(() =>
+            {
+                sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+                MapView.Active.Map.SetSpatialReference(sr);
+            });
             return base.OnToolActivateAsync(active);
         }
 
@@ -37,8 +43,18 @@ namespace GeoenrichmentTool
             if (geometry.GetType().FullName == "ArcGIS.Core.Geometry.Polygon")
             {
                 Polygon polyGeo = (Polygon)geometry;
-                Form geoForm = new GeoSPARQL_Query(polyGeo);
 
+                //Build the string Polygon value
+                var coordinates = polyGeo.Copy2DCoordinatesToList();
+                List<string> coorArray = new List<string>();
+                foreach (Coordinate2D coor in coordinates)
+                {
+                    MapPoint geoCoor = coor.ToMapPoint();
+                    coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
+                }
+                string polyString = "Polygon((" + String.Join(", ", coorArray) + "))";
+
+                //Create layer for the polygon
                 Random gen = new Random();
                 string layerName = defaultLayerPrefix + gen.Next(999999).ToString();
                 await FeatureClassHelper.CreatePolygonFeatureLayer(layerName);
@@ -51,13 +67,18 @@ namespace GeoenrichmentTool
                 }
                 else
                 {
+                    //Add polygon value to layer
                     await QueuedTask.Run(() =>
                     {
+                        mainLayer.SetTransparency(50.0);
+
                         InsertCursor cursor = mainLayer.GetTable().CreateInsertCursor();
 
                         RowBuffer buff = mainLayer.GetTable().CreateRowBuffer();
+                        IGeometryEngine geoEngine = GeometryEngine.Instance;
+                        Geometry geo = geoEngine.ImportFromWKT(0, polyString, sr);
 
-                        buff["Shape"] = polyGeo;
+                        buff["Shape"] = geo;
                         cursor.Insert(buff);
 
                         cursor.Dispose();
@@ -65,6 +86,7 @@ namespace GeoenrichmentTool
                         MapView.Active.Redraw(false);
                     });
 
+                    Form geoForm = new GeoSPARQL_Query(polyString);
                     geoForm.ShowDialog();
                 }
             }

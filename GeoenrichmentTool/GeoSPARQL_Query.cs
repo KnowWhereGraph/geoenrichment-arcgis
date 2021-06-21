@@ -14,15 +14,15 @@ namespace GeoenrichmentTool
 {
     public partial class GeoSPARQL_Query : Form
     {
-        protected Polygon geometry;
+        protected string polyString;
         protected Dictionary<string, string> ptArray;
         private readonly QuerySPARQL queryClass;
 
-        public GeoSPARQL_Query(Polygon geo)
+        public GeoSPARQL_Query(string geo)
         {
             InitializeComponent();
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
-            geometry = geo;
+            polyString = geo;
             queryClass = new QuerySPARQL();
             populatePlaceTypes();
         }
@@ -86,17 +86,8 @@ namespace GeoenrichmentTool
                         break;
                 }
 
-                //TODO:: Build proper WKT value
-                var coordinates = geometry.Copy2DCoordinatesToList();
-                    
-                List<string> coorArray = new List<string>();
-                foreach (Coordinate2D coor in coordinates)
-                {
-                    MapPoint geoCoor = coor.ToMapPoint();
-                    coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
-                }
-                string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((-119.79 34.46, -119.63 34.46, -119.63 34.38, -119.78 34.38, -119.79 34.46)) '''";
-                //string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> Polygon((" + String.Join(", ", coorArray) + ")) '''";
+                //Build proper WKT value
+                string geoWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + polyString + " '''";
 
                 var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
 
@@ -167,7 +158,8 @@ namespace GeoenrichmentTool
         {
             List<string> placeIRISet = new List<string>();
             List<string[]> placeList = new List<string[]>();
-            string geomType = "";
+            //string geomType = "";
+
             int index = 0;
             foreach (var item in geoQueryResult)
             {
