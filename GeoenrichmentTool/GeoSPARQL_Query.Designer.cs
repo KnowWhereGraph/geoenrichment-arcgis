@@ -46,6 +46,7 @@ namespace GeoenrichmentTool
             this.formError = new System.Windows.Forms.Label();
             this.requiredPlaceType = new System.Windows.Forms.Label();
             this.requiredCalculator = new System.Windows.Forms.Label();
+            this.refreshPlaceTypeBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // endPointLabel
@@ -101,7 +102,7 @@ namespace GeoenrichmentTool
             this.placeType.FormattingEnabled = true;
             this.placeType.Location = new System.Drawing.Point(19, 183);
             this.placeType.Name = "placeType";
-            this.placeType.Size = new System.Drawing.Size(740, 26);
+            this.placeType.Size = new System.Drawing.Size(652, 26);
             this.placeType.TabIndex = 4;
             // 
             // subclassReasoning
@@ -238,6 +239,20 @@ namespace GeoenrichmentTool
             this.requiredCalculator.TabIndex = 18;
             this.requiredCalculator.Text = "*";
             // 
+            // refreshPlaceTypeBtn
+            // 
+            this.refreshPlaceTypeBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(214)))), ((int)(((byte)(237)))));
+            this.refreshPlaceTypeBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.refreshPlaceTypeBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.refreshPlaceTypeBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.refreshPlaceTypeBtn.Location = new System.Drawing.Point(677, 183);
+            this.refreshPlaceTypeBtn.Name = "refreshPlaceTypeBtn";
+            this.refreshPlaceTypeBtn.Size = new System.Drawing.Size(82, 26);
+            this.refreshPlaceTypeBtn.TabIndex = 19;
+            this.refreshPlaceTypeBtn.Text = "Refresh";
+            this.refreshPlaceTypeBtn.UseVisualStyleBackColor = false;
+            this.refreshPlaceTypeBtn.Click += new System.EventHandler(this.RefreshPlaceList);
+            // 
             // GeoSPARQL_Query
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 20F);
@@ -246,6 +261,7 @@ namespace GeoenrichmentTool
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(778, 471);
+            this.Controls.Add(this.refreshPlaceTypeBtn);
             this.Controls.Add(this.requiredCalculator);
             this.Controls.Add(this.requiredPlaceType);
             this.Controls.Add(this.formError);
@@ -290,5 +306,6 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label formError;
         private System.Windows.Forms.Label requiredPlaceType;
         private System.Windows.Forms.Label requiredCalculator;
+        private System.Windows.Forms.Button refreshPlaceTypeBtn;
     }
 }
