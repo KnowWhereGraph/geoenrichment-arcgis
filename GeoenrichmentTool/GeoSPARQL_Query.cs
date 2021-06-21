@@ -24,10 +24,27 @@ namespace GeoenrichmentTool
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
             polyString = geo;
             queryClass = new QuerySPARQL();
-            populatePlaceTypes();
+            PopulatePlaceTypes();
         }
 
-        private void populatePlaceTypes()
+        private void RefreshPlaceList(object sender, EventArgs e)
+        {
+            placeType.Items.Clear();
+            placeType.ResetText();
+            queryClass.UpdateActiveEndPoint(endPoint.Text);
+
+            try
+            {
+                PopulatePlaceTypes();
+                MessageBox.Show($@"Place types updated!");
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show($@"Failed to connect to endpoint!");
+            }
+        }
+
+        private void PopulatePlaceTypes()
         {
             var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
 
@@ -257,6 +274,6 @@ namespace GeoenrichmentTool
             }
 
             return "";
-        } 
+        }
     }
 }
