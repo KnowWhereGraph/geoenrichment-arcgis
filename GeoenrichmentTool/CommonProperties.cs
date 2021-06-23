@@ -28,6 +28,7 @@ namespace GeoenrichmentTool
 
         protected override void OnClick()
         {
+            var test = GeoModule.Current;
             MessageBox.Show($@"PROPERTY ENRICHMENT");
         }
     }

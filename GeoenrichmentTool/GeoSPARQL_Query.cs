@@ -1,6 +1,7 @@
 ﻿using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Framework;
+using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
@@ -17,14 +18,12 @@ namespace GeoenrichmentTool
     {
         protected string polyString;
         protected Dictionary<string, string> ptArray;
-        private readonly QuerySPARQL queryClass;
 
         public GeoSPARQL_Query(string geo)
         {
             InitializeComponent();
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
             polyString = geo;
-            queryClass = new QuerySPARQL();
             PopulatePlaceTypes();
         }
 
@@ -32,7 +31,7 @@ namespace GeoenrichmentTool
         {
             placeType.Items.Clear();
             placeType.ResetText();
-            queryClass.UpdateActiveEndPoint(endPoint.Text);
+            GeoModule.Current.GetQueryClass().UpdateActiveEndPoint(endPoint.Text);
 
             try
             {
@@ -48,6 +47,7 @@ namespace GeoenrichmentTool
         private void PopulatePlaceTypes()
         {
             var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
+            QuerySPARQL queryClass = GeoModule.Current.GetQueryClass();
 
             JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
 
@@ -84,6 +84,7 @@ namespace GeoenrichmentTool
                 string gfClassName = className.Text.Replace(" ", "_");
                 string gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
 
+                QuerySPARQL queryClass = GeoModule.Current.GetQueryClass();
                 queryClass.UpdateActiveEndPoint(gfEndPoint);
 
                 string[] geoFunc = new string[] { };
@@ -111,7 +112,7 @@ namespace GeoenrichmentTool
 
                 CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
 
-                //Enable the property enrichment tool
+                //Enable the property enrichment tool since we have a layer for it to use
                 FrameworkApplication.State.Activate("kwg_query_layer_added");
             }
         }
@@ -254,6 +255,9 @@ namespace GeoenrichmentTool
                         cursor.Dispose();
 
                         MapView.Active.Redraw(false);
+
+                        //Save layer name to main list of active layers so other tools can access them
+                        GeoModule.Current.AddLayer(className);
                     });
                 }
             }
