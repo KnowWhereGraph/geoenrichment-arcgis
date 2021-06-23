@@ -2,14 +2,19 @@
   <AddInInfo id="{2c67f191-2703-4291-bce4-994cf0016027}" version="1.0" desktopVersion="2.8.29751">
     <Name>GeoenrichmentTool</Name>
     <Description>GeoenrichmentTool description</Description>
-    <Image>Images\AddinDesktop32.png</Image>
+    <Image>Images\logo-button.png</Image>
     <Author>anthon70</Author>
-    <Company>Acme</Company>
+	  <Company>Matrix</Company>
     <Date>5/26/2021 7:01:03 AM</Date>
-    <Subject>Framework</Subject>
+    <Subject>Geoprocessing</Subject>
     <!-- Note subject can be one or more of these topics:
                     Content, Framework, Editing, Geodatabase, Geometry, Geoprocessing, Layouts, Map Authoring, Map Exploration -->
   </AddInInfo>
+    <conditions>
+	    <insertCondition id="kwg_common_properties_active">
+		    <state id="kwg_query_layer_added"/>
+	    </insertCondition>
+    </conditions>
   <modules>
     <insertModule id="GeoenrichmentTool_Module" className="GeoModule" autoLoad="false" caption="GeoModule">
       <!-- uncomment to have the control hosted on a separate tab-->
@@ -24,16 +29,22 @@
         <group id="GeoenrichmentTool_Group" caption="KWG Geoenrichment Tool" appearsOnAddInTab="true">
           <!-- host controls within groups -->
           <tool refID="GeoenrichmentTool_PolygonSelect" size="large" />
-          <button refID="GeoenrichmentTool_PropertyEnrichment" size="large" />
+          <button refID="GeoenrichmentTool_CommonProperties" size="large" />
         </group>
       </groups>
       <controls>
         <!-- add your controls here -->
         <tool id="GeoenrichmentTool_PolygonSelect" caption="Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
-          <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
+          <tooltip heading="Tooltip Heading">
+			  Create the initial query to the SPARQL endpoint
+			  <disabledText>Map pane required</disabledText>
+		  </tooltip>
         </tool>
-        <button id="GeoenrichmentTool_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png">
-          <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
+        <button id="GeoenrichmentTool_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_common_properties_active">
+          <tooltip heading="Tooltip Heading">
+			  Enrich query result using common properties
+			  <disabledText>Requires query to be run</disabledText>
+		  </tooltip>
         </button>
       </controls>
     </insertModule>

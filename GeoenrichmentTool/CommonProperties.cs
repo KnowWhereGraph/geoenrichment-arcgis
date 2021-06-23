@@ -23,11 +23,12 @@ namespace GeoenrichmentTool
     {
         public CommonProperties()
         {
-            Enabled = false;
+            
         }
 
         protected override void OnClick()
         {
+            MessageBox.Show($@"PROPERTY ENRICHMENT");
         }
     }
 }
