@@ -19,8 +19,13 @@ using System.Threading.Tasks;
 
 namespace GeoenrichmentTool
 {
-    internal class PropertyEnrichment : Button
+    internal class CommonProperties : Button
     {
+        public CommonProperties()
+        {
+            Enabled = false;
+        }
+
         protected override void OnClick()
         {
         }

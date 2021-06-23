@@ -32,7 +32,7 @@
         <tool id="GeoenrichmentTool_PolygonSelect" caption="Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
           <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
         </tool>
-        <button id="GeoenrichmentTool_PropertyEnrichment" caption="Enrich Data" className="PropertyEnrichment" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png">
+        <button id="GeoenrichmentTool_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png">
           <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
         </button>
       </controls>

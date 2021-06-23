@@ -328,7 +328,6 @@ class WikidataSpatialQuery(object):
                                         SERVICE wikibase:label {bd:serviceParam wikibase:language "en". ?place rdfs:label ?placeLabel .}
                                         ?place wdt:P31 ?placeFlatType.
                                         ?placeFlatType wdt:P279* wd:Q2221906.
-
                                         # show results ordered by distance
                                         } ORDER BY ?distance"""
             
@@ -1338,7 +1337,8 @@ class LinkedDataGeoSPARQLQuery(object):
         outFeatureClassName = out_geo_name.valueAsText
         
         isDirectInstance = False
-       
+        
+        
         if in_is_directed_instance.valueAsText == 'true':
             isDirectInstance = True
         elif in_is_directed_instance.valueAsText == 'false':
@@ -1355,6 +1355,9 @@ class LinkedDataGeoSPARQLQuery(object):
             geosparql_func = ["geo:sfIntersects"]
         else:
             arcpy.AddError("The spatial relation is not supported!")
+
+        # messages.addMessage("in_query_geo_extent.value: {0}".format(queryGeoExtent))
+        # messages.addMessage("type(in_query_geo_extent.value): {0}".format(type(queryGeoExtent)))
         
         query_geo_wkt = UTIL.get_geometrywkt_from_interactive_featureclass_by_idx(queryGeoExtent)
         
@@ -1362,6 +1365,8 @@ class LinkedDataGeoSPARQLQuery(object):
         
         query_geo_wkt = UTIL.project_wkt_to_wgs84(queryGeoExtent, query_geo_wkt)
 
+
+    
         if ".gdb" in outLocation:
             # if the outputLocation is a file geodatabase, cancatnate the outputlocation with outFeatureClassName to create a feature class in current geodatabase
             out_path = os.path.join(outLocation,outFeatureClassName)
@@ -1371,27 +1376,93 @@ class LinkedDataGeoSPARQLQuery(object):
             # however, Relationship Class must be created in a geodatabase, so we forbid to create a shapfile
             # messages.addErrorMessage("Please enter a file geodatabase as output location in order to create a relation class")
             # raise arcpy.ExecuteError
-       
+            
+
+
         messages.addMessage("outpath: {0}".format(out_path))
 
         selectedURL = out_place_type_url.valueAsText
+
         
         messages.addMessage("selectedURL: {0}".format(selectedURL))
+
+  
 
         # a set of unique Coordinates for each input points
         searchCoordsSet = []
     
+
+
         GeoQueryResult = SPARQLQuery.TypeAndGeoSPARQLQuery(query_geo_wkt, 
                                                         selectedURL = selectedURL, 
                                                         isDirectInstance = isDirectInstance, 
                                                         geosparql_func = geosparql_func, 
                                                         sparql_endpoint = sparql_endpoint)
 
+
         Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult = GeoQueryResult, 
                                             out_path = out_path, 
                                             inPlaceType = inPlaceType, 
                                             selectedURL = selectedURL, 
                                             isDirectInstance = isDirectInstance)
+
+        # # a set of unique Coordinates for each found places
+        # placeIRISet = set()
+        # placeList = []
+
+        # for item in GeoQueryResult:
+        #     print("{}\t{}\t{}".format(
+        #         item["place"]["value"], item["placeLabel"]["value"], item["placeFlatType"]["value"]))
+        #     if len(placeIRISet) == 0 or item["place"]["value"] not in placeIRISet:
+        #         placeIRISet.add(item["place"]["value"])
+        #         if isDirectInstance == False:
+        #             placeType = item["placeFlatType"]["value"]
+        #         else:
+        #             placeType = selectedURL
+        #         placeList.append(
+        #             [ item["place"]["value"], item["placeLabel"]["value"], placeType, item["wkt"]["value"] ])
+
+        # if len(placeList) == 0:
+        #     messages.addMessage("No {0} within the provided polygon can be finded!".format(inPlaceType))
+        # else:
+            
+
+        #     if out_path == None:
+        #         messages.addMessage("No data will be added to the map document.")
+        #         # pythonaddins.MessageBox("No data will be added to the map document.", "Warning Message", 0)
+        #     else:
+        #         geo_feature_class = arcpy.CreateFeatureclass_management(
+        #                             os.path.dirname(out_path), 
+        #                             os.path.basename(out_path), 
+        #                             spatial_reference = arcpy.SpatialReference(4326) )
+
+        #         labelFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "placeLabel")
+        #         arcpy.AddMessage("labelFieldLength: {0}".format(labelFieldLength))
+        #         urlFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "place")
+        #         arcpy.AddMessage("urlFieldLength: {0}".format(urlFieldLength))
+        #         classFieldLength = Json2Field.fieldLengthDecide(GeoQueryResult, "placeFlatType")
+        #         arcpy.AddMessage("classFieldLength: {0}".format(classFieldLength))
+                
+        #         # add field to this point feature class
+        #         arcpy.AddField_management(geo_feature_class, "Label", "TEXT", field_length=labelFieldLength)
+        #         arcpy.AddField_management(geo_feature_class, "URL", "TEXT", field_length=urlFieldLength)
+        #         arcpy.AddField_management(geo_feature_class, "Class", "TEXT", field_length=classFieldLength)
+
+
+        #         insertCursor = arcpy.da.InsertCursor(out_path, ['URL', 'Label', "Class", 'SHAPE@WKT',])
+        #         for item in placeList:
+        #             place_iri, label, type_iri, wkt_literal = item
+        #             wkt = wkt_literal.replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "")
+        #             try:
+        #                 insertCursor.insertRow( (place_iri, label, type_iri, wkt ) )
+        #             except Error:
+        #                 arcpy.AddMessage("Error inserting geo data: {} {} {}".format(place_iri, label, type_iri))
+
+        #         del insertCursor
+
+        #         ArcpyViz.visualize_current_layer(out_path)
+                
+                    
 
         return
     
@@ -4121,7 +4192,6 @@ class SPARQLQuery(object):
                 select distinct ?place ?placeLabel ?placeFlatType ?wkt
                 where
                 {
-
                     ?place geo:hasGeometry ?geometry .
                     ?place rdfs:label ?placeLabel .
                     ?geometry geo:asWKT ?wkt.
@@ -4209,7 +4279,6 @@ class SPARQLQuery(object):
                                 SERVICE wikibase:label {bd:serviceParam wikibase:language "en". ?place rdfs:label ?placeLabel .}
                                 ?place wdt:P31 ?placeFlatType.
                                 # ?placeFlatType wdt:P279* wd:Q2221906.
-
                                 VALUES ?place
                                 {"""
             else:
@@ -4218,7 +4287,6 @@ class SPARQLQuery(object):
                                 ?place geo:hasGeometry ?geometry .
                                 ?place rdfs:label ?placeLabel .
                                 ?geometry geo:asWKT ?wkt.
-
                                 VALUES ?place
                                 {"""
             for IRI in endPlaceIRISubList:
@@ -4255,7 +4323,6 @@ class SPARQLQuery(object):
 
 
         locationLinkageQuery += """<""" + locationCommonPropertyURL + """>""" + """?end.
-
                         VALUES ?origin
                         {"""
         for IRI in inplaceIRIList:
@@ -4317,10 +4384,8 @@ class SPARQLQuery(object):
                                                 {
                                                    
                                                     hint:Query hint:optimizer "None" .
-
                                                     ?s ?p ?o .
                                                     ?prop wikibase:directClaim ?p .
-
                                                     VALUES ?s
                                                     {
             """
@@ -4333,7 +4398,6 @@ class SPARQLQuery(object):
                                             SERVICE wikibase:label {
                                                 bd:serviceParam wikibase:language "en" .
                                             }
-
                                         } ORDER BY DESC (?NumofSub)
             """
 
@@ -5944,7 +6008,6 @@ class Json2Field(object):
         '''
         Given the SPARQL result of a geometry search, 
         we compute the geometry similarity between query geometry, and each geographic entity's geometry
-
         GeoQueryResult: a sparql query result json obj serialized as a list of dict()
                     SPARQL query like this:
                     select distinct ?place ?placeLabel ?placeFlatType ?wkt

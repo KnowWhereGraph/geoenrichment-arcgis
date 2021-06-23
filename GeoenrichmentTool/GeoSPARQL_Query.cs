@@ -68,7 +68,7 @@ namespace GeoenrichmentTool
         private void SubmitGeoQueryForm(object sender, EventArgs e)
         {
             formError.Text = "";
-            if (endPoint.Text == "" | className.Text == "" | placeType.Text == "" | calculator.Text == "")
+            if (endPoint.Text == "" | className.Text == "" | calculator.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
             }
@@ -88,7 +88,7 @@ namespace GeoenrichmentTool
                 string[] geoFunc = new string[] { };
                 switch (gfCalculator)
                 {
-                    case "Contain + Intersect":
+                    case "Contain or Intersect":
                         geoFunc = new string[] { "geo:sfContains", "geo:sfIntersects" };
                         break;
                     case "Contain":
@@ -108,7 +108,7 @@ namespace GeoenrichmentTool
 
                 var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
 
-                CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
+                CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning)
             }
         }
 
@@ -129,6 +129,7 @@ namespace GeoenrichmentTool
                 "?place geo:hasGeometry ?geometry . " +
                 "?place rdfs:label ?placeLabel . " +
                 "?geometry geo:asWKT ?wkt . " +
+                "?place rdf:type ?placeFlatType ." +
                 "{ " + queryGeoWKT + "^^geo:wktLiteral " +
                 geoFunc[0] + "  ?geometry .}";
 

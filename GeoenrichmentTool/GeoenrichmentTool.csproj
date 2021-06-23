@@ -133,7 +133,7 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PropertyEnrichment.cs" />
+    <Compile Include="CommonProperties.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="GeoSPARQL_Query.cs">
