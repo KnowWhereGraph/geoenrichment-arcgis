@@ -12,6 +12,7 @@ using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,52 +30,45 @@ namespace GeoenrichmentTool
 
             if(uris.Count > 0)
             {
+                JToken commonProps = GetCommonProperties(uris);
+
                 /**
-                # get the direct common property 
-                commonPropertyJSONObj = SPARQLQuery.commonPropertyQuery(inplaceIRIList, 
-                                                sparql_endpoint = sparql_endpoint,
-                                                doSameAs = False)
-                commonPropertyJSON = commonPropertyJSONObj["results"]["bindings"]
+                #process values
+                LinkedDataPropertyEnrichGeneral.propertyURLList = []
+                LinkedDataPropertyEnrichGeneral.propertyNameList = []
+                LinkedDataPropertyEnrichGeneral.propertyURLDict = dict()
 
-                if len(commonPropertyJSON) == 0:
-                    arcpy.AddMessage("No property find.")
-                    raise arcpy.ExecuteError
-                else:
-                    LinkedDataPropertyEnrichGeneral.propertyURLList = []
-                    LinkedDataPropertyEnrichGeneral.propertyNameList = []
-                    LinkedDataPropertyEnrichGeneral.propertyURLDict = dict()
-
-                    LinkedDataPropertyEnrichGeneral.propertyURLDict = UTIL.extractCommonPropertyJSON(commonPropertyJSON, 
-                                                p_url_list = LinkedDataPropertyEnrichGeneral.propertyURLList, 
-                                                p_name_list = LinkedDataPropertyEnrichGeneral.propertyNameList, 
-                                                url_dict = LinkedDataPropertyEnrichGeneral.propertyURLDict,
-                                                p_var = "p", 
-                                                plabel_var = "propLabel" if sparql_endpoint == SPARQLUtil._WIKIDATA_SPARQL_ENDPOINT else "pLabel", 
-                                                numofsub_var = "NumofSub")
+                LinkedDataPropertyEnrichGeneral.propertyURLDict = UTIL.extractCommonPropertyJSON(commonPropertyJSON, 
+                                            p_url_list = LinkedDataPropertyEnrichGeneral.propertyURLList, 
+                                            p_name_list = LinkedDataPropertyEnrichGeneral.propertyNameList, 
+                                            url_dict = LinkedDataPropertyEnrichGeneral.propertyURLDict,
+                                            p_var = "p", 
+                                            plabel_var = "propLabel" if sparql_endpoint == SPARQLUtil._WIKIDATA_SPARQL_ENDPOINT else "pLabel", 
+                                            numofsub_var = "NumofSub")
                             
 
-                    in_com_property.filter.list = LinkedDataPropertyEnrichGeneral.propertyNameList
+                in_com_property.filter.list = LinkedDataPropertyEnrichGeneral.propertyNameList
                             
 
-                    # query for common sosa observabale property
-                    LinkedDataPropertyEnrichGeneral.sosaObsPropURLList = []
-                    LinkedDataPropertyEnrichGeneral.sosaObsPropNameList = []
-                    LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict = dict()
+                # query for common sosa observabale property
+                LinkedDataPropertyEnrichGeneral.sosaObsPropURLList = []
+                LinkedDataPropertyEnrichGeneral.sosaObsPropNameList = []
+                LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict = dict()
 
-                    commonSosaObsPropJSONObj = SPARQLQuery.commonSosaObsPropertyQuery(inplaceIRIList, 
-                                                sparql_endpoint = sparql_endpoint,
-                                                doSameAs = False)
-                    commonSosaObsPropJSON = commonSosaObsPropJSONObj["results"]["bindings"]
-                    if len(commonSosaObsPropJSON) > 0:
-                        LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict = UTIL.extractCommonPropertyJSON(commonSosaObsPropJSON, 
-                                                p_url_list = LinkedDataPropertyEnrichGeneral.sosaObsPropURLList, 
-                                                p_name_list = LinkedDataPropertyEnrichGeneral.sosaObsPropNameList, 
-                                                url_dict = LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict,
-                                                p_var = "p", 
-                                                plabel_var = "pLabel", 
-                                                numofsub_var = "NumofSub")
+                commonSosaObsPropJSONObj = SPARQLQuery.commonSosaObsPropertyQuery(inplaceIRIList, 
+                                            sparql_endpoint = sparql_endpoint,
+                                            doSameAs = False)
+                commonSosaObsPropJSON = commonSosaObsPropJSONObj["results"]["bindings"]
+                if len(commonSosaObsPropJSON) > 0:
+                    LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict = UTIL.extractCommonPropertyJSON(commonSosaObsPropJSON, 
+                                            p_url_list = LinkedDataPropertyEnrichGeneral.sosaObsPropURLList, 
+                                            p_name_list = LinkedDataPropertyEnrichGeneral.sosaObsPropNameList, 
+                                            url_dict = LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict,
+                                            p_var = "p", 
+                                            plabel_var = "pLabel", 
+                                            numofsub_var = "NumofSub")
 
-                        in_com_property.filter.list += LinkedDataPropertyEnrichGeneral.sosaObsPropNameList
+                    in_com_property.filter.list += LinkedDataPropertyEnrichGeneral.sosaObsPropNameList
 
                 # get the inverse direct common property 
                 if isInverse == True:
@@ -110,6 +104,32 @@ namespace GeoenrichmentTool
             {
                 MessageBox.Show($@"No data to enrich for layer {mainLayer.Name}");
             }
+        }
+
+        private JToken GetCommonProperties(List<string> uriList, bool doSameAs = false)
+        {
+            string uriString = "";
+            foreach(var uri in uriList)
+            {
+                uriString += "<" + uri + "> \n";
+            }
+
+            string cpQuery = "";
+
+            if(doSameAs)
+            {
+                cpQuery += "select distinct ?p (count(distinct ?s) as ?NumofSub) where { ?s owl:sameAs ?wikidataSub. ?s ?p ?o. VALUES ?wikidataSub { ";
+            }
+            else
+            {
+                cpQuery += "select distinct ?p (count(distinct ?s) as ?NumofSub) where { ?s ?p ?o. VALUES ?s { ";
+            }
+
+            cpQuery += uriString;
+
+            cpQuery += "} } group by ?p order by DESC(?NumofSub)";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false); 
         }
     }
 }
