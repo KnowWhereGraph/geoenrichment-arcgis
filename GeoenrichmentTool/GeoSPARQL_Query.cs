@@ -257,7 +257,7 @@ namespace GeoenrichmentTool
                         MapView.Active.Redraw(false);
 
                         //Save layer name to main list of active layers so other tools can access them
-                        GeoModule.Current.AddLayer(className);
+                        GeoModule.Current.AddLayer(fcLayer);
                     });
                 }
             }
