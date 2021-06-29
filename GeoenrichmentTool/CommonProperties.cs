@@ -30,75 +30,14 @@ namespace GeoenrichmentTool
 
             if(uris.Count > 0)
             {
-                JToken commonProps = GetCommonProperties(uris);
+                List<string>[] commonProps = GetCommonProperties(uris);
+                List<string>[] sobaObsProps = GetSobaObsProperties(uris);
+                List<string>[] inverseCommonProps = GetCommonProperties(uris, true);
 
-                /**
-                #process values
-                LinkedDataPropertyEnrichGeneral.propertyURLList = []
-                LinkedDataPropertyEnrichGeneral.propertyNameList = []
-                LinkedDataPropertyEnrichGeneral.propertyURLDict = dict()
+                var test = "";
 
-                LinkedDataPropertyEnrichGeneral.propertyURLDict = UTIL.extractCommonPropertyJSON(commonPropertyJSON, 
-                                            p_url_list = LinkedDataPropertyEnrichGeneral.propertyURLList, 
-                                            p_name_list = LinkedDataPropertyEnrichGeneral.propertyNameList, 
-                                            url_dict = LinkedDataPropertyEnrichGeneral.propertyURLDict,
-                                            p_var = "p", 
-                                            plabel_var = "propLabel" if sparql_endpoint == SPARQLUtil._WIKIDATA_SPARQL_ENDPOINT else "pLabel", 
-                                            numofsub_var = "NumofSub")
-                            
-
-                in_com_property.filter.list = LinkedDataPropertyEnrichGeneral.propertyNameList
-                            
-
-                # query for common sosa observabale property
-                LinkedDataPropertyEnrichGeneral.sosaObsPropURLList = []
-                LinkedDataPropertyEnrichGeneral.sosaObsPropNameList = []
-                LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict = dict()
-
-                commonSosaObsPropJSONObj = SPARQLQuery.commonSosaObsPropertyQuery(inplaceIRIList, 
-                                            sparql_endpoint = sparql_endpoint,
-                                            doSameAs = False)
-                commonSosaObsPropJSON = commonSosaObsPropJSONObj["results"]["bindings"]
-                if len(commonSosaObsPropJSON) > 0:
-                    LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict = UTIL.extractCommonPropertyJSON(commonSosaObsPropJSON, 
-                                            p_url_list = LinkedDataPropertyEnrichGeneral.sosaObsPropURLList, 
-                                            p_name_list = LinkedDataPropertyEnrichGeneral.sosaObsPropNameList, 
-                                            url_dict = LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict,
-                                            p_var = "p", 
-                                            plabel_var = "pLabel", 
-                                            numofsub_var = "NumofSub")
-
-                    in_com_property.filter.list += LinkedDataPropertyEnrichGeneral.sosaObsPropNameList
-
-                # get the inverse direct common property 
-                if isInverse == True:
-                    inverseCommonPropertyJSONObj = SPARQLQuery.inverseCommonPropertyQuery(inplaceIRIList, 
-                                                                                            sparql_endpoint = sparql_endpoint, 
-                                                                                            doSameAs = True)
-                    inverseCommonPropertyJSON = inverseCommonPropertyJSONObj["results"]["bindings"]
-
-                    if len(inverseCommonPropertyJSON) == 0:
-                        arcpy.AddMessage("No inverse property find.")
-                        out_message.value = "No inverse property find."
-                        # in_inverse_com_property.value = "No inverse property find."
-                        # raise arcpy.ExecuteError
-                    else:
-                                
-                        LinkedDataPropertyEnrichGeneral.inversePropertyURLList = []
-                        LinkedDataPropertyEnrichGeneral.inversePropertyNameList = []
-                        LinkedDataPropertyEnrichGeneral.inversePropertyURLDict = dict()
-
-                        LinkedDataPropertyEnrichGeneral.inversePropertyURLDict = UTIL.extractCommonPropertyJSON(inverseCommonPropertyJSON, 
-                                                p_url_list = LinkedDataPropertyEnrichGeneral.inversePropertyURLList, 
-                                                p_name_list = LinkedDataPropertyEnrichGeneral.inversePropertyNameList, 
-                                                url_dict = LinkedDataPropertyEnrichGeneral.inversePropertyURLDict,
-                                                p_var = "p", 
-                                                plabel_var = "pLabel", 
-                                                numofsub_var = "NumofSub")
-                                
-
-                        in_inverse_com_property.filter.list = LinkedDataPropertyEnrichGeneral.inversePropertyNameList
-                 **/
+                //Build a form for listing out selections
+                //Actually list them out
             } 
             else
             {
@@ -106,7 +45,7 @@ namespace GeoenrichmentTool
             }
         }
 
-        private JToken GetCommonProperties(List<string> uriList, bool doSameAs = false)
+        private List<string>[] GetCommonProperties(List<string> uriList, bool inverse = false)
         {
             string uriString = "";
             foreach(var uri in uriList)
@@ -116,7 +55,7 @@ namespace GeoenrichmentTool
 
             string cpQuery = "";
 
-            if(doSameAs)
+            if(inverse)
             {
                 cpQuery += "select distinct ?p (count(distinct ?s) as ?NumofSub) where { ?s owl:sameAs ?wikidataSub. ?s ?p ?o. VALUES ?wikidataSub { ";
             }
@@ -129,7 +68,59 @@ namespace GeoenrichmentTool
 
             cpQuery += "} } group by ?p order by DESC(?NumofSub)";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false); 
+            var results = GeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
+            return ProcessProperties(results);
+        }
+
+        private List<string>[] GetSobaObsProperties(List<string> uriList)
+        {
+            string uriString = "";
+            foreach (var uri in uriList)
+            {
+                uriString += "<" + uri + "> \n";
+            }
+
+            string cpQuery = "select distinct ?p ?pLabel (count(distinct ?s) as ?NumofSub) where " +
+                "{ ?s sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. ?obs sosa:observedProperty ?p . OPTIONAL {?p rdfs:label ?pLabel . } " +
+                "VALUES ?s {";
+
+            cpQuery += uriString;
+
+            cpQuery += "} } group by ?p ?pLabel order by DESC(?NumofSub)";
+
+            var results = GeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
+            return ProcessProperties(results);
+        }
+
+        private List<string>[] ProcessProperties(JToken properties)
+        {
+            List<string> urlList = new List<string>() { };
+            List<string> nameList = new List<string>() { };
+
+            foreach (var item in properties)
+            {
+                string propertyURL = (string)item["p"]["value"];
+
+                if(!urlList.Contains(propertyURL))
+                {
+                    urlList.Add(propertyURL);
+
+                    string label = "";
+                    if (item["pLabel"] != null)
+                    {
+                        label = (string)item["pLabel"]["value"];
+                    }
+                    if(label.Trim() == "")
+                    {
+                        label = GeoModule.Current.GetQueryClass().MakeIRIPrefix(propertyURL);
+                    }
+
+                    string propertyName = label + " [" + item["NumofSub"]["value"] + "]";
+                    nameList.Add(propertyName);
+                }
+            }
+
+            return new List<string>[] { urlList, nameList };
         }
     }
 }
