@@ -110,6 +110,7 @@ namespace GeoenrichmentTool
             this.submitFormBtn.TabIndex = 9;
             this.submitFormBtn.Text = "Run";
             this.submitFormBtn.UseVisualStyleBackColor = false;
+            this.submitFormBtn.Click += new System.EventHandler(this.EnrichData);
             // 
             // PropertyEnrichment
             // 

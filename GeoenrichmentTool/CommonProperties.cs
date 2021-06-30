@@ -34,10 +34,10 @@ namespace GeoenrichmentTool
             if(uris.Count > 0)
             {
                 List<string>[] commonProps = GetCommonProperties(uris);
-                List<string>[] sobaObsProps = GetSobaObsProperties(uris);
+                List<string>[] sosaObsProps = GetSosaObsProperties(uris);
                 List<string>[] inverseProps = GetCommonProperties(uris, true);
 
-                Form propForm = new PropertyEnrichment(commonProps, inverseProps);
+                Form propForm = new PropertyEnrichment(commonProps, sosaObsProps, inverseProps);
                 propForm.ShowDialog();
             } 
             else
@@ -73,7 +73,7 @@ namespace GeoenrichmentTool
             return ProcessProperties(results);
         }
 
-        private List<string>[] GetSobaObsProperties(List<string> uriList)
+        private List<string>[] GetSosaObsProperties(List<string> uriList)
         {
             string uriString = "";
             foreach (var uri in uriList)
