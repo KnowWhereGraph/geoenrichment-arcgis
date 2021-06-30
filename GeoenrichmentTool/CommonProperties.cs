@@ -18,6 +18,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using Button = ArcGIS.Desktop.Framework.Contracts.Button;
+using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 namespace GeoenrichmentTool
 {
@@ -32,12 +35,10 @@ namespace GeoenrichmentTool
             {
                 List<string>[] commonProps = GetCommonProperties(uris);
                 List<string>[] sobaObsProps = GetSobaObsProperties(uris);
-                List<string>[] inverseCommonProps = GetCommonProperties(uris, true);
+                List<string>[] inverseProps = GetCommonProperties(uris, true);
 
-                var test = "";
-
-                //Build a form for listing out selections
-                //Actually list them out
+                Form propForm = new PropertyEnrichment(commonProps, inverseProps);
+                propForm.ShowDialog();
             } 
             else
             {
