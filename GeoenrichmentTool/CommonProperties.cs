@@ -37,7 +37,7 @@ namespace GeoenrichmentTool
                 List<string>[] sosaObsProps = GetSosaObsProperties(uris);
                 List<string>[] inverseProps = GetCommonProperties(uris, true);
 
-                Form propForm = new PropertyEnrichment(commonProps, sosaObsProps, inverseProps);
+                Form propForm = new PropertyEnrichment(commonProps, sosaObsProps, inverseProps, uris);
                 propForm.ShowDialog();
             } 
             else

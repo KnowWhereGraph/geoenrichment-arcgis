@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,11 +13,15 @@ namespace GeoenrichmentTool
 {
     public partial class PropertyEnrichment : Form
     {
-        public PropertyEnrichment(List<string>[] commonProperties, List<string>[] sosaObsProperties, List<string>[] inverseProperties)
+        private List<string> soList;
+        private List<string> uriList;
+
+        public PropertyEnrichment(List<string>[] commonProperties, List<string>[] sosaObsProperties, List<string>[] inverseProperties, List<string> uris)
         {
             InitializeComponent();
+            soList = new List<string>() { };
 
-            for(var i=0; i < commonProperties[0].Count(); i++)
+            for (var i=0; i < commonProperties[0].Count(); i++)
             {
                 string url = commonProperties[0][i];
                 string name = commonProperties[1][i];
@@ -33,7 +38,10 @@ namespace GeoenrichmentTool
 
                 string value = name + " | " + url;
 
+                //We want to add the value to main user selection list for common properties
                 commonCheckBox.Items.Add(value);
+                //But we also want to keep track of the fact its a sosa observation value
+                soList.Add(value);
             }
 
             for (var i = 0; i < inverseProperties[0].Count(); i++)
@@ -45,69 +53,57 @@ namespace GeoenrichmentTool
 
                 inverseCheckBox.Items.Add(value);
             }
+
+            uriList = uris;
         }
 
         private void EnrichData(object sender, EventArgs e)
-        {
-            /*
-            """The source code of the tool."""
-            in_sparql_endpoint = parameters[0]
-            in_place_IRI = parameters[1]
-            in_com_property = parameters[2]
-            in_boolean_inverse_com = parameters[3]
-            in_inverse_com_property = parameters[4]
-            */
-            
-            /*
-            # get all the IRI from input point feature class of wikidata places
-            inplaceIRIList = []
-            cursor = arcpy.SearchCursor(inputFeatureClassName)
-            for row in cursor:
-                inplaceIRIList.append(row.getValue("URL"))
+        {   
+            if(commonCheckBox.CheckedItems.Count > 0)
+            {
+                List<string> commonURIs = new List<string>() { };
+                List<string> sosaObsURIs = new List<string>() { };
+                char[] delimiterChars = { '|' };
 
-            arcpy.AddMessage(in_com_property.valueAsText)
-            propertySelect = in_com_property.valueAsText
-            selectPropertyURLList = []
-            selectSosaObsPropURLList = []
-            arcpy.AddMessage("propertySelect: {0}".format(propertySelect))
-            if propertySelect != None:
-                propertySplitList = re.split("[;]", propertySelect.replace("'", ""))
-                arcpy.AddMessage("propertySplitList: {0}".format(propertySplitList))
-                for propertyItem in propertySplitList:
-                    if propertyItem in LinkedDataPropertyEnrichGeneral.propertyURLDict:
-                        selectPropertyURLList.append(LinkedDataPropertyEnrichGeneral.propertyURLDict[propertyItem])
-                    elif propertyItem in LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict:
-                        selectSosaObsPropURLList.append(LinkedDataPropertyEnrichGeneral.sosaObsPropURLDict[propertyItem])
+                //Now that we have the selected common property values, separate the sosa observation values so that we can process them separately
+                //While were at it, get rid of the name and isolate to just the URIs
+                foreach (var checkedItem in commonCheckBox.CheckedItems)
+                {
+                    string checkedVal = checkedItem.ToString();
+                    string checkedURI = checkedVal.Split(delimiterChars)[1].Trim();
+                    if (soList.Contains(checkedVal))
+                    {
+                        sosaObsURIs.Add(checkedURI);
+                    }
+                    else
+                    {
+                        commonURIs.Add(checkedURI);
+                    }
+                }
 
-                # send a SPARQL query to DBpedia endpoint to test whether the properties are functionalProperty
-                isFuncnalPropertyJSON = SPARQLQuery.functionalPropertyQuery(selectPropertyURLList,
-                                                                            sparql_endpoint = sparql_endpoint)
+                //Determine which selected URIs are functional and create a function and non-functional list
+                JToken functionPropsResult = FunctionalPropertyQuery(commonURIs);
+                List<string> functionProps = new List<string> { };
+                foreach(var result in functionPropsResult)
+                {
+                    functionProps.Add((string)result["property"]["value"]);
+                }
+                List<string> noFunctionProps = (List<string>)commonURIs.Except(functionProps);
 
-                FunctionalPropertySet = set()
-
-                for jsonItem in isFuncnalPropertyJSON:
-                    functionalPropertyURL = jsonItem["property"]["value"]
-                    FunctionalPropertySet.add(functionalPropertyURL)
-
-
-
-                arcpy.AddMessage("FunctionalPropertySet: {0}".format(FunctionalPropertySet))
-
-                # get the value for each functionalProperty
-                FuncnalPropertyList = list(FunctionalPropertySet)
-                # add these functionalProperty value to feature class table
-                for functionalProperty in FuncnalPropertyList:
+                foreach(var propURI in functionProps)
+                {
+                    /*
                     functionalPropertyJSON = SPARQLQuery.propertyValueQuery(inplaceIRIList, functionalProperty,
                                                                             sparql_endpoint = sparql_endpoint,
                                                                             doSameAs = False)
 
                     Json2Field.addFieldInTableByMapping(functionalPropertyJSON, "wikidataSub", "o", inputFeatureClassName, "URL", functionalProperty, False)
-                    
-                selectPropertyURLSet = set(selectPropertyURLList)
-                noFunctionalPropertySet = selectPropertyURLSet.difference(FunctionalPropertySet)
-                noFunctionalPropertyList = list(noFunctionalPropertySet)
+                    */
+                }
 
-                for noFunctionalProperty in noFunctionalPropertyList:
+                foreach (var propURI in noFunctionProps)
+                {
+                    /*
                     noFunctionalPropertyJSON = SPARQLQuery.propertyValueQuery(inplaceIRIList, noFunctionalProperty,
                                                                                 sparql_endpoint = sparql_endpoint,
                                                                                 doSameAs = False)
@@ -161,91 +157,107 @@ namespace GeoenrichmentTool
                                                                 attributed = "NONE", 
                                                                 origin_primary_key = "URL", 
                                                                 origin_foreign_key = currentValuePropertyName)
+                    */
+                }
 
-                # sosa property value query
-                for p_url in selectSosaObsPropURLList:
-                    sosaPropValJSON = SPARQLQuery.sosaObsPropertyValueQuery(inplaceIRIList, p_url,
-                                                                                sparql_endpoint = sparql_endpoint,
-                                                                                doSameAs = False)
+                foreach (var propURI in sosaObsURIs)
+                {
+                    /*                    
+                    # sosa property value query
+                    for p_url in selectSosaObsPropURLList:
+                        sosaPropValJSON = SPARQLQuery.sosaObsPropertyValueQuery(inplaceIRIList, p_url,
+                                                                                    sparql_endpoint = sparql_endpoint,
+                                                                                    doSameAs = False)
 
-                    sosaTableName, _, _ = Json2Field.createMappingTableFromJSON(sosaPropValJSON, 
-                                                    keyPropertyName = "wikidataSub", 
-                                                    valuePropertyName = "o", 
-                                                    valuePropertyURL = p_url, 
-                                                    inputFeatureClassName = inputFeatureClassName, 
-                                                    keyPropertyFieldName = "URL", 
-                                                    isInverse = False, 
-                                                    isSubDivisionTable = False)
+                        sosaTableName, _, _ = Json2Field.createMappingTableFromJSON(sosaPropValJSON, 
+                                                        keyPropertyName = "wikidataSub", 
+                                                        valuePropertyName = "o", 
+                                                        valuePropertyURL = p_url, 
+                                                        inputFeatureClassName = inputFeatureClassName, 
+                                                        keyPropertyFieldName = "URL", 
+                                                        isInverse = False, 
+                                                        isSubDivisionTable = False)
 
-                    sosaRelationshipClassName = featureClassName + "_" + sosaTableName + "_RelClass"
-                    arcpy.CreateRelationshipClass_management(featureClassName, sosaTableName, 
-                                        sosaRelationshipClassName, "SIMPLE",
-                                        p_url, "features from Knowledge Graph",
-                                            "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL")
-
-            # if the user want the inverse properties
-            if isInverse == True:
-                inversePropertySelect = in_inverse_com_property.valueAsText
-                arcpy.AddMessage("LinkedDataPropertyEnrichGeneral.inversePropertyURLDict: {0}".format(
-                    LinkedDataPropertyEnrichGeneral.inversePropertyURLDict))
-                arcpy.AddMessage("inversePropertySelect: {0}".format(inversePropertySelect))
-
-                selectInversePropertyURLList = []
-                if inversePropertySelect is not None:
-                    inversePropertySplitList = re.split("[;]", inversePropertySelect.replace("'", ""))
-                    for propertyItem in inversePropertySplitList:
-
-                        selectInversePropertyURLList.append(
-                            LinkedDataPropertyEnrichGeneral.inversePropertyURLDict[propertyItem.split("\'")[1]])
-                    
-
-                    # send a SPARQL query to DBpedia endpoint to test whether the properties are InverseFunctionalProperty
-                    isInverseFuncnalPropertyJSON = SPARQLQuery.inverseFunctionalPropertyQuery(selectInversePropertyURLList,
-                                                                                    sparql_endpoint = sparql_endpoint)
-                    # isFuncnalPropertyJSON = isFuncnalPropertyJSONObj["results"]["bindings"]
-
-                    inverseFunctionalPropertySet = set()
-
-                    for jsonItem in isInverseFuncnalPropertyJSON:
-                        inverseFunctionalPropertyURL = jsonItem["property"]["value"]
-                        inverseFunctionalPropertySet.add(inverseFunctionalPropertyURL)
-
-                    arcpy.AddMessage("inverseFunctionalPropertySet: {0}".format(inverseFunctionalPropertySet))
-
-                    # get the value for each functionalProperty
-                    inverseFuncnalPropertyList = list(inverseFunctionalPropertySet)
-                    # add these inverseFunctionalProperty subject value to feature class table
-                    for inverseFunctionalProperty in inverseFuncnalPropertyList:
-                        inverseFunctionalPropertyJSON = SPARQLQuery.inversePropertyValueQuery(inplaceIRIList, 
-                                                                                                inverseFunctionalProperty,
-                                                                                                sparql_endpoint = sparql_endpoint,
-                                                                                                doSameAs = False)
-                        # functionalPropertyJSON = functionalPropertyJSONObj["results"]["bindings"]
-
-                        Json2Field.addFieldInTableByMapping(inverseFunctionalPropertyJSON, "wikidataSub", "o", inputFeatureClassName, "URL", inverseFunctionalProperty, True)
-
-                    selectInversePropertyURLSet = set(selectInversePropertyURLList)
-                    noFunctionalInversePropertySet = selectInversePropertyURLSet.difference(inverseFunctionalPropertySet)
-                    noFunctionalInversePropertyList = list(noFunctionalInversePropertySet)
-
-                    for noFunctionalInverseProperty in noFunctionalInversePropertyList:
-                        noFunctionalInversePropertyJSON = SPARQLQuery.inversePropertyValueQuery(inplaceIRIList, 
-                                                                                                noFunctionalInverseProperty,
-                                                                                                sparql_endpoint = sparql_endpoint,
-                                                                                                doSameAs = False)
-                        # create a seperate table to store one-to-many property-subject pair, return the created table name
-                        tableName, _, _ = Json2Field.createMappingTableFromJSON(noFunctionalInversePropertyJSON, "wikidataSub", "o", noFunctionalInverseProperty, inputFeatureClassName, "URL", True, False)
-                        # creat relationship class between the original feature class and the created table
-
-                        relationshipClassName = featureClassName + "_" + tableName + "_RelClass"
-                        arcpy.AddMessage("featureClassName: {0}".format(featureClassName))
-                        arcpy.AddMessage("tableName: {0}".format(tableName))
-                        arcpy.CreateRelationshipClass_management(featureClassName, tableName, relationshipClassName, "SIMPLE",
-                            noFunctionalInverseProperty, "features from wikidata",
+                        sosaRelationshipClassName = featureClassName + "_" + sosaTableName + "_RelClass"
+                        arcpy.CreateRelationshipClass_management(featureClassName, sosaTableName, 
+                                            sosaRelationshipClassName, "SIMPLE",
+                                            p_url, "features from Knowledge Graph",
                                                 "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL")
+                     */
+                }
+            }
 
-            return
-             */
+            if (inverseCheckBox.CheckedItems.Count > 0)
+            {
+                List<string> inverseURIs = new List<string>() { };
+                char[] delimiterChars = { '|' };
+
+                //Get rid of the name and isolate to just the URIs
+                foreach (var checkedItem in commonCheckBox.CheckedItems)
+                {
+                    string checkedVal = checkedItem.ToString();
+                    string checkedURI = checkedVal.Split(delimiterChars)[1].Trim();
+                    inverseURIs.Add(checkedURI);
+                }
+
+                //Determine which selected URIs are functional and create a function and non-functional list
+                JToken functionPropsResult = FunctionalPropertyQuery(inverseURIs, true);
+                List<string> functionProps = new List<string> { };
+                foreach (var result in functionPropsResult)
+                {
+                    functionProps.Add((string)result["property"]["value"]);
+                }
+                List<string> noFunctionProps = (List<string>)inverseURIs.Except(functionProps);
+
+                foreach (var propURI in functionProps)
+                {
+                    /*
+                    inverseFunctionalPropertyJSON = SPARQLQuery.inversePropertyValueQuery(inplaceIRIList, 
+                                                                                            inverseFunctionalProperty,
+                                                                                            sparql_endpoint = sparql_endpoint,
+                                                                                            doSameAs = False)
+                    # functionalPropertyJSON = functionalPropertyJSONObj["results"]["bindings"]
+
+                    Json2Field.addFieldInTableByMapping(inverseFunctionalPropertyJSON, "wikidataSub", "o", inputFeatureClassName, "URL", inverseFunctionalProperty, True)
+                    */
+                }
+
+                foreach (var propURI in noFunctionProps)
+                {
+                    /*
+                    noFunctionalInversePropertyJSON = SPARQLQuery.inversePropertyValueQuery(inplaceIRIList, 
+                                                                                            noFunctionalInverseProperty,
+                                                                                            sparql_endpoint = sparql_endpoint,
+                                                                                            doSameAs = False)
+                    # create a seperate table to store one-to-many property-subject pair, return the created table name
+                    tableName, _, _ = Json2Field.createMappingTableFromJSON(noFunctionalInversePropertyJSON, "wikidataSub", "o", noFunctionalInverseProperty, inputFeatureClassName, "URL", True, False)
+                    # creat relationship class between the original feature class and the created table
+
+                    relationshipClassName = featureClassName + "_" + tableName + "_RelClass"
+                    arcpy.AddMessage("featureClassName: {0}".format(featureClassName))
+                    arcpy.AddMessage("tableName: {0}".format(tableName))
+                    arcpy.CreateRelationshipClass_management(featureClassName, tableName, relationshipClassName, "SIMPLE",
+                        noFunctionalInverseProperty, "features from wikidata",
+                                            "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL")
+                    */
+                }
+            }
+        }
+
+        private JToken FunctionalPropertyQuery(List<string> properties, bool inverse=false)
+        {
+            string owlProp = (inverse) ? "owl:InverseFunctionalProperty": "owl:FunctionalProperty";
+
+            string funcQuery = "select ?property where { ?property a "+ owlProp+". VALUES ?property {";
+
+            foreach (string propURI in properties)
+            {
+                funcQuery += "<" + propURI + "> \n";
+            }
+
+            funcQuery += "}}";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
         }
     }
 }
