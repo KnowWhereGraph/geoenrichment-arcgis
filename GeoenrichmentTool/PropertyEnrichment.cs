@@ -57,7 +57,7 @@ namespace GeoenrichmentTool
             uriList = uris;
         }
 
-        private void EnrichData(object sender, EventArgs e)
+        private async void EnrichData(object sender, EventArgs e)
         {   
             if(commonCheckBox.CheckedItems.Count > 0)
             {
@@ -88,26 +88,18 @@ namespace GeoenrichmentTool
                 {
                     functionProps.Add((string)result["property"]["value"]);
                 }
-                List<string> noFunctionProps = (List<string>)commonURIs.Except(functionProps);
+                var noFunctionProps = commonURIs.Except(functionProps);
 
                 foreach(var propURI in functionProps)
                 {
-                    /*
-                    functionalPropertyJSON = SPARQLQuery.propertyValueQuery(inplaceIRIList, functionalProperty,
-                                                                            sparql_endpoint = sparql_endpoint,
-                                                                            doSameAs = False)
-
-                    Json2Field.addFieldInTableByMapping(functionalPropertyJSON, "wikidataSub", "o", inputFeatureClassName, "URL", functionalProperty, False)
-                    */
+                    JToken propertyVal = PropertyValueQuery(propURI, false);
+                    await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", false);
                 }
 
                 foreach (var propURI in noFunctionProps)
                 {
+                    JToken propertyVal = PropertyValueQuery(propURI, false);
                     /*
-                    noFunctionalPropertyJSON = SPARQLQuery.propertyValueQuery(inplaceIRIList, noFunctionalProperty,
-                                                                                sparql_endpoint = sparql_endpoint,
-                                                                                doSameAs = False)
-                    # noFunctionalPropertyJSON = noFunctionalPropertyJSONObj["results"]["bindings"]
                     # create a seperate table to store one-to-many property value, return the created table name
                     tableName, keyPropertyFieldName, currentValuePropertyName = Json2Field.createMappingTableFromJSON(noFunctionalPropertyJSON, "wikidataSub", "o", 
                                         noFunctionalProperty, inputFeatureClassName, "URL", False, False)
@@ -211,24 +203,16 @@ namespace GeoenrichmentTool
 
                 foreach (var propURI in functionProps)
                 {
+                    JToken propertyVal = InversePropertyValueQuery(propURI, false);
                     /*
-                    inverseFunctionalPropertyJSON = SPARQLQuery.inversePropertyValueQuery(inplaceIRIList, 
-                                                                                            inverseFunctionalProperty,
-                                                                                            sparql_endpoint = sparql_endpoint,
-                                                                                            doSameAs = False)
-                    # functionalPropertyJSON = functionalPropertyJSONObj["results"]["bindings"]
-
                     Json2Field.addFieldInTableByMapping(inverseFunctionalPropertyJSON, "wikidataSub", "o", inputFeatureClassName, "URL", inverseFunctionalProperty, True)
                     */
                 }
 
                 foreach (var propURI in noFunctionProps)
                 {
+                    JToken propertyVal = InversePropertyValueQuery(propURI, false);
                     /*
-                    noFunctionalInversePropertyJSON = SPARQLQuery.inversePropertyValueQuery(inplaceIRIList, 
-                                                                                            noFunctionalInverseProperty,
-                                                                                            sparql_endpoint = sparql_endpoint,
-                                                                                            doSameAs = False)
                     # create a seperate table to store one-to-many property-subject pair, return the created table name
                     tableName, _, _ = Json2Field.createMappingTableFromJSON(noFunctionalInversePropertyJSON, "wikidataSub", "o", noFunctionalInverseProperty, inputFeatureClassName, "URL", True, False)
                     # creat relationship class between the original feature class and the created table
@@ -258,6 +242,52 @@ namespace GeoenrichmentTool
             funcQuery += "}}";
 
             return GeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
+        }
+
+        private JToken PropertyValueQuery(string property, bool doSameAs = true)
+        {
+            string propValQuery = "";
+
+            if (doSameAs)
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?s owl:sameAs ?wikidataSub. ?s <" + property + "> ?o. VALUES ?wikidataSub {";
+            }
+            else
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?wikidataSub <" + property + "> ?o. VALUES ?wikidataSub {";
+            }
+
+            foreach(var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        private JToken InversePropertyValueQuery(string property, bool doSameAs = true)
+        {
+            string propValQuery = "";
+
+            if (doSameAs)
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?s owl:sameAs ?wikidataSub. ?o <" + property + "> ?s. VALUES ?wikidataSub {";
+            }
+            else
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?o <" + property + "> ?wikidataSub. VALUES ?wikidataSub {";
+            }
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
     }
 }
