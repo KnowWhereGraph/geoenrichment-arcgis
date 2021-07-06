@@ -204,9 +204,7 @@ namespace GeoenrichmentTool
                 foreach (var propURI in functionProps)
                 {
                     JToken propertyVal = InversePropertyValueQuery(propURI, false);
-                    /*
-                    Json2Field.addFieldInTableByMapping(inverseFunctionalPropertyJSON, "wikidataSub", "o", inputFeatureClassName, "URL", inverseFunctionalProperty, True)
-                    */
+                    await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", true);
                 }
 
                 foreach (var propURI in noFunctionProps)

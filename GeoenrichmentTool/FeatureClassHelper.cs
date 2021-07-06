@@ -7,6 +7,7 @@ using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -116,7 +117,7 @@ namespace GeoenrichmentTool
         {
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
-            List<string>[] keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
+            Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
             string currentValuePropertyName = "";
             char[] delimSharp = { '#' };
@@ -132,7 +133,7 @@ namespace GeoenrichmentTool
 
             string currentFieldName = (isInverse) ? "is_" + currentValuePropertyName + "_Of" : currentValuePropertyName;
 
-            if(IsFieldNameInTable(currentValuePropertyName,mainLayer).Result)
+            if(IsFieldNameInTable(currentValuePropertyName,mainLayer))
             {
                 Random gen = new Random();
                 currentFieldName = currentFieldName + gen.Next(999999).ToString();
@@ -142,48 +143,73 @@ namespace GeoenrichmentTool
 
             await AddField(mainLayer, currentFieldName, fieldType);
 
-            /*            
-            cursor = arcpy.UpdateCursor(inputFeatureClassName)
-            
-            for row in cursor:
-                currentKeyPropertyValue = row.getValue(keyPropertyFieldName)
-                if currentKeyPropertyValue in keyValueDict:
-                    propertyValue = Json2Field.dataTypeCast(keyValueDict[currentKeyPropertyValue], fieldType)
-                    # row[1] = propertyValue
-                    row.setValue(currentFieldName, propertyValue)
-                    cursor.updateRow(row)
-             */
+
+            await QueuedTask.Run(() =>
+            {
+                using (var tbl = mainLayer.GetTable())
+                {
+                    using (var datastore = tbl.GetDatastore())
+                    {
+                        if (datastore is UnknownDatastore) return;
+                        var geodatabase = datastore as Geodatabase;
+                        if (geodatabase == null) return;
+                        var queryDef = new QueryDef
+                        {
+                            Tables = mainLayer.Name
+                        };
+                        var result = new DataTable("results");
+                        using (var rowCursor = geodatabase.Evaluate(queryDef, false))
+                        {
+                            while (rowCursor.MoveNext())
+                            {
+                                using (Row row = rowCursor.Current)
+                                {
+                                    string rowValue = row[keyPropertyFieldName].ToString();
+
+                                    if (keyValueDict.ContainsKey(rowValue))
+                                    {
+                                        var propVal = keyValueDict[rowValue];
+                                        //propertyValue = Json2Field.dataTypeCast(keyValueDict[currentKeyPropertyValue], fieldType)
+                                        row[currentFieldName] = propVal;
+                                        row.Store();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
-        private static List<string>[] ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)
+        private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)
         {
-            List<string> valueList = new List<string>() { };
-            List<string> keyPropList = new List<string>() { };
+            Dictionary<string, string> keyPropList = new Dictionary<string, string>() { };
 
             foreach (var item in propertyValues)
             {
-                valueList.Add((string)item[valuePropertyName]["value"]);
-                keyPropList.Add((string)item[keyPropertyName]["value"]);
+                var kpnValue = (string)item[keyPropertyName]["value"];
+                var vpnValue = (string)item[valuePropertyName]["value"];
+                keyPropList[kpnValue] = vpnValue;
             }
 
-            return new List<string>[] { keyPropList, valueList };
+            return keyPropList;
         }
 
-        private static async Task<bool> IsFieldNameInTable(string fieldName, BasicFeatureLayer featureClass)
+        private static bool IsFieldNameInTable(string fieldName, BasicFeatureLayer featureClass)
         {
             IReadOnlyList<Field> fields = null;
-            await QueuedTask.Run(() =>
+            return QueuedTask.Run(() =>
             {
                 fields = featureClass.GetTable().GetDefinition().GetFields();
-            });
 
-            foreach(var field in fields)
-            {
-                if(field.Name == fieldName)
-                    return true;
-            }
+                foreach (var field in fields)
+                {
+                    if (field.Name == fieldName)
+                        return true;
+                }
 
-            return false;
+                return false;
+            }).Result;
         }
 
         /*
@@ -218,7 +244,7 @@ namespace GeoenrichmentTool
                 }
             }
 
-            return leader;
+            return UrlDataType2FieldDataType(leader);
         }
 
         private static string UrlDataType2FieldDataType(string urlDataType)

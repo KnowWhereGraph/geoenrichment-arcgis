@@ -23,6 +23,11 @@ namespace GeoenrichmentTool
         {
             InitializeComponent();
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
+            ///TODO::DEV CODE///
+            calculator.Text = "Contain";
+            Random gen = new Random();
+            className.Text = "layerName" + gen.Next(999999).ToString();
+            ////////////////////
             polyString = geo;
             PopulatePlaceTypes();
         }
