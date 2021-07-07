@@ -2,6 +2,7 @@
 using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Geoprocessing;
+using ArcGIS.Desktop.Editing;
 using ArcGIS.Desktop.Editing.Attributes;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
@@ -13,6 +14,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 namespace GeoenrichmentTool
 {
@@ -143,27 +145,28 @@ namespace GeoenrichmentTool
 
             await AddField(mainLayer, currentFieldName, fieldType);
 
+            string message = String.Empty;
+            bool modificationResult = false;
 
-            await QueuedTask.Run(() =>
-            {
-                using (var tbl = mainLayer.GetTable())
+            await QueuedTask.Run(() => {
+                using (var featureTable = mainLayer.GetTable())
                 {
-                    using (var datastore = tbl.GetDatastore())
-                    {
-                        if (datastore is UnknownDatastore) return;
-                        var geodatabase = datastore as Geodatabase;
-                        if (geodatabase == null) return;
-                        var queryDef = new QueryDef
+                    EditOperation editOperation = new EditOperation();
+                    editOperation.Callback(context => {
+                        QueryFilter openCutFilter = new QueryFilter { };
+
+                        using (RowCursor rowCursor = featureTable.Search(openCutFilter, false))
                         {
-                            Tables = mainLayer.Name
-                        };
-                        var result = new DataTable("results");
-                        using (var rowCursor = geodatabase.Evaluate(queryDef, false))
-                        {
+                            TableDefinition tableDefinition = featureTable.GetDefinition();
+
                             while (rowCursor.MoveNext())
                             {
                                 using (Row row = rowCursor.Current)
                                 {
+                                    // In order to update the Map and/or the attribute table.
+                                    // Has to be called before any changes are made to the row.
+                                    context.Invalidate(row);
+
                                     string rowValue = row[keyPropertyFieldName].ToString();
 
                                     if (keyValueDict.ContainsKey(rowValue))
@@ -171,14 +174,32 @@ namespace GeoenrichmentTool
                                         var propVal = keyValueDict[rowValue];
                                         //propertyValue = Json2Field.dataTypeCast(keyValueDict[currentKeyPropertyValue], fieldType)
                                         row[currentFieldName] = propVal;
-                                        row.Store();
                                     }
+
+                                    //After all the changes are done, persist it.
+                                    row.Store();
+
+                                    // Has to be called after the store too.
+                                    context.Invalidate(row);
                                 }
                             }
                         }
+                    }, featureTable);
+
+                    try
+                    {
+                        modificationResult = editOperation.Execute();
+                        if (!modificationResult) message = editOperation.ErrorMessage;
+                    }
+                    catch (GeodatabaseException exObj)
+                    {
+                        message = exObj.Message;
                     }
                 }
             });
+
+            if (!string.IsNullOrEmpty(message))
+                MessageBox.Show(message);
         }
 
         private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)
