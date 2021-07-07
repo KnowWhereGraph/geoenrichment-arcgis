@@ -97,12 +97,12 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateTable_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
-        public static async Task CreateRelationshipClass(string featureClassName, string tableName, string relationshipClassName, string forwardLabel, string backwardLabel)
+        public static async Task CreateRelationshipClass(string featureClassName, string tableName, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
         {
             List<object> arguments = new List<object>
             {
                 featureClassName, tableName, relationshipClassName, "SIMPLE", forwardLabel, backwardLabel, 
-                "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL"
+                "FORWARD", "ONE_TO_MANY", "NONE", "URL", foreignKey
             };
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateRelationshipClass_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
@@ -143,6 +143,105 @@ namespace GeoenrichmentTool
             });
 
             return uris;
+        }
+
+        /**
+         * Format GeoSPARQL query by given query_geo_wkt and type
+         * 
+         * geoQueryResult: a sparql query result json obj serialized as a list of dict()
+         *           SPARQL query like this:
+         *           select distinct ?place ?placeLabel ?placeFlatType ?wkt
+         *           where
+         *           {...}
+         * className: Name of feature layer class
+         * inPlaceType: the label of user spercified type IRI
+         * selectedURL: the user spercified type IRI
+         * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
+         **/
+        public static async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType = "", string selectedURL = "", bool isDirectInstance = false)
+        {
+            List<string> placeIRISet = new List<string>();
+            List<string[]> placeList = new List<string[]>();
+            //string geomType = "";
+
+            int index = 0;
+            foreach (var item in geoQueryResult)
+            {
+                /*
+                string wktLiteral = item["wkt"]["value"].ToString();
+                if(index == 0)
+                {
+                    geomType = GetShapeFromWKT(wktLiteral);
+                }
+                else
+                {
+                    if(wktLiteral!=geomType)
+                    {
+                        continue;
+                    }
+                }*/
+
+                string placeType = (item["placeFlatType"] != null) ? item["placeFlatType"]["value"].ToString() : "";
+                if (isDirectInstance)
+                {
+                    placeType = selectedURL;
+                }
+
+                string place = item["place"]["value"].ToString();
+                if (!placeIRISet.Contains(place))
+                {
+                    placeIRISet.Add(place);
+                    placeList.Add(new string[] { place, item["placeLabel"]["value"].ToString(), placeType, item["wkt"]["value"].ToString() });
+                }
+
+                index++;
+            }
+
+            if (placeList.Count != 0)
+            {
+                await FeatureClassHelper.CreatePolygonFeatureLayer(className);
+
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == className).FirstOrDefault() as BasicFeatureLayer;
+
+                if (fcLayer == null)
+                {
+                    MessageBox.Show($@"Unable to find {className} in the active map");
+                }
+                else
+                {
+                    await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
+                    await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
+                    await FeatureClassHelper.AddField(fcLayer, "Class", "TEXT");
+
+
+                    await QueuedTask.Run(() =>
+                    {
+                        InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor();
+
+                        foreach (string[] item in placeList)
+                        {
+                            RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
+                            IGeometryEngine geoEngine = GeometryEngine.Instance;
+                            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+                            Geometry geo = geoEngine.ImportFromWKT(0, item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", ""), sr);
+
+
+                            buff["URL"] = item[0];
+                            buff["Label"] = item[1];
+                            buff["Class"] = item[2];
+                            buff["Shape"] = geo;
+                            cursor.Insert(buff);
+                        }
+
+                        cursor.Dispose();
+
+                        MapView.Active.Redraw(false);
+
+                        //Save layer name to main list of active layers so other tools can access them
+                        GeoModule.Current.AddLayer(fcLayer);
+                    });
+                }
+            }
         }
 
         /*
@@ -324,7 +423,7 @@ namespace GeoenrichmentTool
             return new string[] { tableName, keyPropertyFieldName, currentValuePropertyName };
         }
 
-        private static string GetPropertyName(string valuePropertyURL) {
+        public static string GetPropertyName(string valuePropertyURL) {
             char[] delimSharp = { '#' };
             char[] delimSlash = { '/' };
             if (valuePropertyURL.Contains("#"))

@@ -115,7 +115,7 @@ namespace GeoenrichmentTool
 
                 var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
 
-                CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
+                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
 
                 //Enable the property enrichment tool since we have a layer for it to use
                 FrameworkApplication.State.Activate("kwg_query_layer_added");
@@ -167,105 +167,6 @@ namespace GeoenrichmentTool
             query += "}";
 
             return queryClass.SubmitQuery(query);
-        }
-
-        /**
-         * Format GeoSPARQL query by given query_geo_wkt and type
-         * 
-         * geoQueryResult: a sparql query result json obj serialized as a list of dict()
-         *           SPARQL query like this:
-         *           select distinct ?place ?placeLabel ?placeFlatType ?wkt
-         *           where
-         *           {...}
-         * className: Name of feature layer class
-         * inPlaceType: the label of user spercified type IRI
-         * selectedURL: the user spercified type IRI
-         * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
-         **/
-        private async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType, string selectedURL, bool isDirectInstance=false)
-        {
-            List<string> placeIRISet = new List<string>();
-            List<string[]> placeList = new List<string[]>();
-            //string geomType = "";
-
-            int index = 0;
-            foreach (var item in geoQueryResult)
-            {
-                /*
-                string wktLiteral = item["wkt"]["value"].ToString();
-                if(index == 0)
-                {
-                    geomType = GetShapeFromWKT(wktLiteral);
-                }
-                else
-                {
-                    if(wktLiteral!=geomType)
-                    {
-                        continue;
-                    }
-                }*/
-
-                string placeType = (item["placeFlatType"] != null) ? item["placeFlatType"]["value"].ToString() : "";
-                if (isDirectInstance)
-                {
-                    placeType = selectedURL;
-                }
-
-                string place = item["place"]["value"].ToString();
-                if(!placeIRISet.Contains(place))
-                {
-                    placeIRISet.Add(place);
-                    placeList.Add(new string[] { place, item["placeLabel"]["value"].ToString(), placeType, item["wkt"]["value"].ToString() });
-                }
-
-                index++;
-            }
-
-            if(placeList.Count != 0)
-            {
-                await FeatureClassHelper.CreatePolygonFeatureLayer(className);
-
-                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == className).FirstOrDefault() as BasicFeatureLayer;
-
-                if (fcLayer == null)
-                {
-                    MessageBox.Show($@"Unable to find {className} in the active map");
-                }
-                else
-                {
-                    await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
-                    await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
-                    await FeatureClassHelper.AddField(fcLayer, "Class", "TEXT");
-
-                    
-                    await QueuedTask.Run(() =>
-                    {
-                        InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor();
-
-                        foreach (string[] item in placeList)
-                        {
-                            RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
-                            IGeometryEngine geoEngine = GeometryEngine.Instance;
-                            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
-                            Geometry geo = geoEngine.ImportFromWKT(0,item[3].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", ""), sr);
-
-
-                            buff["URL"] = item[0];
-                            buff["Label"] = item[1];
-                            buff["Class"] = item[2];
-                            buff["Shape"] = geo;
-                            cursor.Insert(buff);
-                        }
-
-                        cursor.Dispose();
-
-                        MapView.Active.Redraw(false);
-
-                        //Save layer name to main list of active layers so other tools can access them
-                        GeoModule.Current.AddLayer(fcLayer);
-                    });
-                }
-            }
         }
 
         private string GetShapeFromWKT(string WKT)

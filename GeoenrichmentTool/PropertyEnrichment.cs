@@ -1,4 +1,5 @@
-﻿using ArcGIS.Desktop.Mapping;
+﻿using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -114,73 +115,39 @@ namespace GeoenrichmentTool
 
                     await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, tableName, relationshipClassName, propURI, "features from Knowledge Graph");
 
-                    /*
-                    # check whether the object of propertyURL is geo-entity
-                    # if it is create new feature class
-                    # for propertyURL in selectPropertyURLList:
-                    propertyURL = noFunctionalProperty
-                    geoCheckJSON = SPARQLQuery.checkGeoPropertyquery(inplaceIRIList, propertyURL, 
-                                                        sparql_endpoint = sparql_endpoint,
-                                                        doSameAs = False)
-                    geometry_cnt = int(geoCheckJSON[0]["cnt"]["value"])
-                    if geometry_cnt > 0:
-                        # OK, propertyURL is a property whose value is geo-entities
-                        # get their geometries, create a feature layer
-                        GeoQueryResult = SPARQLQuery.twoDegreePropertyValueWKTquery(inplaceIRIList, propertyURL, 
-                                                        sparql_endpoint = sparql_endpoint,
-                                                        doSameAs = False)
+                    JToken geoCheckJSON = CheckGeoPropertyQuery(propURI, false);
 
-                        in_place_IRI_desc = arcpy.Describe(in_place_IRI)
+                    if((int)geoCheckJSON["cnt"]["value"] > 0)
+                    {
+                        JToken geoQueryResult = TwoDegreePropertyValueWKTquery(propURI);
 
-                        arcpy.AddMessage("input feature class: {}".format(in_place_IRI_desc.name))
-                        arcpy.AddMessage("input feature class: {}".format(in_place_IRI_desc.path))
+                        string propName = FeatureClassHelper.GetPropertyName(propURI);
 
-                        prop_name = UTIL.getPropertyName(propertyURL)
+                        string outFeatureClassName = mainLayer.Name + "_" + propName;
+                        string outFeatureClassPath = "";
+                        await QueuedTask.Run(() =>
+                        {
+                            outFeatureClassPath = mainLayer.GetPath().ToString() + outFeatureClassName;
+                        });
 
-                        out_geo_feature_class_name = "{}_{}".format(featureClassName, prop_name)
-                        out_geo_feature_class_path = os.path.join(in_place_IRI_desc.path, out_geo_feature_class_name)
-                        Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult = GeoQueryResult, 
-                                                        out_path = out_geo_feature_class_path)
+                        FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassPath);
 
-                        out_relationshipClassName = out_geo_feature_class_name + "_" + tableName + "_RelClass"
-                        arcpy.CreateRelationshipClass_management(origin_table = out_geo_feature_class_name, 
-                                                                destination_table = tableName, 
-                                                                out_relationship_class = out_relationshipClassName, 
-                                                                relationship_type = "SIMPLE",
-                                                                forward_label = "is " + noFunctionalProperty + " Of", 
-                                                                backward_label = "features from Knowledge Graph",
-                                                                message_direction = "FORWARD", 
-                                                                cardinality = "ONE_TO_MANY", 
-                                                                attributed = "NONE", 
-                                                                origin_primary_key = "URL", 
-                                                                origin_foreign_key = currentValuePropertyName)
-                    */
+                        string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
+
+                        await FeatureClassHelper.CreateRelationshipClass(outFeatureClassName, tableName, outRelationshipClassName, "is " + propURI + " Of", "features from Knowledge Graph", currentValuePropertyName);
+                    }
                 }
 
                 foreach (var propURI in sosaObsURIs)
                 {
-                    /*                    
-                    # sosa property value query
-                    for p_url in selectSosaObsPropURLList:
-                        sosaPropValJSON = SPARQLQuery.sosaObsPropertyValueQuery(inplaceIRIList, p_url,
-                                                                                    sparql_endpoint = sparql_endpoint,
-                                                                                    doSameAs = False)
+                    JToken propertyVal = SosaObsPropertyValueQuery(propURI);
 
-                        sosaTableName, _, _ = Json2Field.createMappingTableFromJSON(sosaPropValJSON, 
-                                                        keyPropertyName = "wikidataSub", 
-                                                        valuePropertyName = "o", 
-                                                        valuePropertyURL = p_url, 
-                                                        inputFeatureClassName = inputFeatureClassName, 
-                                                        keyPropertyFieldName = "URL", 
-                                                        isInverse = False, 
-                                                        isSubDivisionTable = False)
+                    string[] tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                    string sosaTableName = tableResult[0];
 
-                        sosaRelationshipClassName = featureClassName + "_" + sosaTableName + "_RelClass"
-                        arcpy.CreateRelationshipClass_management(featureClassName, sosaTableName, 
-                                            sosaRelationshipClassName, "SIMPLE",
-                                            p_url, "features from Knowledge Graph",
-                                                "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL")
-                     */
+                    string sosaRelationshipClassName = mainLayer.Name + "_" + sosaTableName + "_RelClass";
+
+                    await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, sosaTableName, sosaRelationshipClassName, propURI, "features from Knowledge Graph");
                 }
             }
 
@@ -267,6 +234,21 @@ namespace GeoenrichmentTool
             return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
+        private JToken SosaObsPropertyValueQuery(string property)
+        {
+            string propValQuery = "select ?wikidataSub ?o where { ?wikidataSub sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. " +
+                "?obs sosa:observedProperty <" + property + "> . ?obs sosa:hasSimpleResult ?o. VALUES ?wikidataSub {";
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
         private JToken InversePropertyValueQuery(string property, bool doSameAs = true)
         {
             string propValQuery = "";
@@ -279,6 +261,57 @@ namespace GeoenrichmentTool
             {
                 propValQuery = "select ?wikidataSub ?o where { ?o <" + property + "> ?wikidataSub. VALUES ?wikidataSub {";
             }
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        private JToken CheckGeoPropertyQuery(string propertyURL, bool doSameAs = true)
+        {
+            string propValQuery = "select (count(?geometry) as ?cnt) where {";
+
+            if(doSameAs)
+            {
+                propValQuery += " ?s owl:sameAs ?wikidataSub. ?s <" + propertyURL + "> ?place.";
+            }
+            else
+            {
+                propValQuery += " ?wikidataSub <" + propertyURL + "> ?place.";
+            }
+
+            propValQuery += " ?place geo:hasGeometry ?geometry . VALUES ?wikidataSub {";
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        private JToken TwoDegreePropertyValueWKTquery(string propertyURL, bool doSameAs = true)
+        {
+            string propValQuery = "select distinct ?place ?placeLabel ?placeFlatType ?wkt where {";
+
+            if (doSameAs)
+            {
+                propValQuery += " ?s owl:sameAs ?wikidataSub. ?s <" + propertyURL + "> ?place.";
+            }
+            else
+            {
+                propValQuery += " ?wikidataSub <" + propertyURL + "> ?place.";
+            }
+
+            propValQuery += " ?place geo:hasGeometry ?geometry . ?place rdfs:label ?placeLabel . " +
+                "?geometry geo:asWKT ?wkt. ?place rdf:type ?placeFlatType. VALUES ?wikidataSub {";
 
             foreach (var uri in uriList)
             {
