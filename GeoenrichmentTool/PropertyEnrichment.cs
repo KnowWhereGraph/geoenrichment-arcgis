@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using ArcGIS.Desktop.Mapping;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -58,8 +59,12 @@ namespace GeoenrichmentTool
         }
 
         private async void EnrichData(object sender, EventArgs e)
-        {   
-            if(commonCheckBox.CheckedItems.Count > 0)
+        {
+            Close();
+
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+            if (commonCheckBox.CheckedItems.Count > 0)
             {
                 List<string> commonURIs = new List<string>() { };
                 List<string> sosaObsURIs = new List<string>() { };
@@ -99,17 +104,17 @@ namespace GeoenrichmentTool
                 foreach (var propURI in noFunctionProps)
                 {
                     JToken propertyVal = PropertyValueQuery(propURI, false);
-                    /*
-                    # create a seperate table to store one-to-many property value, return the created table name
-                    tableName, keyPropertyFieldName, currentValuePropertyName = Json2Field.createMappingTableFromJSON(noFunctionalPropertyJSON, "wikidataSub", "o", 
-                                        noFunctionalProperty, inputFeatureClassName, "URL", False, False)
-                    # creat relationship class between the original feature class and the created table
-                    
-                    relationshipClassName = featureClassName + "_" + tableName + "_RelClass"
-                    arcpy.CreateRelationshipClass_management(featureClassName, tableName, relationshipClassName, "SIMPLE",
-                        noFunctionalProperty, "features from Knowledge Graph",
-                                            "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL")
 
+                    string[] tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                    string tableName = tableResult[0];
+                    string keyPropertyFieldName = tableResult[1];
+                    string currentValuePropertyName = tableResult[2];
+
+                    string relationshipClassName = mainLayer.Name + "_" + tableName + "_RelClass";
+
+                    await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, tableName, relationshipClassName, propURI, "features from Knowledge Graph");
+
+                    /*
                     # check whether the object of propertyURL is geo-entity
                     # if it is create new feature class
                     # for propertyURL in selectPropertyURLList:
@@ -210,18 +215,15 @@ namespace GeoenrichmentTool
                 foreach (var propURI in noFunctionProps)
                 {
                     JToken propertyVal = InversePropertyValueQuery(propURI, false);
-                    /*
-                    # create a seperate table to store one-to-many property-subject pair, return the created table name
-                    tableName, _, _ = Json2Field.createMappingTableFromJSON(noFunctionalInversePropertyJSON, "wikidataSub", "o", noFunctionalInverseProperty, inputFeatureClassName, "URL", True, False)
-                    # creat relationship class between the original feature class and the created table
 
-                    relationshipClassName = featureClassName + "_" + tableName + "_RelClass"
-                    arcpy.AddMessage("featureClassName: {0}".format(featureClassName))
-                    arcpy.AddMessage("tableName: {0}".format(tableName))
-                    arcpy.CreateRelationshipClass_management(featureClassName, tableName, relationshipClassName, "SIMPLE",
-                        noFunctionalInverseProperty, "features from wikidata",
-                                            "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL")
-                    */
+                    string[] tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
+                    string tableName = tableResult[0];
+                    string keyPropertyFieldName = tableResult[1];
+                    string currentValuePropertyName = tableResult[2];
+
+                    string relationshipClassName = mainLayer.Name + "_" + tableName + "_RelClass";
+
+                    await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, tableName, relationshipClassName, propURI, "features from wikidata");
                 }
             }
         }

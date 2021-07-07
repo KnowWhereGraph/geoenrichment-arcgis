@@ -69,6 +69,45 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
+        public static async Task AddField(Table geoTable, string fieldName, string fieldType)
+        {
+            List<object> arguments = new List<object>
+            {
+                // name of table in geodatabase
+                geoTable,
+                // name of the data field
+                fieldName,
+                // type of data field
+                fieldType
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
+
+        public static async Task CreateTable(string tableName)
+        {
+            List<object> arguments = new List<object>
+            {
+                // store the results in the default geodatabase
+                CoreModule.CurrentProject.DefaultGeodatabasePath,
+                // name of the table
+                tableName
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateTable_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
+
+        public static async Task CreateRelationshipClass(string featureClassName, string tableName, string relationshipClassName, string forwardLabel, string backwardLabel)
+        {
+            List<object> arguments = new List<object>
+            {
+                featureClassName, tableName, relationshipClassName, "SIMPLE", forwardLabel, backwardLabel, 
+                "FORWARD", "ONE_TO_MANY", "NONE", "URL", "URL"
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateRelationshipClass_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
+
         public static async Task<List<string>> GetURIs(BasicFeatureLayer featLayer)
         {
             List<string> uris = new List<string>() { };
@@ -121,21 +160,11 @@ namespace GeoenrichmentTool
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
-            string currentValuePropertyName = "";
-            char[] delimSharp = { '#' };
-            char[] delimSlash = { '/' };
-            if(valuePropertyURL.Contains("#"))
-            {
-                currentValuePropertyName = valuePropertyURL.Split(delimSharp)[1];
-            }
-            else
-            {
-                currentValuePropertyName = valuePropertyURL.Split(delimSlash)[1];
-            }
+            string currentValuePropertyName = GetPropertyName(valuePropertyURL);
 
             string currentFieldName = (isInverse) ? "is_" + currentValuePropertyName + "_Of" : currentValuePropertyName;
 
-            if(IsFieldNameInTable(currentValuePropertyName,mainLayer))
+            if (IsFieldNameInTable(currentValuePropertyName, mainLayer))
             {
                 Random gen = new Random();
                 currentFieldName = currentFieldName + gen.Next(999999).ToString();
@@ -202,6 +231,112 @@ namespace GeoenrichmentTool
                 MessageBox.Show(message);
         }
 
+        /*
+        # according to jsonBindingObject, create a sperate table to store the nofunctional property-value pairs 
+        # OR store the transtive "isPartOf" relationship between location and its subDivision
+        # return the name of the table without the full path
+        # isInverse: Boolean variable indicates whether the value we get is the subject value or object value of valuePropertyURL
+        # isSubDivisionTable: Boolean variable indicates whether the current table store the value of subdivision for the original location
+         */
+        public static async Task<string[]> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
+        {
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+            Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
+
+            string featureClassName = mainLayer.Name;
+
+            string currentValuePropertyName = GetPropertyName(valuePropertyURL);
+
+            //currentValuePropertyName = arcpy.ValidateTableName(currentValuePropertyName)
+            if (isInverse)
+                currentValuePropertyName = "is_" + currentValuePropertyName + "_Of";
+            if (isSubDivisionTable)
+                currentValuePropertyName = "subDivisionIRI";
+
+            //if outputLocation.endswith(".gdb"):
+            string tableName = featureClassName + "_" + keyPropertyFieldName + "_" + currentValuePropertyName;
+            /*
+            else:
+                lastIndexOFshp = featureClassName.rfind(".")
+                featureClassName = featureClassName[:lastIndexOFshp]
+
+                tableName =  featureClassName + "_" + keyPropertyFieldName + "_" + currentValuePropertyName + ".dbf"
+            */
+
+            var datastore = mainLayer.GetTable().GetDatastore();
+            var geodatabase = datastore as Geodatabase;
+            if (DoesTableNameExist(geodatabase, tableName))
+            {
+                Random gen = new Random();
+                tableName = tableName + gen.Next(999999).ToString();
+            }
+
+            await CreateTable(tableName);
+            var queryDef = new QueryDef
+            {
+                Tables = tableName
+            };
+            Table propertyTable = geodatabase.OpenQueryTable(new QueryTableDescription(queryDef));
+            await AddField(propertyTable, keyPropertyFieldName, "TEXT");
+
+            string valuePropertyFieldType = DetermineFieldDataType(jsonBindingObject, valuePropertyName);
+            await AddField(propertyTable, valuePropertyName, valuePropertyFieldType);
+
+            string message = String.Empty;
+            bool creationResult = false;
+            EditOperation editOperation = new EditOperation();
+
+            await QueuedTask.Run(() => {
+                //declare the callback here. We are not executing it ~yet~
+                editOperation.Callback(context => {
+                    using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
+                    {
+                        foreach (var item in keyValueDict)
+                        {
+                            rowBuffer[keyPropertyFieldName] = item.Key;
+                            rowBuffer[currentValuePropertyName] = item.Value;
+                            using (Row row = propertyTable.CreateRow(rowBuffer))
+                            {
+                                // To Indicate that the attribute table has to be updated.
+                                context.Invalidate(row);
+                            }
+                        }
+                    }
+                }, propertyTable);
+
+                try
+                {
+                    creationResult = editOperation.Execute();
+                    if (!creationResult) message = editOperation.ErrorMessage;
+                }
+                catch (GeodatabaseException exObj)
+                {
+                    message = exObj.Message;
+                }
+            });
+
+            if (!string.IsNullOrEmpty(message))
+                MessageBox.Show(message);
+
+            MapView.Active.Redraw(false);
+
+            return new string[] { tableName, keyPropertyFieldName, currentValuePropertyName };
+        }
+
+        private static string GetPropertyName(string valuePropertyURL) {
+            char[] delimSharp = { '#' };
+            char[] delimSlash = { '/' };
+            if (valuePropertyURL.Contains("#"))
+            {
+                return valuePropertyURL.Split(delimSharp)[1];
+            }
+            else
+            {
+                return valuePropertyURL.Split(delimSlash)[1];
+            }
+        }
+
         private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)
         {
             Dictionary<string, string> keyPropList = new Dictionary<string, string>() { };
@@ -231,6 +366,21 @@ namespace GeoenrichmentTool
 
                 return false;
             }).Result;
+        }
+
+        private static bool DoesTableNameExist(Geodatabase geodatabase, string tableName)
+        {
+            try
+            {
+                TableDefinition tableDefinition = geodatabase.GetDefinition<TableDefinition>(tableName);
+                tableDefinition.Dispose();
+                return true;
+            }
+            catch
+            {
+                // GetDefinition throws an exception if the definition doesn't exist
+                return false;
+            }
         }
 
         /*
@@ -322,5 +472,7 @@ namespace GeoenrichmentTool
                 return "string";
             }
         }
+
+        
     }
 }
