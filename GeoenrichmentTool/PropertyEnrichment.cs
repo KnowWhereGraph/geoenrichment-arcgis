@@ -106,7 +106,11 @@ namespace GeoenrichmentTool
                 {
                     JToken propertyVal = PropertyValueQuery(propURI, false);
 
-                    string[] tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                    string[] tableResult = null;
+                    await QueuedTask.Run(() =>
+                    {
+                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                    });
                     string tableName = tableResult[0];
                     string keyPropertyFieldName = tableResult[1];
                     string currentValuePropertyName = tableResult[2];
@@ -117,7 +121,7 @@ namespace GeoenrichmentTool
 
                     JToken geoCheckJSON = CheckGeoPropertyQuery(propURI, false);
 
-                    if((int)geoCheckJSON["cnt"]["value"] > 0)
+                    if((int)geoCheckJSON[0]["cnt"]["value"] > 0)
                     {
                         JToken geoQueryResult = TwoDegreePropertyValueWKTquery(propURI);
 
@@ -142,7 +146,11 @@ namespace GeoenrichmentTool
                 {
                     JToken propertyVal = SosaObsPropertyValueQuery(propURI);
 
-                    string[] tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                    string[] tableResult = null;
+                    await QueuedTask.Run(() =>
+                    {
+                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                    });
                     string sosaTableName = tableResult[0];
 
                     string sosaRelationshipClassName = mainLayer.Name + "_" + sosaTableName + "_RelClass";
@@ -183,7 +191,11 @@ namespace GeoenrichmentTool
                 {
                     JToken propertyVal = InversePropertyValueQuery(propURI, false);
 
-                    string[] tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
+                    string[] tableResult = null;
+                    await QueuedTask.Run(() =>
+                    {
+                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
+                    });
                     string tableName = tableResult[0];
                     string keyPropertyFieldName = tableResult[1];
                     string currentValuePropertyName = tableResult[2];

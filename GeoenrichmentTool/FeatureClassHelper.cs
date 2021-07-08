@@ -69,7 +69,7 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
-        public static async Task AddField(Table geoTable, string fieldName, string fieldType)
+        public static async Task AddField(string geoTable, string fieldName, string fieldType)
         {
             List<object> arguments = new List<object>
             {
@@ -82,6 +82,10 @@ namespace GeoenrichmentTool
             };
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+            if (result.IsFailed)
+            {
+                MessageBox.Show("Unable to modify schema of category assignment table in project workspace", "Category Assignments");
+            }
         }
 
         public static async Task CreateTable(string tableName)
@@ -372,15 +376,12 @@ namespace GeoenrichmentTool
             }
 
             await CreateTable(tableName);
-            var queryDef = new QueryDef
-            {
-                Tables = tableName
-            };
-            Table propertyTable = geodatabase.OpenQueryTable(new QueryTableDescription(queryDef));
-            await AddField(propertyTable, keyPropertyFieldName, "TEXT");
+            //Table propertyTable = geodatabase.OpenDataset<Table>(tableName);
+
+            await AddField(tableName, keyPropertyFieldName, "TEXT");
 
             string valuePropertyFieldType = DetermineFieldDataType(jsonBindingObject, valuePropertyName);
-            await AddField(propertyTable, valuePropertyName, valuePropertyFieldType);
+            await AddField(tableName, valuePropertyName, valuePropertyFieldType);
 
             string message = String.Empty;
             bool creationResult = false;
@@ -388,31 +389,31 @@ namespace GeoenrichmentTool
 
             await QueuedTask.Run(() => {
                 //declare the callback here. We are not executing it ~yet~
-                editOperation.Callback(context => {
-                    using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
-                    {
-                        foreach (var item in keyValueDict)
-                        {
-                            rowBuffer[keyPropertyFieldName] = item.Key;
-                            rowBuffer[currentValuePropertyName] = item.Value;
-                            using (Row row = propertyTable.CreateRow(rowBuffer))
-                            {
-                                // To Indicate that the attribute table has to be updated.
-                                context.Invalidate(row);
-                            }
-                        }
-                    }
-                }, propertyTable);
+                //editOperation.Callback(context => {
+                //    using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
+                //    {
+                //        foreach (var item in keyValueDict)
+                //        {
+                //            rowBuffer[keyPropertyFieldName] = item.Key;
+                //            rowBuffer[currentValuePropertyName] = item.Value;
+                //            using (Row row = propertyTable.CreateRow(rowBuffer))
+                //            {
+                //                // To Indicate that the attribute table has to be updated.
+                //                context.Invalidate(row);
+                //            }
+                //        }
+                //    }
+                //}, propertyTable);
 
-                try
-                {
-                    creationResult = editOperation.Execute();
-                    if (!creationResult) message = editOperation.ErrorMessage;
-                }
-                catch (GeodatabaseException exObj)
-                {
-                    message = exObj.Message;
-                }
+                //try
+                //{
+                //    creationResult = editOperation.Execute();
+                //    if (!creationResult) message = editOperation.ErrorMessage;
+                //}
+                //catch (GeodatabaseException exObj)
+                //{
+                //    message = exObj.Message;
+                //}
             });
 
             if (!string.IsNullOrEmpty(message))
