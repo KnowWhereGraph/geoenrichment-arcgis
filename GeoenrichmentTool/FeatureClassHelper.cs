@@ -54,6 +54,21 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateFeatureclass_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
+        public static async Task<string> CreateTable(string tableName)
+        {
+            List<object> arguments = new List<object>
+            {
+                // store the results in the default geodatabase
+                CoreModule.CurrentProject.DefaultGeodatabasePath,
+                // name of the table
+                tableName
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateTable_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+
+            return result.ReturnValue;
+        }
+
         public static async Task AddField(BasicFeatureLayer featureLayer, string fieldName, string fieldType)
         {
             List<object> arguments = new List<object>
@@ -82,23 +97,6 @@ namespace GeoenrichmentTool
             };
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
-            if (result.IsFailed)
-            {
-                MessageBox.Show("Unable to modify schema of category assignment table in project workspace", "Category Assignments");
-            }
-        }
-
-        public static async Task CreateTable(string tableName)
-        {
-            List<object> arguments = new List<object>
-            {
-                // store the results in the default geodatabase
-                CoreModule.CurrentProject.DefaultGeodatabasePath,
-                // name of the table
-                tableName
-            };
-
-            IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateTable_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
         public static async Task CreateRelationshipClass(string featureClassName, string tableName, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
@@ -375,45 +373,47 @@ namespace GeoenrichmentTool
                 tableName = tableName + gen.Next(999999).ToString();
             }
 
-            await CreateTable(tableName);
-            //Table propertyTable = geodatabase.OpenDataset<Table>(tableName);
+            string propertyTableName = CreateTable(tableName).Result;
 
-            await AddField(tableName, keyPropertyFieldName, "TEXT");
+            await AddField(propertyTableName, keyPropertyFieldName, "TEXT");
 
             string valuePropertyFieldType = DetermineFieldDataType(jsonBindingObject, valuePropertyName);
-            await AddField(tableName, valuePropertyName, valuePropertyFieldType);
+            await AddField(propertyTableName, valuePropertyName, valuePropertyFieldType);
 
             string message = String.Empty;
             bool creationResult = false;
             EditOperation editOperation = new EditOperation();
 
             await QueuedTask.Run(() => {
-                //declare the callback here. We are not executing it ~yet~
-                //editOperation.Callback(context => {
-                //    using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
-                //    {
-                //        foreach (var item in keyValueDict)
-                //        {
-                //            rowBuffer[keyPropertyFieldName] = item.Key;
-                //            rowBuffer[currentValuePropertyName] = item.Value;
-                //            using (Row row = propertyTable.CreateRow(rowBuffer))
-                //            {
-                //                // To Indicate that the attribute table has to be updated.
-                //                context.Invalidate(row);
-                //            }
-                //        }
-                //    }
-                //}, propertyTable);
+                using (var propertyTable = geodatabase.OpenDataset<Table>(tableName))
+                {
+                    editOperation.Callback(context =>
+                    {
+                        using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
+                        {
+                            foreach (var item in keyValueDict)
+                            {
+                                rowBuffer[keyPropertyFieldName] = item.Key;
+                                rowBuffer[currentValuePropertyName] = item.Value;
+                                using (Row row = propertyTable.CreateRow(rowBuffer))
+                                {
+                                // To Indicate that the attribute table has to be updated.
+                                context.Invalidate(row);
+                                }
+                            }
+                        }
+                    }, propertyTable);
 
-                //try
-                //{
-                //    creationResult = editOperation.Execute();
-                //    if (!creationResult) message = editOperation.ErrorMessage;
-                //}
-                //catch (GeodatabaseException exObj)
-                //{
-                //    message = exObj.Message;
-                //}
+                    try
+                    {
+                        creationResult = editOperation.Execute();
+                        if (!creationResult) message = editOperation.ErrorMessage;
+                    }
+                    catch (GeodatabaseException exObj)
+                    {
+                        message = exObj.Message;
+                    }
+                }
             });
 
             if (!string.IsNullOrEmpty(message))
