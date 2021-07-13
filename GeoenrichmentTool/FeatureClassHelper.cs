@@ -84,7 +84,7 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
-        public static async Task AddField(string geoTable, string fieldName, string fieldType)
+        public static async Task AddField(Table geoTable, string fieldName, string fieldType)
         {
             List<object> arguments = new List<object>
             {
@@ -373,46 +373,46 @@ namespace GeoenrichmentTool
                 tableName = tableName + gen.Next(999999).ToString();
             }
 
-            string propertyTableName = CreateTable(tableName).Result;
+            await CreateTable(tableName);
+            var propertyTable = geodatabase.OpenDataset<Table>(tableName);
 
-            await AddField(propertyTableName, keyPropertyFieldName, "TEXT");
+            await Project.Current.SaveEditsAsync();
+
+            await AddField(propertyTable, keyPropertyFieldName, "TEXT");
 
             string valuePropertyFieldType = DetermineFieldDataType(jsonBindingObject, valuePropertyName);
-            await AddField(propertyTableName, valuePropertyName, valuePropertyFieldType);
+            await AddField(propertyTable, currentValuePropertyName, valuePropertyFieldType);
 
             string message = String.Empty;
             bool creationResult = false;
             EditOperation editOperation = new EditOperation();
 
             await QueuedTask.Run(() => {
-                using (var propertyTable = geodatabase.OpenDataset<Table>(tableName))
+                editOperation.Callback(context =>
                 {
-                    editOperation.Callback(context =>
+                    using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
                     {
-                        using (RowBuffer rowBuffer = propertyTable.CreateRowBuffer())
+                        foreach (var item in keyValueDict)
                         {
-                            foreach (var item in keyValueDict)
+                            rowBuffer[keyPropertyFieldName] = item.Key;
+                            rowBuffer[currentValuePropertyName] = item.Value;
+                            using (Row row = propertyTable.CreateRow(rowBuffer))
                             {
-                                rowBuffer[keyPropertyFieldName] = item.Key;
-                                rowBuffer[currentValuePropertyName] = item.Value;
-                                using (Row row = propertyTable.CreateRow(rowBuffer))
-                                {
                                 // To Indicate that the attribute table has to be updated.
                                 context.Invalidate(row);
-                                }
                             }
                         }
-                    }, propertyTable);
+                    }
+                }, propertyTable);
 
-                    try
-                    {
-                        creationResult = editOperation.Execute();
-                        if (!creationResult) message = editOperation.ErrorMessage;
-                    }
-                    catch (GeodatabaseException exObj)
-                    {
-                        message = exObj.Message;
-                    }
+                try
+                {
+                    creationResult = editOperation.Execute();
+                    if (!creationResult) message = editOperation.ErrorMessage;
+                }
+                catch (GeodatabaseException exObj)
+                {
+                    message = exObj.Message;
                 }
             });
 
@@ -429,11 +429,11 @@ namespace GeoenrichmentTool
             char[] delimSlash = { '/' };
             if (valuePropertyURL.Contains("#"))
             {
-                return valuePropertyURL.Split(delimSharp)[1];
+                return valuePropertyURL.Split(delimSharp).Last();
             }
             else
             {
-                return valuePropertyURL.Split(delimSlash)[1];
+                return valuePropertyURL.Split(delimSlash).Last();
             }
         }
 
