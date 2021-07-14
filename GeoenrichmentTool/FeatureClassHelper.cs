@@ -54,7 +54,7 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateFeatureclass_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
-        public static async Task<string> CreateTable(string tableName)
+        public static async Task CreateTable(string tableName)
         {
             List<object> arguments = new List<object>
             {
@@ -65,8 +65,18 @@ namespace GeoenrichmentTool
             };
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("CreateTable_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
 
-            return result.ReturnValue;
+        public static string ValidateTableName(string tableName)
+        {
+            char[] invalids = { '`', '~', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '|', ',', '<', '>', '?', '/', '{', '}', '.', '!', '\'', '[', ']', ':', ';' };
+
+            foreach(char c in invalids)
+            {
+                tableName = tableName.Replace(c, '_');
+            }
+
+            return tableName;
         }
 
         public static async Task AddField(BasicFeatureLayer featureLayer, string fieldName, string fieldType)
@@ -348,8 +358,7 @@ namespace GeoenrichmentTool
             string featureClassName = mainLayer.Name;
 
             string currentValuePropertyName = GetPropertyName(valuePropertyURL);
-
-            //currentValuePropertyName = arcpy.ValidateTableName(currentValuePropertyName)
+            currentValuePropertyName = ValidateTableName(currentValuePropertyName);
             if (isInverse)
                 currentValuePropertyName = "is_" + currentValuePropertyName + "_Of";
             if (isSubDivisionTable)
@@ -367,6 +376,7 @@ namespace GeoenrichmentTool
 
             var datastore = mainLayer.GetTable().GetDatastore();
             var geodatabase = datastore as Geodatabase;
+
             if (DoesTableNameExist(geodatabase, tableName))
             {
                 Random gen = new Random();
