@@ -429,8 +429,6 @@ namespace GeoenrichmentTool
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message);
 
-            MapView.Active.Redraw(false);
-
             return new string[] { tableName, keyPropertyFieldName, currentValuePropertyName };
         }
 

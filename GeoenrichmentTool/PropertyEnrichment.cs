@@ -123,7 +123,7 @@ namespace GeoenrichmentTool
 
                     if((int)geoCheckJSON[0]["cnt"]["value"] > 0)
                     {
-                        JToken geoQueryResult = TwoDegreePropertyValueWKTquery(propURI);
+                        JToken geoQueryResult = TwoDegreePropertyValueWKTquery(propURI, false);
 
                         string propName = FeatureClassHelper.GetPropertyName(propURI);
 
@@ -131,7 +131,7 @@ namespace GeoenrichmentTool
                         string outFeatureClassPath = "";
                         await QueuedTask.Run(() =>
                         {
-                            outFeatureClassPath = mainLayer.GetPath().ToString() + outFeatureClassName;
+                            outFeatureClassPath = mainLayer.GetPath().ToString() + "_" + propName;
                         });
 
                         FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassPath);
