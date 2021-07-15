@@ -221,6 +221,8 @@ namespace GeoenrichmentTool
                 }
                 else
                 {
+                    await Project.Current.SaveEditsAsync();
+
                     await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
                     await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
                     await FeatureClassHelper.AddField(fcLayer, "Class", "TEXT");

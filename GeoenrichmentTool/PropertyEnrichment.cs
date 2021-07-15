@@ -134,7 +134,7 @@ namespace GeoenrichmentTool
                             outFeatureClassPath = mainLayer.GetPath().ToString() + "_" + propName;
                         });
 
-                        FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassPath);
+                        FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassName);
 
                         string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
 
