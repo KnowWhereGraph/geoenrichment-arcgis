@@ -23,6 +23,8 @@ namespace GeoenrichmentTool
     internal class GeoModule : Module
     {
         private static GeoModule _this = null;
+        private readonly QuerySPARQL queryClass;
+        protected List<BasicFeatureLayer> activeLayers;
 
         /// <summary>
         /// Retrieve the singleton instance to this module here
@@ -33,6 +35,27 @@ namespace GeoenrichmentTool
             {
                 return _this ?? (_this = (GeoModule)FrameworkApplication.FindModule("GeoenrichmentTool_Module"));
             }
+        }
+
+        GeoModule()
+        {
+            queryClass = new QuerySPARQL();
+            activeLayers = new List<BasicFeatureLayer> { };
+        }
+
+        public QuerySPARQL GetQueryClass()
+        {
+            return queryClass;
+        }
+
+        public void AddLayer(BasicFeatureLayer layerName)
+        {
+            activeLayers.Add(layerName);
+        }
+
+        public List<BasicFeatureLayer> GetLayers()
+        {
+            return activeLayers;
         }
 
         #region Overrides
@@ -48,6 +71,5 @@ namespace GeoenrichmentTool
         }
 
         #endregion Overrides
-
     }
 }

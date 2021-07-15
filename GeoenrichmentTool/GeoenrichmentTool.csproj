@@ -133,7 +133,14 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommonProperties.cs" />
     <Compile Include="FeatureClassHelper.cs" />
+    <Compile Include="PropertyEnrichment.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PropertyEnrichment.Designer.cs">
+      <DependentUpon>PropertyEnrichment.cs</DependentUpon>
+    </Compile>
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="GeoSPARQL_Query.cs">
       <SubType>Form</SubType>
@@ -151,6 +158,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="PropertyEnrichment.resx">
+      <DependentUpon>PropertyEnrichment.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="GeoSPARQL_Query.resx">
       <DependentUpon>GeoSPARQL_Query.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -163,6 +173,7 @@
   <ItemGroup>
     <AddInContent Include="Images\logo-button.png" />
     <AddInContent Include="Images\graph-query.png" />
+    <AddInContent Include="Images\enrich-data.png" />
     <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
   <ItemGroup>

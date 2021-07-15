@@ -44,7 +44,6 @@ namespace GeoenrichmentTool
             this.requiredEndpoint = new System.Windows.Forms.Label();
             this.requiredClassName = new System.Windows.Forms.Label();
             this.formError = new System.Windows.Forms.Label();
-            this.requiredPlaceType = new System.Windows.Forms.Label();
             this.requiredCalculator = new System.Windows.Forms.Label();
             this.refreshPlaceTypeBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -89,12 +88,12 @@ namespace GeoenrichmentTool
             this.placeTypeLabel.BackColor = System.Drawing.Color.Transparent;
             this.placeTypeLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.placeTypeLabel.ForeColor = System.Drawing.Color.White;
-            this.placeTypeLabel.Location = new System.Drawing.Point(25, 161);
+            this.placeTypeLabel.Location = new System.Drawing.Point(15, 161);
             this.placeTypeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.placeTypeLabel.Name = "placeTypeLabel";
-            this.placeTypeLabel.Size = new System.Drawing.Size(98, 19);
+            this.placeTypeLabel.Size = new System.Drawing.Size(52, 19);
             this.placeTypeLabel.TabIndex = 3;
-            this.placeTypeLabel.Text = "Place Type:";
+            this.placeTypeLabel.Text = "Type:";
             // 
             // placeType
             // 
@@ -113,9 +112,9 @@ namespace GeoenrichmentTool
             this.subclassReasoning.ForeColor = System.Drawing.Color.White;
             this.subclassReasoning.Location = new System.Drawing.Point(19, 232);
             this.subclassReasoning.Name = "subclassReasoning";
-            this.subclassReasoning.Size = new System.Drawing.Size(334, 23);
+            this.subclassReasoning.Size = new System.Drawing.Size(230, 23);
             this.subclassReasoning.TabIndex = 5;
-            this.subclassReasoning.Text = "Disable Transistive Subclass Reasoning";
+            this.subclassReasoning.Text = "Do not include subclasses";
             this.subclassReasoning.UseVisualStyleBackColor = false;
             // 
             // calculatorLabel
@@ -127,16 +126,16 @@ namespace GeoenrichmentTool
             this.calculatorLabel.Location = new System.Drawing.Point(25, 277);
             this.calculatorLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.calculatorLabel.Name = "calculatorLabel";
-            this.calculatorLabel.Size = new System.Drawing.Size(216, 19);
+            this.calculatorLabel.Size = new System.Drawing.Size(176, 19);
             this.calculatorLabel.TabIndex = 6;
-            this.calculatorLabel.Text = "Spatial Relation Calculator:";
+            this.calculatorLabel.Text = "Spatial Relation Filter:";
             // 
             // calculator
             // 
             this.calculator.Font = new System.Drawing.Font("Arial", 12F);
             this.calculator.FormattingEnabled = true;
             this.calculator.Items.AddRange(new object[] {
-            "Contain + Intersect",
+            "Contain or Intersect",
             "Contain",
             "Within",
             "Intersect"});
@@ -169,9 +168,9 @@ namespace GeoenrichmentTool
             this.classNameLabel.Location = new System.Drawing.Point(25, 343);
             this.classNameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.classNameLabel.Name = "classNameLabel";
-            this.classNameLabel.Size = new System.Drawing.Size(162, 19);
+            this.classNameLabel.Size = new System.Drawing.Size(100, 19);
             this.classNameLabel.TabIndex = 10;
-            this.classNameLabel.Text = "Feature Class Name";
+            this.classNameLabel.Text = "Layer Name";
             // 
             // className
             // 
@@ -215,18 +214,6 @@ namespace GeoenrichmentTool
             this.formError.Size = new System.Drawing.Size(0, 20);
             this.formError.TabIndex = 16;
             // 
-            // requiredPlaceType
-            // 
-            this.requiredPlaceType.AutoSize = true;
-            this.requiredPlaceType.BackColor = System.Drawing.Color.Transparent;
-            this.requiredPlaceType.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.requiredPlaceType.ForeColor = System.Drawing.Color.Red;
-            this.requiredPlaceType.Location = new System.Drawing.Point(15, 160);
-            this.requiredPlaceType.Name = "requiredPlaceType";
-            this.requiredPlaceType.Size = new System.Drawing.Size(15, 20);
-            this.requiredPlaceType.TabIndex = 17;
-            this.requiredPlaceType.Text = "*";
-            // 
             // requiredCalculator
             // 
             this.requiredCalculator.AutoSize = true;
@@ -263,7 +250,6 @@ namespace GeoenrichmentTool
             this.ClientSize = new System.Drawing.Size(778, 471);
             this.Controls.Add(this.refreshPlaceTypeBtn);
             this.Controls.Add(this.requiredCalculator);
-            this.Controls.Add(this.requiredPlaceType);
             this.Controls.Add(this.formError);
             this.Controls.Add(this.requiredClassName);
             this.Controls.Add(this.requiredEndpoint);
@@ -304,7 +290,6 @@ namespace GeoenrichmentTool
         private System.Windows.Forms.Label requiredEndpoint;
         private System.Windows.Forms.Label requiredClassName;
         private System.Windows.Forms.Label formError;
-        private System.Windows.Forms.Label requiredPlaceType;
         private System.Windows.Forms.Label requiredCalculator;
         private System.Windows.Forms.Button refreshPlaceTypeBtn;
     }
