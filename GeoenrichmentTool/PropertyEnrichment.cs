@@ -144,7 +144,15 @@ namespace GeoenrichmentTool
 
                 foreach (var propURI in sosaObsURIs)
                 {
-                    JToken propertyVal = SosaObsPropertyValueQuery(propURI);
+                    JToken propertyVal = null;
+                    try
+                    {
+                        propertyVal = SosaObsPropertyValueQuery(propURI);
+                    } catch(Exception ex)
+                    {
+                        //MessageBox.Show("Sosa property query error for: " + propURI);
+                        continue;
+                    }
 
                     string[] tableResult = null;
                     await QueuedTask.Run(() =>
