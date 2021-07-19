@@ -59,6 +59,22 @@ namespace GeoenrichmentTool
             uriList = uris;
         }
 
+        private void SelectAllProperties(object sender, EventArgs e)
+        {
+            for (int i = 0; i < commonCheckBox.Items.Count; i++) // loop to set all items checked or unchecked
+            {
+                commonCheckBox.SetItemChecked(i, true);
+            }
+        }
+
+        private void InverseSelectAllProperties(object sender, EventArgs e)
+        {
+            for (int i = 0; i < commonCheckBox.Items.Count; i++) // loop to set all items checked or unchecked
+            {
+                inverseCheckBox.SetItemChecked(i, true);
+            }
+        }
+
         private async void EnrichData(object sender, EventArgs e)
         {
             Close();
