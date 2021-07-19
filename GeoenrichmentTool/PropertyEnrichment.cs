@@ -35,6 +35,10 @@ namespace GeoenrichmentTool
 
             for (var i = 0; i < sosaObsProperties[0].Count(); i++)
             {
+                ///TODO::DEV CODE///
+                break;
+                ////////////////////
+                
                 string url = sosaObsProperties[0][i];
                 string name = sosaObsProperties[1][i];
 
@@ -131,7 +135,7 @@ namespace GeoenrichmentTool
                     string keyPropertyFieldName = tableResult[1];
                     string currentValuePropertyName = tableResult[2];
 
-                    string relationshipClassName = mainLayer.Name + "_" + tableName + "_RelClass";
+                    string relationshipClassName = tableName + "_RelClass";
 
                     await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, tableName, relationshipClassName, propURI, "features from Knowledge Graph");
 
