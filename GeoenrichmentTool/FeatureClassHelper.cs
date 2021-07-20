@@ -109,11 +109,11 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
-        public static async Task CreateRelationshipClass(string featureClassName, string tableName, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
+        public static async Task CreateRelationshipClass(BasicFeatureLayer featureClass, Table dataTable, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
         {
             List<object> arguments = new List<object>
             {
-                featureClassName, tableName, relationshipClassName, "SIMPLE", forwardLabel, backwardLabel, 
+                featureClass, dataTable, CoreModule.CurrentProject.DefaultGeodatabasePath+"\\"+relationshipClassName, "SIMPLE", forwardLabel, backwardLabel, 
                 "FORWARD", "ONE_TO_MANY", "NONE", "URL", foreignKey
             };
 
@@ -351,7 +351,7 @@ namespace GeoenrichmentTool
         # isInverse: Boolean variable indicates whether the value we get is the subject value or object value of valuePropertyURL
         # isSubDivisionTable: Boolean variable indicates whether the current table store the value of subdivision for the original location
          */
-        public static async Task<string[]> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
+        public static async Task<Table> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
         {
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
@@ -431,7 +431,7 @@ namespace GeoenrichmentTool
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message);
 
-            return new string[] { tableName, keyPropertyFieldName, currentValuePropertyName };
+            return propertyTable;
         }
 
         public static string GetPropertyName(string valuePropertyURL) {
