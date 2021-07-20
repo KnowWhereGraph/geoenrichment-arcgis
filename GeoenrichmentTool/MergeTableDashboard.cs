@@ -34,31 +34,31 @@ namespace GeoenrichmentTool
                 var datastore = mainLayer.GetTable().GetDatastore();
                 var geodatabase = datastore as Geodatabase;
 
-                var rcDefs = geodatabase.GetDefinitions<RelationshipClassDefinition>();
-                foreach(var rcDef in rcDefs)
+                //MergeSingleNoFunctionalProperty.relatedTableFieldList = []
+                //MergeSingleNoFunctionalProperty.relatedTableList = []
+                //MergeSingleNoFunctionalProperty.relatedNoFunctionalPropertyURLList = []
+
+                //MergeSingleNoFunctionalProperty.relatedTableList = UTIL.getRelatedTableFromFeatureClass(inputFeatureClassName)
+                //in_related_table_list.filter.list = MergeSingleNoFunctionalProperty.relatedTableList
+
+                List<string> relatedTables = GetRelatedTablesFromFeatureClass(mainLayer).Result;
+                foreach(var tblName in relatedTables)
                 {
-                    
-                }
+                    Table rTable = geodatabase.OpenDataset<Table>(tblName);
+                    var rFields = rTable.GetDefinition().GetFields();
+                    bool hasOriginEnd = false;
+                    foreach(var rf in rFields)
+                    {
+                        if(rf.Name== "origin" | rf.Name == "end")
+                        {
+                            hasOriginEnd = true;
+                        }
+                    }
 
-                var test = "";
-            });
-
-            /*
-            if in_wikiplace_IRI.altered:
-                MergeSingleNoFunctionalProperty.relatedTableFieldList = []
-                MergeSingleNoFunctionalProperty.relatedTableList = []
-                MergeSingleNoFunctionalProperty.relatedNoFunctionalPropertyURLList = []
-
-                MergeSingleNoFunctionalProperty.relatedTableList = UTIL.getRelatedTableFromFeatureClass(inputFeatureClassName)
-                in_related_table_list.filter.list = MergeSingleNoFunctionalProperty.relatedTableList
-                
-                # noFunctionalPropertyTable = []
-
-                for relatedTable in MergeSingleNoFunctionalProperty.relatedTableList:
-                    fieldList = arcpy.ListFields(relatedTable)
-                    if "origin" not in fieldList and "end" not in fieldList:
+                    if(!hasOriginEnd)
+                    {
+                        /*
                         noFunctionalFieldName = fieldList[2].name
-                        arcpy.AddMessage("noFunctionalFieldName: {0}".format(noFunctionalFieldName))
                         MergeSingleNoFunctionalProperty.relatedTableFieldList.append(noFunctionalFieldName)
                         # get the no functioal property URL from the firt row of this table field "propURL"
 
@@ -66,9 +66,16 @@ namespace GeoenrichmentTool
                         propURL = arcpy.Describe(TableRelationshipClassList[0]).forwardPathLabel
 
                         MergeSingleNoFunctionalProperty.relatedNoFunctionalPropertyURLList.append(propURL)
+                        */
+                    }
+                }
 
-                in_no_functional_property_list.filter.list = MergeSingleNoFunctionalProperty.relatedNoFunctionalPropertyURLList
+                var test = "";
 
+                //in_no_functional_property_list.filter.list = MergeSingleNoFunctionalProperty.relatedNoFunctionalPropertyURLList
+            });
+
+            /*
             if in_no_functional_property_list.altered:
                 selectPropURL = in_no_functional_property_list.valueAsText
                 selectIndex = MergeSingleNoFunctionalProperty.relatedNoFunctionalPropertyURLList.index(selectPropURL)
@@ -105,6 +112,28 @@ namespace GeoenrichmentTool
             if in_merge_rule.valueAsText == "CONCATENATE":
                 in_cancatenate_delimiter.enabled = True
             */
+        }
+
+        private async Task<List<string>> GetRelatedTablesFromFeatureClass(BasicFeatureLayer fcLayer)
+        {
+            List<string> tables = new List<string>() { };
+            await QueuedTask.Run(() =>
+            {
+                var datastore = fcLayer.GetTable().GetDatastore();
+                var geodatabase = datastore as Geodatabase;
+                var rcDefs = geodatabase.GetDefinitions<RelationshipClassDefinition>();
+                foreach (var rcDef in rcDefs)
+                {
+                    RelationshipClass rClass = geodatabase.OpenDataset<RelationshipClass>(rcDef.GetName());
+
+                    if(rcDef.GetOriginClass() == fcLayer.Name)
+                    {
+                        tables.Add(rcDef.GetDestinationClass());
+                    }
+                }
+            });
+
+            return tables;
         }
     }
 }
