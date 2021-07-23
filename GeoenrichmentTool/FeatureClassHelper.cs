@@ -434,7 +434,119 @@ namespace GeoenrichmentTool
             return propertyTable;
         }
 
-        public static string GetPropertyName(string valuePropertyURL) {
+        /*
+        # append a new field in inputFeatureClassName which will install the merged no-functional property value
+        # noFunctionalPropertyDict: the collections.defaultdict object which stores the no-functional property value for each URL
+        # appendFieldName: the field name of no-functional property in the relatedTableName
+        # mergeRule: the merge rule the user selected, one of ['SUM', 'MIN', 'MAX', 'STDEV', 'MEAN', 'COUNT', 'FIRST', 'LAST']
+        # delimiter: the optional paramter which define the delimiter of the cancatenate operation
+        */
+        public static async Task AppendFieldInFeatureClassByMergeRule(BasicFeatureLayer fcLayer, Dictionary<string, string> noFunctionalPropertyDict, string appendFieldName, 
+            string relatedTableName, string mergeRule, bool useDelimiter)
+        {
+            /*
+            appendFieldType = ''
+            appendFieldLength = 0
+            fieldList = arcpy.ListFields(relatedTableName)
+            for field in fieldList:
+                if field.name == appendFieldName:
+                    appendFieldType = field.type
+                    if field.type == "String":
+                        appendFieldLength = field.length
+                    break
+            mergeRuleField = ''
+            if mergeRule == 'SUM':
+                mergeRuleField = 'SUM'
+            elif mergeRule == 'MIN':
+                mergeRuleField = 'MIN'
+            elif mergeRule == 'MAX':
+                mergeRuleField = 'MAX'
+            elif mergeRule == 'STDEV':
+                mergeRuleField = 'STD'
+            elif mergeRule == 'MEAN':
+                mergeRuleField = 'MEN'
+            elif mergeRule == 'COUNT':
+                mergeRuleField = 'COUNT'
+            elif mergeRule == 'FIRST':
+                mergeRuleField = 'FIRST'
+            elif mergeRule == 'LAST':
+                mergeRuleField = 'LAST'
+            elif mergeRule == 'CONCATENATE':
+                mergeRuleField = 'CONCAT'
+
+            if appendFieldType != "String":
+                cursor = arcpy.SearchCursor(relatedTableName)
+                for row in cursor:
+                    rowValue = row.getValue(appendFieldName)
+                    if appendFieldLength < len(str(rowValue)):
+                        appendFieldLength = len(str(rowValue))
+
+            featureClassAppendFieldName = appendFieldName + "_" + mergeRuleField
+            newAppendFieldName = UTIL.getFieldNameWithTable(featureClassAppendFieldName, inputFeatureClassName)
+            if newAppendFieldName != -1:
+                if mergeRule == 'COUNT':
+                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, "SHORT")
+                elif mergeRule == 'STDEV' or mergeRule == 'MEAN':
+                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, "DOUBLE")
+                elif mergeRule == 'CONCATENATE':
+                    # get the maximum number of values for current property: maxNumOfValue
+                    # maxNumOfValue * field.length = the length of new append field
+                    maxNumOfValue = 1
+                    for key in noFunctionalPropertyDict:
+                        if maxNumOfValue < len(noFunctionalPropertyDict[key]):
+                            maxNumOfValue = len(noFunctionalPropertyDict[key])
+                
+                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, 'TEXT', field_length=appendFieldLength * maxNumOfValue)
+                
+                
+                else:
+                    if appendFieldType == "String":
+                        arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType, field_length=appendFieldLength)
+                    else:
+                        arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType)
+
+                if UTIL.isFieldNameInTable("URL", inputFeatureClassName):
+                    urows = None
+                    urows = arcpy.UpdateCursor(inputFeatureClassName)
+                    for row in urows:
+                        foreignKeyValue = row.getValue("URL")
+                        noFunctionalPropertyValueList = noFunctionalPropertyDict[foreignKeyValue]
+                        if len(noFunctionalPropertyValueList) != 0:
+                            rowValue = ""
+                            if mergeRule in ['STDEV', 'MEAN', 'SUM', 'MIN', 'MAX']:
+                                if appendFieldType in ['Single', 'Double', 'SmallInteger', 'Integer']:
+                                    if mergeRule == 'MEAN':
+                                        rowValue = numpy.average(noFunctionalPropertyValueList)
+                                    elif mergeRule == 'STDEV':
+                                        rowValue = numpy.std(noFunctionalPropertyValueList)
+                                    elif mergeRule == 'SUM':
+                                        rowValue = numpy.sum(noFunctionalPropertyValueList)
+                                    elif mergeRule == 'MIN':
+                                        rowValue = numpy.amin(noFunctionalPropertyValueList)
+                                    elif mergeRule == 'MAX':
+                                        rowValue = numpy.amax(noFunctionalPropertyValueList)
+                                else:
+                                    arcpy.AddError("The {0} data type of Field {1} does not support {2} merge rule".format(appendFieldType, appendFieldName, mergeRule))
+                            elif mergeRule in ['COUNT', 'FIRST', 'LAST']:
+                                if mergeRule == 'COUNT':
+                                    rowValue = len(noFunctionalPropertyValueList)
+                                elif mergeRule == 'FIRST':
+                                    rowValue = noFunctionalPropertyValueList[0]
+                                elif mergeRule == 'LAST':
+                                    rowValue = noFunctionalPropertyValueList[len(noFunctionalPropertyValueList)-1]
+                            elif mergeRule == 'CONCATENATE':
+                                value = ""
+                                if appendFieldType in ['String']:
+                                    rowValue = delimiter.join(sorted(set([val for val in noFunctionalPropertyValueList if not value is None])))
+                                else:
+                                    rowValue = delimiter.join(sorted(set([str(val) for val in noFunctionalPropertyValueList if not value is None])))
+
+                            row.setValue(newAppendFieldName, rowValue)
+                            urows.updateRow(row)
+             */
+    }
+
+    public static string GetPropertyName(string valuePropertyURL) {
             char[] delimSharp = { '#' };
             char[] delimSlash = { '/' };
             if (valuePropertyURL.Contains("#"))

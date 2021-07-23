@@ -1,4 +1,7 @@
-﻿using System;
+﻿using ArcGIS.Core.Data;
+using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Mapping;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -44,17 +47,68 @@ namespace GeoenrichmentTool
             }
         }
 
-        private void MergeTables(object sender, EventArgs e)
+        private async void MergeTables(object sender, EventArgs e)
         {
-            /*
-            if in_merge_rule.valueAsText == "CONCATENATE":
-                in_cancatenate_delimiter.enabled = True
-            */
+            if (mergeRules.Text == "" | relatedTables.Text == "")
+            {
+                MessageBox.Show($@"Required fields missing!");
+            }
+            else
+            {
+                Close();
+
+                BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+                char[] delimSharp = { '|' };
+                string selectTableName = relatedTables.Text.Split(delimSharp)[1].Trim();
+                string selectFieldName = relatedTables.Text.Split(delimSharp)[0].Trim();
+                string selectMergeRule = mergeRules.Text;
+                bool isConcatenate = (selectMergeRule == "CONCATENATE") ? true : false;
+
+                Dictionary<string, string> noFunctionalPropertyDict = BuildMultiValueDictFromNoFunctionalProperty(selectFieldName, selectTableName, "URL").Result;
+
+                if(noFunctionalPropertyDict.Count() > 0)
+                {
+                    await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(mainLayer, noFunctionalPropertyDict, selectFieldName, selectTableName, selectMergeRule, isConcatenate);
+                }
+            }
         }
 
         private void UpdateMergeRules(object sender, EventArgs e)
         {
             SetMergeRules(relatedTables.SelectedItem.ToString());
+        }
+
+        private async Task<Dictionary<string, string>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
+        {
+            Dictionary<string,string> valueDict = new Dictionary<string, string>() { };
+
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            var datastore = mainLayer.GetTable().GetDatastore();
+            var geodatabase = datastore as Geodatabase;
+
+            await QueuedTask.Run(() =>
+            {
+                var queryDef = new QueryDef
+                {
+                    Tables = tableName
+                };
+                var result = new DataTable("results");
+                using (var rowCursor = geodatabase.Evaluate(queryDef, false))
+                {
+                    while (rowCursor.MoveNext())
+                    {
+                        using (Row row = rowCursor.Current)
+                        {
+                            var foreignKeyValue = row[urlFieldName].ToString();
+                            var noFunctionalPropertyValue = row[fieldName].ToString();
+
+                            valueDict[foreignKeyValue] = noFunctionalPropertyValue;
+                        }
+                    }
+                }
+            });
+
+            return valueDict;
         }
     }
 }
