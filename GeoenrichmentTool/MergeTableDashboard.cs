@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 
 namespace GeoenrichmentTool
 {
@@ -25,13 +27,14 @@ namespace GeoenrichmentTool
         {
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
+            List<string> tablePropValueList = new List<string>() { };
+            Dictionary<string, List<string>> propMergeValueDict = new Dictionary<string, List<string>>() { };
+
             await QueuedTask.Run(() =>
             {
                 var datastore = mainLayer.GetTable().GetDatastore();
                 var geodatabase = datastore as Geodatabase;
 
-                List<string> tablPropValueList = new List<string>() { };
-                Dictionary<string, List<string>> propMergeValueDict = new Dictionary<string, List<string>>() { };
                 List<string> relatedTableList = GetRelatedTablesFromFeatureClass(mainLayer).Result;
 
                 foreach (var tblName in relatedTableList)
@@ -50,7 +53,7 @@ namespace GeoenrichmentTool
                     if(!hasOriginEnd)
                     {
                         string noFunctionalFieldName = rFields[2].Name;
-                        tablPropValueList.Add(noFunctionalFieldName + " | " + tblName);
+                        tablePropValueList.Add(noFunctionalFieldName + " | " + tblName);
 
                         foreach (var rf in rFields)
                         {
@@ -78,10 +81,8 @@ namespace GeoenrichmentTool
                 }
             });
 
-            /*
-            if in_merge_rule.valueAsText == "CONCATENATE":
-                in_cancatenate_delimiter.enabled = True
-            */
+            Form mergeForm = new MergePropertyTable(tablePropValueList, propMergeValueDict);
+            mergeForm.ShowDialog();
         }
 
         private async Task<List<string>> GetRelatedTablesFromFeatureClass(BasicFeatureLayer fcLayer)

@@ -133,6 +133,12 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MergePropertyTable.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MergePropertyTable.Designer.cs">
+      <DependentUpon>MergePropertyTable.cs</DependentUpon>
+    </Compile>
     <Compile Include="MergeTableDashboard.cs" />
     <Compile Include="CommonProperties.cs" />
     <Compile Include="FeatureClassHelper.cs" />
@@ -159,6 +165,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="MergePropertyTable.resx">
+      <DependentUpon>MergePropertyTable.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="PropertyEnrichment.resx">
       <DependentUpon>PropertyEnrichment.cs</DependentUpon>
     </EmbeddedResource>
