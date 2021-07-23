@@ -62,13 +62,12 @@ namespace GeoenrichmentTool
                 string selectTableName = relatedTables.Text.Split(delimSharp)[1].Trim();
                 string selectFieldName = relatedTables.Text.Split(delimSharp)[0].Trim();
                 string selectMergeRule = mergeRules.Text;
-                bool isConcatenate = (selectMergeRule == "CONCATENATE") ? true : false;
 
-                Dictionary<string, string> noFunctionalPropertyDict = BuildMultiValueDictFromNoFunctionalProperty(selectFieldName, selectTableName, "URL").Result;
+                Dictionary<string, List<string>> noFunctionalPropertyDict = BuildMultiValueDictFromNoFunctionalProperty(selectFieldName, selectTableName, "URL").Result;
 
                 if(noFunctionalPropertyDict.Count() > 0)
                 {
-                    await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(mainLayer, noFunctionalPropertyDict, selectFieldName, selectTableName, selectMergeRule, isConcatenate);
+                    await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(mainLayer, noFunctionalPropertyDict, selectFieldName, selectTableName, selectMergeRule);
                 }
             }
         }
@@ -78,9 +77,9 @@ namespace GeoenrichmentTool
             SetMergeRules(relatedTables.SelectedItem.ToString());
         }
 
-        private async Task<Dictionary<string, string>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
+        private async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
         {
-            Dictionary<string,string> valueDict = new Dictionary<string, string>() { };
+            Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
 
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
             var datastore = mainLayer.GetTable().GetDatastore();
@@ -102,7 +101,7 @@ namespace GeoenrichmentTool
                             var foreignKeyValue = row[urlFieldName].ToString();
                             var noFunctionalPropertyValue = row[fieldName].ToString();
 
-                            valueDict[foreignKeyValue] = noFunctionalPropertyValue;
+                            valueDict[foreignKeyValue].Add(noFunctionalPropertyValue);
                         }
                     }
                 }

@@ -441,9 +441,14 @@ namespace GeoenrichmentTool
         # mergeRule: the merge rule the user selected, one of ['SUM', 'MIN', 'MAX', 'STDEV', 'MEAN', 'COUNT', 'FIRST', 'LAST']
         # delimiter: the optional paramter which define the delimiter of the cancatenate operation
         */
-        public static async Task AppendFieldInFeatureClassByMergeRule(BasicFeatureLayer fcLayer, Dictionary<string, string> noFunctionalPropertyDict, string appendFieldName, 
-            string relatedTableName, string mergeRule, bool useDelimiter)
+        public static async Task AppendFieldInFeatureClassByMergeRule(BasicFeatureLayer fcLayer, Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
+            string relatedTableName, string mergeRule)
         {
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            var datastore = mainLayer.GetTable().GetDatastore();
+            var geodatabase = datastore as Geodatabase;
+            var propertyTable = geodatabase.OpenDataset<Table>(relatedTableName);
+
             /*
             appendFieldType = ''
             appendFieldLength = 0
@@ -454,97 +459,142 @@ namespace GeoenrichmentTool
                     if field.type == "String":
                         appendFieldLength = field.length
                     break
-            mergeRuleField = ''
-            if mergeRule == 'SUM':
-                mergeRuleField = 'SUM'
-            elif mergeRule == 'MIN':
-                mergeRuleField = 'MIN'
-            elif mergeRule == 'MAX':
-                mergeRuleField = 'MAX'
-            elif mergeRule == 'STDEV':
-                mergeRuleField = 'STD'
-            elif mergeRule == 'MEAN':
-                mergeRuleField = 'MEN'
-            elif mergeRule == 'COUNT':
-                mergeRuleField = 'COUNT'
-            elif mergeRule == 'FIRST':
-                mergeRuleField = 'FIRST'
-            elif mergeRule == 'LAST':
-                mergeRuleField = 'LAST'
-            elif mergeRule == 'CONCATENATE':
-                mergeRuleField = 'CONCAT'
+            */
 
+            Dictionary<string, string> mergeConvert = new Dictionary<string, string>() { { "STDEV","STD" }, { "MEAN", "MEN" }, { "CONCATENATE", "CONCAT" } };
+            if(mergeConvert.ContainsKey(mergeRule))
+            {
+                mergeRule = mergeConvert[mergeRule];
+            }
+
+            /*
             if appendFieldType != "String":
                 cursor = arcpy.SearchCursor(relatedTableName)
                 for row in cursor:
                     rowValue = row.getValue(appendFieldName)
                     if appendFieldLength < len(str(rowValue)):
                         appendFieldLength = len(str(rowValue))
+            */
 
-            featureClassAppendFieldName = appendFieldName + "_" + mergeRuleField
-            newAppendFieldName = UTIL.getFieldNameWithTable(featureClassAppendFieldName, inputFeatureClassName)
-            if newAppendFieldName != -1:
-                if mergeRule == 'COUNT':
-                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, "SHORT")
-                elif mergeRule == 'STDEV' or mergeRule == 'MEAN':
-                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, "DOUBLE")
-                elif mergeRule == 'CONCATENATE':
-                    # get the maximum number of values for current property: maxNumOfValue
-                    # maxNumOfValue * field.length = the length of new append field
-                    maxNumOfValue = 1
-                    for key in noFunctionalPropertyDict:
-                        if maxNumOfValue < len(noFunctionalPropertyDict[key]):
-                            maxNumOfValue = len(noFunctionalPropertyDict[key])
-                
-                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, 'TEXT', field_length=appendFieldLength * maxNumOfValue)
-                
-                
-                else:
-                    if appendFieldType == "String":
-                        arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType, field_length=appendFieldLength)
-                    else:
-                        arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType)
+            string featureClassAppendFieldName = appendFieldName + "_" + mergeRule;
+            if (IsFieldNameInTable(featureClassAppendFieldName, mainLayer))
+            {
+                Random gen = new Random();
+                featureClassAppendFieldName = featureClassAppendFieldName + gen.Next(999999).ToString();
+            }
 
-                if UTIL.isFieldNameInTable("URL", inputFeatureClassName):
-                    urows = None
-                    urows = arcpy.UpdateCursor(inputFeatureClassName)
-                    for row in urows:
-                        foreignKeyValue = row.getValue("URL")
-                        noFunctionalPropertyValueList = noFunctionalPropertyDict[foreignKeyValue]
-                        if len(noFunctionalPropertyValueList) != 0:
-                            rowValue = ""
-                            if mergeRule in ['STDEV', 'MEAN', 'SUM', 'MIN', 'MAX']:
-                                if appendFieldType in ['Single', 'Double', 'SmallInteger', 'Integer']:
-                                    if mergeRule == 'MEAN':
-                                        rowValue = numpy.average(noFunctionalPropertyValueList)
-                                    elif mergeRule == 'STDEV':
-                                        rowValue = numpy.std(noFunctionalPropertyValueList)
-                                    elif mergeRule == 'SUM':
-                                        rowValue = numpy.sum(noFunctionalPropertyValueList)
-                                    elif mergeRule == 'MIN':
-                                        rowValue = numpy.amin(noFunctionalPropertyValueList)
-                                    elif mergeRule == 'MAX':
-                                        rowValue = numpy.amax(noFunctionalPropertyValueList)
-                                else:
-                                    arcpy.AddError("The {0} data type of Field {1} does not support {2} merge rule".format(appendFieldType, appendFieldName, mergeRule))
-                            elif mergeRule in ['COUNT', 'FIRST', 'LAST']:
-                                if mergeRule == 'COUNT':
-                                    rowValue = len(noFunctionalPropertyValueList)
-                                elif mergeRule == 'FIRST':
-                                    rowValue = noFunctionalPropertyValueList[0]
-                                elif mergeRule == 'LAST':
-                                    rowValue = noFunctionalPropertyValueList[len(noFunctionalPropertyValueList)-1]
-                            elif mergeRule == 'CONCATENATE':
-                                value = ""
-                                if appendFieldType in ['String']:
-                                    rowValue = delimiter.join(sorted(set([val for val in noFunctionalPropertyValueList if not value is None])))
-                                else:
-                                    rowValue = delimiter.join(sorted(set([str(val) for val in noFunctionalPropertyValueList if not value is None])))
+            string appendFieldType = "TEXT";
+            if(mergeRule == "COUNT")
+                appendFieldType = "SHORT";
+            else if(mergeRule == "STDEV" | mergeRule == "MEAN")
+                appendFieldType = "DOUBLE";
+            
+            if (mergeRule == "CONCATENATE")
+            {
+                /*
+                # get the maximum number of values for current property: maxNumOfValue
+                maxNumOfValue = 1
+                for key in noFunctionalPropertyDict:
+                    if maxNumOfValue < len(noFunctionalPropertyDict[key]):
+                        maxNumOfValue = len(noFunctionalPropertyDict[key])
+                arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, 'TEXT', field_length=appendFieldLength * maxNumOfValue)
+                 */
+            }
 
-                            row.setValue(newAppendFieldName, rowValue)
-                            urows.updateRow(row)
-             */
-    }
+            /*   
+            else:
+                if appendFieldType == "String":
+                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType, field_length=appendFieldLength)
+            */
+
+            await AddField(mainLayer, featureClassAppendFieldName, appendFieldType);
+
+            if (IsFieldNameInTable("URL", mainLayer))
+            {
+                string message = String.Empty;
+                bool modificationResult = false;
+
+                await QueuedTask.Run(() => {
+                    using (var featureTable = mainLayer.GetTable())
+                    {
+                        EditOperation editOperation = new EditOperation();
+                        editOperation.Callback(context => {
+                            QueryFilter openCutFilter = new QueryFilter { };
+
+                            using (RowCursor rowCursor = featureTable.Search(openCutFilter, false))
+                            {
+                                TableDefinition tableDefinition = featureTable.GetDefinition();
+
+                                while (rowCursor.MoveNext())
+                                {
+                                    using (Row row = rowCursor.Current)
+                                    {
+                                        // In order to update the Map and/or the attribute table.
+                                        // Has to be called before any changes are made to the row.
+                                        context.Invalidate(row);
+
+                                        string foreignKeyValue = row["URL"].ToString();
+                                        List<string> noFunctionalPropertyValueList = noFunctionalPropertyDict[foreignKeyValue];
+
+                                        string rowValue = "";
+                                        switch (mergeRule)
+                                        {
+                                            case "STDEV":
+                                                //rowValue = numpy.std(noFunctionalPropertyValueList)
+                                                break;
+                                            case "MEAN":
+                                                //rowValue = numpy.average(noFunctionalPropertyValueList)
+                                                break;
+                                            case "SUM":
+                                                //rowValue = numpy.sum(noFunctionalPropertyValueList)
+                                                break;
+                                            case "MIN":
+                                                //rowValue = numpy.amin(noFunctionalPropertyValueList)
+                                                break;
+                                            case "MAX":
+                                                //rowValue = numpy.amax(noFunctionalPropertyValueList)
+                                                break;
+                                            case "COUNT":
+                                                rowValue = noFunctionalPropertyValueList.Count().ToString();
+                                                break;
+                                            case "FIRST":
+                                                rowValue = noFunctionalPropertyValueList.First();
+                                                break;
+                                            case "LAST":
+                                                rowValue = noFunctionalPropertyValueList.Last();
+                                                break;
+                                            case "CONCATENATE":
+                                                rowValue = String.Join(" | ", noFunctionalPropertyValueList.ToArray());
+                                                break;
+                                        }
+                                        row[featureClassAppendFieldName] = rowValue;
+
+                                        //After all the changes are done, persist it.
+                                        row.Store();
+
+                                        // Has to be called after the store too.
+                                        context.Invalidate(row);
+                                    }
+                                }
+                            }
+                        }, featureTable);
+
+                        try
+                        {
+                            modificationResult = editOperation.Execute();
+                            if (!modificationResult) message = editOperation.ErrorMessage;
+                        }
+                        catch (GeodatabaseException exObj)
+                        {
+                            message = exObj.Message;
+                        }
+                    }
+                });
+
+                if (!string.IsNullOrEmpty(message))
+                    MessageBox.Show(message);
+            }
+        }
 
     public static string GetPropertyName(string valuePropertyURL) {
             char[] delimSharp = { '#' };
