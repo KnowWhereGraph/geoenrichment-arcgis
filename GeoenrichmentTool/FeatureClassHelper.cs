@@ -434,6 +434,44 @@ namespace GeoenrichmentTool
             return propertyTable;
         }
 
+        public static async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
+        {
+            Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+            await QueuedTask.Run(() =>
+            {
+                var datastore = mainLayer.GetTable().GetDatastore();
+                var geodatabase = datastore as Geodatabase;
+
+                var queryDef = new QueryDef
+                {
+                    Tables = tableName
+                };
+                var result = new DataTable("results");
+                using (var rowCursor = geodatabase.Evaluate(queryDef, false))
+                {
+                    while (rowCursor.MoveNext())
+                    {
+                        using (Row row = rowCursor.Current)
+                        {
+                            var foreignKeyValue = row[urlFieldName].ToString();
+                            var noFunctionalPropertyValue = row[fieldName].ToString();
+
+                            if (!valueDict.ContainsKey(foreignKeyValue))
+                            {
+                                valueDict[foreignKeyValue] = new List<string>() { };
+                            }
+
+                            valueDict[foreignKeyValue].Add(noFunctionalPropertyValue);
+                        }
+                    }
+                }
+            });
+
+            return valueDict;
+        }
+
         /*
         # append a new field in inputFeatureClassName which will install the merged no-functional property value
         # noFunctionalPropertyDict: the collections.defaultdict object which stores the no-functional property value for each URL
@@ -441,18 +479,19 @@ namespace GeoenrichmentTool
         # mergeRule: the merge rule the user selected, one of ['SUM', 'MIN', 'MAX', 'STDEV', 'MEAN', 'COUNT', 'FIRST', 'LAST']
         # delimiter: the optional paramter which define the delimiter of the cancatenate operation
         */
-        public static async Task AppendFieldInFeatureClassByMergeRule(BasicFeatureLayer fcLayer, Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
+        public static async Task AppendFieldInFeatureClassByMergeRule(Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
             string relatedTableName, string mergeRule)
         {
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
-            var datastore = mainLayer.GetTable().GetDatastore();
-            var geodatabase = datastore as Geodatabase;
-            var propertyTable = geodatabase.OpenDataset<Table>(relatedTableName);
 
             string appendFieldType = "";
             //int appendFieldLength = 0;
             await QueuedTask.Run(() =>
             {
+                var datastore = mainLayer.GetTable().GetDatastore();
+                var geodatabase = datastore as Geodatabase;
+                var propertyTable = geodatabase.OpenDataset<Table>(relatedTableName);
+
                 foreach (var field in propertyTable.GetDefinition().GetFields())
                 {
                     if (field.Name == appendFieldName) {
@@ -510,6 +549,7 @@ namespace GeoenrichmentTool
                     arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType, field_length=appendFieldLength)
             */
 
+            await Project.Current.SaveEditsAsync();
             await AddField(mainLayer, featureClassAppendFieldName, appendFieldType);
 
             if (IsFieldNameInTable("URL", mainLayer))
@@ -537,6 +577,10 @@ namespace GeoenrichmentTool
                                         context.Invalidate(row);
 
                                         string foreignKeyValue = row["URL"].ToString();
+                                        if(!noFunctionalPropertyDict.ContainsKey(foreignKeyValue))
+                                        {
+                                            continue;
+                                        }
                                         List<string> noFunctionalPropertyValueList = noFunctionalPropertyDict[foreignKeyValue];
 
                                         string rowValue = "";
