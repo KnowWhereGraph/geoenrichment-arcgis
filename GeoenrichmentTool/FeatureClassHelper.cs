@@ -449,17 +449,20 @@ namespace GeoenrichmentTool
             var geodatabase = datastore as Geodatabase;
             var propertyTable = geodatabase.OpenDataset<Table>(relatedTableName);
 
-            /*
-            appendFieldType = ''
-            appendFieldLength = 0
-            fieldList = arcpy.ListFields(relatedTableName)
-            for field in fieldList:
-                if field.name == appendFieldName:
-                    appendFieldType = field.type
-                    if field.type == "String":
-                        appendFieldLength = field.length
-                    break
-            */
+            string appendFieldType = "";
+            //int appendFieldLength = 0;
+            await QueuedTask.Run(() =>
+            {
+                foreach (var field in propertyTable.GetDefinition().GetFields())
+                {
+                    if (field.Name == appendFieldName) {
+                        appendFieldType = field.FieldType.ToString();
+                        //if field.type == "String":
+                        //    appendFieldLength = field.length
+                        break;
+                    }
+                }
+            });
 
             Dictionary<string, string> mergeConvert = new Dictionary<string, string>() { { "STDEV","STD" }, { "MEAN", "MEN" }, { "CONCATENATE", "CONCAT" } };
             if(mergeConvert.ContainsKey(mergeRule))
@@ -483,14 +486,14 @@ namespace GeoenrichmentTool
                 featureClassAppendFieldName = featureClassAppendFieldName + gen.Next(999999).ToString();
             }
 
-            string appendFieldType = "TEXT";
+            //string appendFieldType = "TEXT";
             if(mergeRule == "COUNT")
                 appendFieldType = "SHORT";
             else if(mergeRule == "STDEV" | mergeRule == "MEAN")
                 appendFieldType = "DOUBLE";
-            
-            if (mergeRule == "CONCATENATE")
+            else if (mergeRule == "CONCATENATE")
             {
+                appendFieldType = "TEXT";
                 /*
                 # get the maximum number of values for current property: maxNumOfValue
                 maxNumOfValue = 1
@@ -540,19 +543,54 @@ namespace GeoenrichmentTool
                                         switch (mergeRule)
                                         {
                                             case "STDEV":
-                                                //rowValue = numpy.std(noFunctionalPropertyValueList)
+                                                List<double> stdevVals = new List<double>() { };
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    stdevVals.Add(Convert.ToDouble(strVal));
+                                                }
+                                                double average = stdevVals.Average();
+                                                double sumOfSquaresOfDifferences = stdevVals.Select(val => (val - average) * (val - average)).Sum();
+                                                rowValue = Math.Sqrt(sumOfSquaresOfDifferences / stdevVals.Count).ToString();
                                                 break;
                                             case "MEAN":
-                                                //rowValue = numpy.average(noFunctionalPropertyValueList)
+                                                List<double> meanVals = new List<double>() { };
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    meanVals.Add(Convert.ToDouble(strVal));
+                                                }
+                                                rowValue = meanVals.Average().ToString();
                                                 break;
                                             case "SUM":
-                                                //rowValue = numpy.sum(noFunctionalPropertyValueList)
+                                                double sumVal = 0;
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    sumVal += Convert.ToDouble(strVal);
+                                                }
+                                                rowValue = sumVal.ToString();
                                                 break;
                                             case "MIN":
-                                                //rowValue = numpy.amin(noFunctionalPropertyValueList)
+                                                double minVal = 99999999999;
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    double numVal = Convert.ToDouble(strVal);
+                                                    if (numVal < minVal)
+                                                    {
+                                                        minVal = numVal;
+                                                    }
+                                                }
+                                                rowValue = minVal.ToString();
                                                 break;
                                             case "MAX":
-                                                //rowValue = numpy.amax(noFunctionalPropertyValueList)
+                                                double maxVal = -.99999999999;
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    double numVal = Convert.ToDouble(strVal);
+                                                    if(numVal > maxVal)
+                                                    {
+                                                        maxVal = numVal;
+                                                    }
+                                                }
+                                                rowValue = maxVal.ToString();
                                                 break;
                                             case "COUNT":
                                                 rowValue = noFunctionalPropertyValueList.Count().ToString();
