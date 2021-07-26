@@ -530,7 +530,7 @@ namespace GeoenrichmentTool
                 appendFieldType = "SHORT";
             else if(mergeRule == "STDEV" | mergeRule == "MEAN")
                 appendFieldType = "DOUBLE";
-            else if (mergeRule == "CONCATENATE")
+            else if (mergeRule == "CONCAT")
             {
                 appendFieldType = "TEXT";
                 /*
@@ -645,7 +645,7 @@ namespace GeoenrichmentTool
                                             case "LAST":
                                                 rowValue = noFunctionalPropertyValueList.Last();
                                                 break;
-                                            case "CONCATENATE":
+                                            case "CONCAT":
                                                 rowValue = String.Join(" | ", noFunctionalPropertyValueList.ToArray());
                                                 break;
                                         }
