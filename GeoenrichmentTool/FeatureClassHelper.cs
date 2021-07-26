@@ -109,11 +109,11 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
-        public static async Task CreateRelationshipClass(string featureClassName, string tableName, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
+        public static async Task CreateRelationshipClass(BasicFeatureLayer featureClass, Table dataTable, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
         {
             List<object> arguments = new List<object>
             {
-                featureClassName, tableName, relationshipClassName, "SIMPLE", forwardLabel, backwardLabel, 
+                featureClass, dataTable, CoreModule.CurrentProject.DefaultGeodatabasePath+"\\"+relationshipClassName, "SIMPLE", forwardLabel, backwardLabel, 
                 "FORWARD", "ONE_TO_MANY", "NONE", "URL", foreignKey
             };
 
@@ -351,7 +351,7 @@ namespace GeoenrichmentTool
         # isInverse: Boolean variable indicates whether the value we get is the subject value or object value of valuePropertyURL
         # isSubDivisionTable: Boolean variable indicates whether the current table store the value of subdivision for the original location
          */
-        public static async Task<string[]> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
+        public static async Task<Table> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
         {
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
@@ -431,10 +431,254 @@ namespace GeoenrichmentTool
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message);
 
-            return new string[] { tableName, keyPropertyFieldName, currentValuePropertyName };
+            return propertyTable;
         }
 
-        public static string GetPropertyName(string valuePropertyURL) {
+        public static async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
+        {
+            Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+            await QueuedTask.Run(() =>
+            {
+                var datastore = mainLayer.GetTable().GetDatastore();
+                var geodatabase = datastore as Geodatabase;
+
+                var queryDef = new QueryDef
+                {
+                    Tables = tableName
+                };
+                var result = new DataTable("results");
+                using (var rowCursor = geodatabase.Evaluate(queryDef, false))
+                {
+                    while (rowCursor.MoveNext())
+                    {
+                        using (Row row = rowCursor.Current)
+                        {
+                            var foreignKeyValue = row[urlFieldName].ToString();
+                            var noFunctionalPropertyValue = row[fieldName].ToString();
+
+                            if (!valueDict.ContainsKey(foreignKeyValue))
+                            {
+                                valueDict[foreignKeyValue] = new List<string>() { };
+                            }
+
+                            valueDict[foreignKeyValue].Add(noFunctionalPropertyValue);
+                        }
+                    }
+                }
+            });
+
+            return valueDict;
+        }
+
+        /*
+        # append a new field in inputFeatureClassName which will install the merged no-functional property value
+        # noFunctionalPropertyDict: the collections.defaultdict object which stores the no-functional property value for each URL
+        # appendFieldName: the field name of no-functional property in the relatedTableName
+        # mergeRule: the merge rule the user selected, one of ['SUM', 'MIN', 'MAX', 'STDEV', 'MEAN', 'COUNT', 'FIRST', 'LAST']
+        # delimiter: the optional paramter which define the delimiter of the cancatenate operation
+        */
+        public static async Task AppendFieldInFeatureClassByMergeRule(Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
+            string relatedTableName, string mergeRule)
+        {
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+            string appendFieldType = "";
+            //int appendFieldLength = 0;
+            await QueuedTask.Run(() =>
+            {
+                var datastore = mainLayer.GetTable().GetDatastore();
+                var geodatabase = datastore as Geodatabase;
+                var propertyTable = geodatabase.OpenDataset<Table>(relatedTableName);
+
+                foreach (var field in propertyTable.GetDefinition().GetFields())
+                {
+                    if (field.Name == appendFieldName) {
+                        appendFieldType = field.FieldType.ToString();
+                        //if field.type == "String":
+                        //    appendFieldLength = field.length
+                        break;
+                    }
+                }
+            });
+
+            Dictionary<string, string> mergeConvert = new Dictionary<string, string>() { { "STDEV","STD" }, { "MEAN", "MEN" }, { "CONCATENATE", "CONCAT" } };
+            if(mergeConvert.ContainsKey(mergeRule))
+            {
+                mergeRule = mergeConvert[mergeRule];
+            }
+
+            /*
+            if appendFieldType != "String":
+                cursor = arcpy.SearchCursor(relatedTableName)
+                for row in cursor:
+                    rowValue = row.getValue(appendFieldName)
+                    if appendFieldLength < len(str(rowValue)):
+                        appendFieldLength = len(str(rowValue))
+            */
+
+            string featureClassAppendFieldName = appendFieldName + "_" + mergeRule;
+            if (IsFieldNameInTable(featureClassAppendFieldName, mainLayer))
+            {
+                Random gen = new Random();
+                featureClassAppendFieldName = featureClassAppendFieldName + gen.Next(999999).ToString();
+            }
+
+            //string appendFieldType = "TEXT";
+            if(mergeRule == "COUNT")
+                appendFieldType = "SHORT";
+            else if(mergeRule == "STDEV" | mergeRule == "MEAN")
+                appendFieldType = "DOUBLE";
+            else if (mergeRule == "CONCAT")
+            {
+                appendFieldType = "TEXT";
+                /*
+                # get the maximum number of values for current property: maxNumOfValue
+                maxNumOfValue = 1
+                for key in noFunctionalPropertyDict:
+                    if maxNumOfValue < len(noFunctionalPropertyDict[key]):
+                        maxNumOfValue = len(noFunctionalPropertyDict[key])
+                arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, 'TEXT', field_length=appendFieldLength * maxNumOfValue)
+                 */
+            }
+
+            /*   
+            else:
+                if appendFieldType == "String":
+                    arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType, field_length=appendFieldLength)
+            */
+
+            await Project.Current.SaveEditsAsync();
+            await AddField(mainLayer, featureClassAppendFieldName, appendFieldType);
+
+            if (IsFieldNameInTable("URL", mainLayer))
+            {
+                string message = String.Empty;
+                bool modificationResult = false;
+
+                await QueuedTask.Run(() => {
+                    using (var featureTable = mainLayer.GetTable())
+                    {
+                        EditOperation editOperation = new EditOperation();
+                        editOperation.Callback(context => {
+                            QueryFilter openCutFilter = new QueryFilter { };
+
+                            using (RowCursor rowCursor = featureTable.Search(openCutFilter, false))
+                            {
+                                TableDefinition tableDefinition = featureTable.GetDefinition();
+
+                                while (rowCursor.MoveNext())
+                                {
+                                    using (Row row = rowCursor.Current)
+                                    {
+                                        // In order to update the Map and/or the attribute table.
+                                        // Has to be called before any changes are made to the row.
+                                        context.Invalidate(row);
+
+                                        string foreignKeyValue = row["URL"].ToString();
+                                        if(!noFunctionalPropertyDict.ContainsKey(foreignKeyValue))
+                                        {
+                                            continue;
+                                        }
+                                        List<string> noFunctionalPropertyValueList = noFunctionalPropertyDict[foreignKeyValue];
+
+                                        string rowValue = "";
+                                        switch (mergeRule)
+                                        {
+                                            case "STDEV":
+                                                List<double> stdevVals = new List<double>() { };
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    stdevVals.Add(Convert.ToDouble(strVal));
+                                                }
+                                                double average = stdevVals.Average();
+                                                double sumOfSquaresOfDifferences = stdevVals.Select(val => (val - average) * (val - average)).Sum();
+                                                rowValue = Math.Sqrt(sumOfSquaresOfDifferences / stdevVals.Count).ToString();
+                                                break;
+                                            case "MEAN":
+                                                List<double> meanVals = new List<double>() { };
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    meanVals.Add(Convert.ToDouble(strVal));
+                                                }
+                                                rowValue = meanVals.Average().ToString();
+                                                break;
+                                            case "SUM":
+                                                double sumVal = 0;
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    sumVal += Convert.ToDouble(strVal);
+                                                }
+                                                rowValue = sumVal.ToString();
+                                                break;
+                                            case "MIN":
+                                                double minVal = 99999999999;
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    double numVal = Convert.ToDouble(strVal);
+                                                    if (numVal < minVal)
+                                                    {
+                                                        minVal = numVal;
+                                                    }
+                                                }
+                                                rowValue = minVal.ToString();
+                                                break;
+                                            case "MAX":
+                                                double maxVal = -.99999999999;
+                                                foreach (var strVal in noFunctionalPropertyValueList)
+                                                {
+                                                    double numVal = Convert.ToDouble(strVal);
+                                                    if(numVal > maxVal)
+                                                    {
+                                                        maxVal = numVal;
+                                                    }
+                                                }
+                                                rowValue = maxVal.ToString();
+                                                break;
+                                            case "COUNT":
+                                                rowValue = noFunctionalPropertyValueList.Count().ToString();
+                                                break;
+                                            case "FIRST":
+                                                rowValue = noFunctionalPropertyValueList.First();
+                                                break;
+                                            case "LAST":
+                                                rowValue = noFunctionalPropertyValueList.Last();
+                                                break;
+                                            case "CONCAT":
+                                                rowValue = String.Join(" | ", noFunctionalPropertyValueList.ToArray());
+                                                break;
+                                        }
+                                        row[featureClassAppendFieldName] = rowValue;
+
+                                        //After all the changes are done, persist it.
+                                        row.Store();
+
+                                        // Has to be called after the store too.
+                                        context.Invalidate(row);
+                                    }
+                                }
+                            }
+                        }, featureTable);
+
+                        try
+                        {
+                            modificationResult = editOperation.Execute();
+                            if (!modificationResult) message = editOperation.ErrorMessage;
+                        }
+                        catch (GeodatabaseException exObj)
+                        {
+                            message = exObj.Message;
+                        }
+                    }
+                });
+
+                if (!string.IsNullOrEmpty(message))
+                    MessageBox.Show(message);
+            }
+        }
+
+    public static string GetPropertyName(string valuePropertyURL) {
             char[] delimSharp = { '#' };
             char[] delimSlash = { '/' };
             if (valuePropertyURL.Contains("#"))

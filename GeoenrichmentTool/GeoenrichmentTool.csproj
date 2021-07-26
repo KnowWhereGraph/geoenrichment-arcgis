@@ -133,6 +133,13 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MergePropertyTable.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MergePropertyTable.Designer.cs">
+      <DependentUpon>MergePropertyTable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MergeTableDashboard.cs" />
     <Compile Include="CommonProperties.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="PropertyEnrichment.cs">
@@ -158,6 +165,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="MergePropertyTable.resx">
+      <DependentUpon>MergePropertyTable.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="PropertyEnrichment.resx">
       <DependentUpon>PropertyEnrichment.cs</DependentUpon>
     </EmbeddedResource>
@@ -174,6 +184,9 @@
     <AddInContent Include="Images\logo-button.png" />
     <AddInContent Include="Images\graph-query.png" />
     <AddInContent Include="Images\enrich-data.png" />
+    <Resource Include="Images\geographic-entity-match.png" />
+    <Resource Include="Images\graph-relationships.png" />
+    <AddInContent Include="Images\merge-data.png" />
     <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
   <ItemGroup>

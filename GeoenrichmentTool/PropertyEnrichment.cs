@@ -1,4 +1,6 @@
-﻿using ArcGIS.Desktop.Framework.Threading.Tasks;
+﻿using ArcGIS.Core.Data;
+using ArcGIS.Desktop.Core;
+using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
@@ -35,6 +37,10 @@ namespace GeoenrichmentTool
 
             for (var i = 0; i < sosaObsProperties[0].Count(); i++)
             {
+                ///TODO::DEV CODE///
+                break;
+                ////////////////////
+                
                 string url = sosaObsProperties[0][i];
                 string name = sosaObsProperties[1][i];
 
@@ -57,6 +63,22 @@ namespace GeoenrichmentTool
             }
 
             uriList = uris;
+        }
+
+        private void SelectAllProperties(object sender, EventArgs e)
+        {
+            for (int i = 0; i < commonCheckBox.Items.Count; i++) // loop to set all items checked or unchecked
+            {
+                commonCheckBox.SetItemChecked(i, true);
+            }
+        }
+
+        private void InverseSelectAllProperties(object sender, EventArgs e)
+        {
+            for (int i = 0; i < commonCheckBox.Items.Count; i++) // loop to set all items checked or unchecked
+            {
+                inverseCheckBox.SetItemChecked(i, true);
+            }
         }
 
         private async void EnrichData(object sender, EventArgs e)
@@ -106,18 +128,17 @@ namespace GeoenrichmentTool
                 {
                     JToken propertyVal = PropertyValueQuery(propURI, false);
 
-                    string[] tableResult = null;
+                    Table tableResult = null;
+                    string tableName = "";
                     await QueuedTask.Run(() =>
                     {
                         tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                        Project.Current.SaveEditsAsync();
+                        tableName = tableResult.GetName();
+                        string relationshipClassName = tableName + "_RelClass";
+                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from Knowledge Graph").Wait();
                     });
-                    string tableName = tableResult[0];
-                    string keyPropertyFieldName = tableResult[1];
-                    string currentValuePropertyName = tableResult[2];
-
-                    string relationshipClassName = mainLayer.Name + "_" + tableName + "_RelClass";
-
-                    await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, tableName, relationshipClassName, propURI, "features from Knowledge Graph");
+                    //string currentValuePropertyName = tableResult[2];
 
                     JToken geoCheckJSON = CheckGeoPropertyQuery(propURI, false);
 
@@ -128,17 +149,14 @@ namespace GeoenrichmentTool
                         string propName = FeatureClassHelper.GetPropertyName(propURI);
 
                         string outFeatureClassName = mainLayer.Name + "_" + propName;
-                        string outFeatureClassPath = "";
                         await QueuedTask.Run(() =>
                         {
-                            outFeatureClassPath = mainLayer.GetPath().ToString() + "_" + propName;
+                            FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassName);
+                            var geoLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
+                            string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
+                            string currentValuePropertyName = tableResult.GetDefinition().GetFields().Last().Name;
+                            FeatureClassHelper.CreateRelationshipClass(geoLayer, tableResult, outRelationshipClassName, "is " + propURI + " Of", "features from Knowledge Graph", currentValuePropertyName).Wait();
                         });
-
-                        FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassName);
-
-                        string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
-
-                        await FeatureClassHelper.CreateRelationshipClass(outFeatureClassName, tableName, outRelationshipClassName, "is " + propURI + " Of", "features from Knowledge Graph", currentValuePropertyName);
                     }
                 }
 
@@ -154,16 +172,13 @@ namespace GeoenrichmentTool
                         continue;
                     }
 
-                    string[] tableResult = null;
                     await QueuedTask.Run(() =>
                     {
-                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                        Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                        Project.Current.SaveEditsAsync();
+                        string sosaRelationshipClassName = tableResult.GetName() + "_RelClass";
+                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, sosaRelationshipClassName, propURI, "features from Knowledge Graph").Wait();
                     });
-                    string sosaTableName = tableResult[0];
-
-                    string sosaRelationshipClassName = mainLayer.Name + "_" + sosaTableName + "_RelClass";
-
-                    await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, sosaTableName, sosaRelationshipClassName, propURI, "features from Knowledge Graph");
                 }
             }
 
@@ -199,18 +214,13 @@ namespace GeoenrichmentTool
                 {
                     JToken propertyVal = InversePropertyValueQuery(propURI, false);
 
-                    string[] tableResult = null;
                     await QueuedTask.Run(() =>
                     {
-                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
+                        Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
+                        Project.Current.SaveEditsAsync();
+                        string relationshipClassName = tableResult.GetName() + "_RelClass";
+                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from wikidata").Wait();
                     });
-                    string tableName = tableResult[0];
-                    string keyPropertyFieldName = tableResult[1];
-                    string currentValuePropertyName = tableResult[2];
-
-                    string relationshipClassName = mainLayer.Name + "_" + tableName + "_RelClass";
-
-                    await FeatureClassHelper.CreateRelationshipClass(mainLayer.Name, tableName, relationshipClassName, propURI, "features from wikidata");
                 }
             }
         }

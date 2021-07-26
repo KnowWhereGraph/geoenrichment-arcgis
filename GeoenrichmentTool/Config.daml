@@ -4,17 +4,17 @@
     <Description>GeoenrichmentTool description</Description>
     <Image>Images\logo-button.png</Image>
     <Author>anthon70</Author>
-	  <Company>Matrix</Company>
+    <Company>Matrix</Company>
     <Date>5/26/2021 7:01:03 AM</Date>
     <Subject>Geoprocessing</Subject>
     <!-- Note subject can be one or more of these topics:
                     Content, Framework, Editing, Geodatabase, Geometry, Geoprocessing, Layouts, Map Authoring, Map Exploration -->
   </AddInInfo>
-    <conditions>
-	    <insertCondition id="kwg_common_properties_active">
-		    <state id="kwg_query_layer_added"/>
-	    </insertCondition>
-    </conditions>
+  <conditions>
+    <insertCondition id="kwg_geosparql_active">
+      <state id="kwg_query_layer_added" />
+    </insertCondition>
+  </conditions>
   <modules>
     <insertModule id="GeoenrichmentTool_Module" className="GeoModule" autoLoad="false" caption="GeoModule">
       <!-- uncomment to have the control hosted on a separate tab-->
@@ -30,22 +30,26 @@
           <!-- host controls within groups -->
           <tool refID="GeoenrichmentTool_PolygonSelect" size="large" />
           <button refID="GeoenrichmentTool_CommonProperties" size="large" />
+          <button refID="GeoenrichmentTool_MergeTableDashboard" size="large" />
         </group>
       </groups>
       <controls>
         <!-- add your controls here -->
         <tool id="GeoenrichmentTool_PolygonSelect" caption="Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
-          <tooltip heading="Tooltip Heading">
+          <tooltip heading="GeoSPARQL Query">
 			  Create the initial query to the SPARQL endpoint
-			  <disabledText>Map pane required</disabledText>
-		  </tooltip>
+			  <disabledText>Map pane required</disabledText></tooltip>
         </tool>
-        <button id="GeoenrichmentTool_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_common_properties_active">
-          <tooltip heading="Tooltip Heading">
+        <button id="GeoenrichmentTool_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_geosparql_active">
+          <tooltip heading="Property Enrichment">
 			  Enrich query result using common properties
-			  <disabledText>Requires query to be run</disabledText>
-		  </tooltip>
+			  <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
         </button>
+		<button id="GeoenrichmentTool_MergeTableDashboard" caption="Merge Data" className="MergeTableDashboard" loadOnClick="true" smallImage="Images\merge-data.png" largeImage="Images\merge-data.png" condition="kwg_geosparql_active">
+		    <tooltip heading="Non Functional Property Merge">
+			    Enrich query result by merging non functional properties
+			    <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
+		</button>
       </controls>
     </insertModule>
   </modules>
