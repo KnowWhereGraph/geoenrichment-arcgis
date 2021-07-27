@@ -133,6 +133,7 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LinkedData.cs" />
     <Compile Include="MergePropertyTable.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -185,7 +186,7 @@
     <AddInContent Include="Images\graph-query.png" />
     <AddInContent Include="Images\enrich-data.png" />
     <Resource Include="Images\geographic-entity-match.png" />
-    <Resource Include="Images\graph-relationships.png" />
+    <AddInContent Include="Images\linked-relationships.png" />
     <AddInContent Include="Images\merge-data.png" />
     <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
