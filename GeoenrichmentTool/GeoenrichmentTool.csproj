@@ -133,6 +133,12 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RelationshipFinder.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RelationshipFinder.Designer.cs">
+      <DependentUpon>RelationshipFinder.cs</DependentUpon>
+    </Compile>
     <Compile Include="LinkedData.cs" />
     <Compile Include="MergePropertyTable.cs">
       <SubType>Form</SubType>
@@ -166,6 +172,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="RelationshipFinder.resx">
+      <DependentUpon>RelationshipFinder.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MergePropertyTable.resx">
       <DependentUpon>MergePropertyTable.cs</DependentUpon>
     </EmbeddedResource>
@@ -185,6 +194,7 @@
     <AddInContent Include="Images\logo-button.png" />
     <AddInContent Include="Images\graph-query.png" />
     <AddInContent Include="Images\enrich-data.png" />
+    <None Include="Resources\background-landing %282%29.png" />
     <Resource Include="Images\geographic-entity-match.png" />
     <AddInContent Include="Images\linked-relationships.png" />
     <AddInContent Include="Images\merge-data.png" />

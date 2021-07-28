@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 
 namespace GeoenrichmentTool
 {
@@ -23,6 +25,8 @@ namespace GeoenrichmentTool
     {
         protected override void OnClick()
         {
+            Form linkedForm = new RelationshipFinder();
+            linkedForm.ShowDialog();
         }
     }
 }
