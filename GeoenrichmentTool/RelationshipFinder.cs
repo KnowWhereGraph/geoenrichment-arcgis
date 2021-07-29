@@ -1,4 +1,5 @@
 ﻿using ArcGIS.Desktop.Mapping;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +14,14 @@ namespace GeoenrichmentTool
 {
     public partial class RelationshipFinder : Form
     {
+
+        /*
+        # propertyDirectionList: the list of property direction, it has at most 4 elements, the length is the path degree. The element value is from ["BOTH", "ORIGIN", "DESTINATION"]
+        # selectPropertyURLList: the selected peoperty URL list, it always has three elements, "" if no property has been selected
+         */
+        List<string> propertyDirectionList;
+        List<string> selectPropertyURLList;
+
         public RelationshipFinder()
         {
             InitializeComponent();
@@ -42,40 +51,19 @@ namespace GeoenrichmentTool
             string outTableName = featureClassName + "PathQueryTripleStore";
             string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
+            propertyDirectionList = new List<string>() { firstPropDirection.Text };
+            selectPropertyURLList = new List<string>() {  };
+
+            JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 1);
+
+            foreach (var item in finderJSON)
+            {
+                string itemVal = item["p1"]["value"].ToString();
+                string itemLabel = GeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
+                firstProp.Items.Add(itemLabel + " | " + itemVal);
+            }
+
             /*
-            # get the first property URL list and label list
-            if in_first_property_dir.value and len(in_first_property.filter.list) == 0:
-                fristDirection = in_first_property_dir.valueAsText
-                # get the first property URL list
-                firstPropertyURLListJsonBindingObject = SPARQLQuery.relFinderCommonPropertyQuery(inplaceIRIList, 
-                                                                            relationDegree = relationDegree, 
-                                                                            propertyDirectionList = [fristDirection], 
-                                                                            selectPropertyURLList = ["", "", ""], 
-                                                                            sparql_endpoint = sparql_endpoint)
-                firstPropertyURLList = []
-                for jsonItem in firstPropertyURLListJsonBindingObject:
-                    firstPropertyURLList.append(jsonItem["p1"]["value"])
-
-                if sparql_endpoint == SPARQLUtil._WIKIDATA_SPARQL_ENDPOINT:
-                    firstPropertyLabelJSON = SPARQLQuery.locationCommonPropertyLabelQuery(firstPropertyURLList, 
-                                            sparql_endpoint = sparql_endpoint)
-                    # firstPropertyLabelJSON = firstPropertyLabelJSONObj["results"]["bindings"]
-
-                    # get the first property label list
-                    firstPropertyURLList = []
-                    firstPropertyLabelList = []
-                    for jsonItem in firstPropertyLabelJSON:
-                        propertyURL = jsonItem["p"]["value"]
-                        firstPropertyURLList.append(propertyURL)
-                        propertyName = jsonItem["propertyLabel"]["value"]
-                        firstPropertyLabelList.append(propertyName)
-                else:
-                    firstPropertyLabelList = SPARQLUtil.make_prefixed_iri_batch(firstPropertyURLList)
-
-                RelFinder.firstPropertyLabelURLDict = dict(zip(firstPropertyLabelList, firstPropertyURLList))
-
-                in_first_property.filter.list = firstPropertyLabelList
-
             # get the second property URL list and label list
             #   when we pick the first property
             if in_first_property_dir.value and in_first_property.value and \
@@ -269,7 +257,96 @@ namespace GeoenrichmentTool
         {
         }
 
-        private async void FindRelatedLinkedData(object sender, EventArgs e)
+        /*
+        # get the property URL list in the specific degree path from the inplaceIRIList
+        # inplaceIRIList: the URL list of wikidata locations
+        # relationDegree: the degree of the property on the path the current query wants to get
+         */
+        private JToken RelationshipFinderCommonPropertyQuery(List<string> inplaceIRIList, int relationDegree)
+        {
+            string selectParam = "?p" + relationDegree.ToString();
+
+            string relationFinderQuery = "SELECT distinct " + selectParam +  "WHERE { ";
+            /*
+            if len(propertyDirectionList) > 0:
+                if selectPropertyURLList[0] == "":
+                    if propertyDirectionList[0] == "BOTH":
+                        relFinderPropertyQuery += """{?place ?p1 ?o1.} UNION {?o1 ?p1 ?place.}\n"""
+                    elif propertyDirectionList[0] == "ORIGIN":
+                        relFinderPropertyQuery += """?place ?p1 ?o1.\n"""
+                    elif propertyDirectionList[0] == "DESTINATION":
+                        relFinderPropertyQuery += """?o1 ?p1 ?place.\n"""
+
+                    if relationDegree > 1:
+                        relFinderPropertyQuery += """OPTIONAL {?p1 a owl:ObjectProperty.}\n"""
+                else:
+                    if propertyDirectionList[0] == "BOTH":
+                        relFinderPropertyQuery += """{?place <"""+ selectPropertyURLList[0] + """> ?o1.} UNION {?o1 <"""+ selectPropertyURLList[0] + """> ?place.}\n"""
+                    elif propertyDirectionList[0] == "ORIGIN":
+                        relFinderPropertyQuery += """?place <"""+ selectPropertyURLList[0] + """> ?o1.\n"""
+                    elif propertyDirectionList[0] == "DESTINATION":
+                        relFinderPropertyQuery += """?o1 <"""+ selectPropertyURLList[0] + """> ?place.\n"""
+
+            if len(propertyDirectionList) > 1:
+                if selectPropertyURLList[1] == "":
+                    if propertyDirectionList[1] == "BOTH":
+                        relFinderPropertyQuery += """{?o1 ?p2 ?o2.} UNION {?o2 ?p2 ?o1.}\n"""
+                    elif propertyDirectionList[1] == "ORIGIN":
+                        relFinderPropertyQuery += """?o1 ?p2 ?o2.\n"""
+                    elif propertyDirectionList[1] == "DESTINATION":
+                        relFinderPropertyQuery += """?o2 ?p2 ?o1.\n"""
+
+                    if relationDegree > 2:
+                        relFinderPropertyQuery += """OPTIONAL {?p2 a owl:ObjectProperty.}\n"""
+                else:
+                    if propertyDirectionList[1] == "BOTH":
+                        relFinderPropertyQuery += """{?o1 <"""+ selectPropertyURLList[1] + """> ?o2.} UNION {?o2 <"""+ selectPropertyURLList[1] + """> ?o1.}\n"""
+                    elif propertyDirectionList[1] == "ORIGIN":
+                        relFinderPropertyQuery += """?o1 <"""+ selectPropertyURLList[1] + """> ?o2.\n"""
+                    elif propertyDirectionList[1] == "DESTINATION":
+                        relFinderPropertyQuery += """?o2 <"""+ selectPropertyURLList[1] + """> ?o1.\n"""
+
+            if len(propertyDirectionList) > 2:
+                if selectPropertyURLList[2] == "":
+                    if propertyDirectionList[2] == "BOTH":
+                        relFinderPropertyQuery += """{?o2 ?p3 ?o3.} UNION {?o3 ?p3 ?o2.}\n"""
+                    elif propertyDirectionList[2] == "ORIGIN":
+                        relFinderPropertyQuery += """?o2 ?p3 ?o3.\n"""
+                    elif propertyDirectionList[2] == "DESTINATION":
+                        relFinderPropertyQuery += """?o3 ?p3 ?o2.\n"""
+
+                    if relationDegree > 3:
+                        relFinderPropertyQuery += """OPTIONAL {?p3 a owl:ObjectProperty.}\n"""
+                else:
+                    if propertyDirectionList[2] == "BOTH":
+                        relFinderPropertyQuery += """{?o2 <"""+ selectPropertyURLList[2] + """> ?o3.} UNION {?o3 <"""+ selectPropertyURLList[2] + """> ?o2.}\n"""
+                    elif propertyDirectionList[2] == "ORIGIN":
+                        relFinderPropertyQuery += """?o2 <"""+ selectPropertyURLList[2] + """> ?o3.\n"""
+                    elif propertyDirectionList[2] == "DESTINATION":
+                        relFinderPropertyQuery += """?o3 <"""+ selectPropertyURLList[2] + """> ?o2.\n"""
+
+            if len(propertyDirectionList) > 3:
+                if propertyDirectionList[3] == "BOTH":
+                    relFinderPropertyQuery += """{?o3 ?p4 ?o4.} UNION {?o4 ?p4 ?o3.}\n"""
+                elif propertyDirectionList[3] == "ORIGIN":
+                    relFinderPropertyQuery += """?o3 ?p4 ?o4.\n"""
+                elif propertyDirectionList[3] == "DESTINATION":
+                    relFinderPropertyQuery += """?o4 ?p4 ?o3.\n"""
+
+            */
+
+            relationFinderQuery += "VALUES ?place { ";
+
+            foreach(var iri in inplaceIRIList)
+            {
+                relationFinderQuery += "<" + iri + "> \n";
+            }
+            relationFinderQuery += "} }";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+        }
+
+        private void FindRelatedLinkedData(object sender, EventArgs e)
         {
             if (firstPropDirection.Text == "")
             {
