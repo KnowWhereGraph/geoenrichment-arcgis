@@ -52,7 +52,8 @@ namespace GeoenrichmentTool
             string outTableName = featureClassName + "PathQueryTripleStore";
             string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
-            propertyDirectionList.Add(firstPropDirection.Text);
+            propertyDirectionList = new List<string>() { firstPropDirection.Text };
+            selectPropertyURLList = new List<string>() { };
 
             JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 1);
 
@@ -71,7 +72,8 @@ namespace GeoenrichmentTool
             thirdPropDirection.Enabled = false; thirdPropDirection.Text = "";
             thirdProp.Enabled = false; thirdProp.Text = "";
 
-            selectPropertyURLList.Add(firstProp.Text);
+            propertyDirectionList = new List<string>() { propertyDirectionList[0] };
+            selectPropertyURLList = new List<string>() { firstProp.Text };
         }
 
         private async void secondPropDirectionChanged(object sender, EventArgs e)
@@ -94,7 +96,8 @@ namespace GeoenrichmentTool
             string outTableName = featureClassName + "PathQueryTripleStore";
             string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
-            propertyDirectionList.Add(secondPropDirection.Text);
+            propertyDirectionList = new List<string>() { propertyDirectionList[0], secondPropDirection.Text };
+            selectPropertyURLList = new List<string>() { selectPropertyURLList[0] };
 
             JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 2);
 
@@ -102,7 +105,7 @@ namespace GeoenrichmentTool
             {
                 string itemVal = item["p2"]["value"].ToString();
                 string itemLabel = GeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
-                firstProp.Items.Add(itemLabel + " | " + itemVal);
+                secondProp.Items.Add(itemLabel + " | " + itemVal);
             }
         }
 
@@ -111,7 +114,8 @@ namespace GeoenrichmentTool
             thirdPropDirection.Enabled = true; thirdPropDirection.Text = "";
             thirdProp.Enabled = false; thirdProp.Text = "";
 
-            selectPropertyURLList.Add(secondProp.Text);
+            propertyDirectionList = new List<string>() { propertyDirectionList[0], propertyDirectionList[1] };
+            selectPropertyURLList = new List<string>() { selectPropertyURLList[0], secondProp.Text };
         }
 
         private async void thirdPropDirectionChanged(object sender, EventArgs e)
@@ -132,7 +136,8 @@ namespace GeoenrichmentTool
             string outTableName = featureClassName + "PathQueryTripleStore";
             string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
-            propertyDirectionList.Add(thirdPropDirection.Text);
+            propertyDirectionList = new List<string>() { propertyDirectionList[0], propertyDirectionList[1], thirdPropDirection.Text };
+            selectPropertyURLList = new List<string>() { selectPropertyURLList[0], selectPropertyURLList[1] };
 
             JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 3);
 
@@ -140,13 +145,16 @@ namespace GeoenrichmentTool
             {
                 string itemVal = item["p3"]["value"].ToString();
                 string itemLabel = GeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
-                firstProp.Items.Add(itemLabel + " | " + itemVal);
+                thirdProp.Items.Add(itemLabel + " | " + itemVal);
             }
         }
 
         private void thirdPropChanged(object sender, EventArgs e)
         {
             selectPropertyURLList.Add(thirdProp.Text);
+
+            propertyDirectionList = new List<string>() { propertyDirectionList[0], propertyDirectionList[1], propertyDirectionList[2] };
+            selectPropertyURLList = new List<string>() { selectPropertyURLList[0], selectPropertyURLList[1], thirdProp.Text };
         }
 
         /*
@@ -157,8 +165,9 @@ namespace GeoenrichmentTool
         private JToken RelationshipFinderCommonPropertyQuery(List<string> inplaceIRIList, int relationDegree)
         {
             string selectParam = "?p" + relationDegree.ToString();
+            char[] delimPipe = { '|' };
 
-            string relationFinderQuery = "SELECT distinct " + selectParam +  "WHERE { ";
+            string relationFinderQuery = "SELECT distinct " + selectParam +  " WHERE { ";
 
             for(int index=0; index<relationDegree; index++)
             {
@@ -166,7 +175,7 @@ namespace GeoenrichmentTool
                 int currDegree = index + 1;
                 string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
                 string oValHigh = "?o" + currDegree.ToString();
-                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0] + ">";
+                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0].Split(delimPipe).First().Trim() + ">";
 
                 switch (currDirection)
                 {
@@ -184,7 +193,7 @@ namespace GeoenrichmentTool
                 }
             }
 
-            relationFinderQuery += "VALUES ?place { ";
+            relationFinderQuery += " VALUES ?place { ";
 
             foreach(var iri in inplaceIRIList)
             {
