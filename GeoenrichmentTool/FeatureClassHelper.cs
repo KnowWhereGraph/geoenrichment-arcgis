@@ -678,7 +678,7 @@ namespace GeoenrichmentTool
             }
         }
 
-    public static string GetPropertyName(string valuePropertyURL) {
+        public static string GetPropertyName(string valuePropertyURL) {
             char[] delimSharp = { '#' };
             char[] delimSlash = { '/' };
             if (valuePropertyURL.Contains("#"))
@@ -689,6 +689,77 @@ namespace GeoenrichmentTool
             {
                 return valuePropertyURL.Split(delimSlash).Last();
             }
+        }
+
+        public async static void CreateRelationshipFinderTable(List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
+        {
+            //triplePropertyURLLabelDict = dict(zip(triplePropertyURLList, triplePropertyLabelList))
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+            var datastore = mainLayer.GetTable().GetDatastore();
+            var geodatabase = datastore as Geodatabase;
+
+            await CreateTable(tableName);
+            var tripleStoreTable = geodatabase.OpenDataset<Table>(tableName);
+
+            await Project.Current.SaveEditsAsync();
+
+            await AddField(tripleStoreTable, "Subject", "TEXT");
+            await AddField(tripleStoreTable, "Predicate", "TEXT");
+            await AddField(tripleStoreTable, "Object", "TEXT");
+            await AddField(tripleStoreTable, "Pred_Label", "TEXT");
+            await AddField(tripleStoreTable, "Degree", "LONG");
+
+            /*
+            insertCursor = arcpy.da.InsertCursor(tripleStoreTable, ['Subject', 'Predicate', "Object", 'Pred_Label', "Degree"])
+            for triple in tripleStore:
+                try:
+                    row = (triple.s, triple.p, triple.o, triplePropertyURLLabelDict[triple.p], tripleStore[triple] )
+                    insertCursor.insertRow( row )
+                except Error:
+                    arcpy.AddMessage(row)
+                    arcpy.AddMessage("Error inserting triple data: {} {} {}".format(triple.s, triple.p, triple.o))
+            del insertCursor
+
+            ArcpyViz.visualize_current_layer(out_path = tripleStoreTable)
+
+            entitySet = set()
+            for triple in tripleStore:
+                entitySet.add(triple.s)
+                entitySet.add(triple.o)
+
+            arcpy.AddMessage("entitySet: {}".format(entitySet))
+            placeJSON = SPARQLQuery.endPlaceInformationQuery(list(entitySet), sparql_endpoint = sparql_endpoint)
+
+            arcpy.AddMessage("placeJSON: {}".format(placeJSON))
+
+            # create a Shapefile/FeatuerClass for all geographic entities in the triplestore
+            Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult = placeJSON, 
+                                                        out_path = outputFeatureClassName, 
+                                                        inPlaceType = "", 
+                                                        selectedURL = "", 
+                                                        isDirectInstance = False, 
+                                                        viz_res = True)
+            # Json2Field.creatPlaceFeatureClassFromJSON(placeJSON, outputFeatureClassName, None, "")
+
+            # add their centrold point of each geometry
+            arcpy.AddField_management(outputFeatureClassName, "POINT_X", "DOUBLE")
+            arcpy.AddField_management(outputFeatureClassName, "POINT_Y", "DOUBLE")
+            arcpy.CalculateField_management(outputFeatureClassName, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3")
+            arcpy.CalculateField_management(outputFeatureClassName, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3")
+
+            arcpy.env.workspace = outLocation
+
+            originFeatureRelationshipClassName = outputFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass"
+            arcpy.CreateRelationshipClass_management(outputFeatureClassName, outTableName, originFeatureRelationshipClassName, "SIMPLE",
+                "S-P-O Link", "Origin of S-P-O Link",
+                                    "FORWARD", "ONE_TO_MANY", "NONE", "URL", "Subject")
+
+            endFeatureRelationshipClassName = outputFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass"
+            arcpy.CreateRelationshipClass_management(outputFeatureClassName, outTableName, endFeatureRelationshipClassName, "SIMPLE",
+                "S-P-O Link", "Destination of S-P-O Link",
+                                    "FORWARD", "ONE_TO_MANY", "NONE", "URL", "Object")
+            */
         }
 
         private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)
