@@ -204,7 +204,7 @@ namespace GeoenrichmentTool
             return GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
         }
 
-        private void FindRelatedLinkedData(object sender, EventArgs e)
+        private async void FindRelatedLinkedData(object sender, EventArgs e)
         {
             if (firstPropDirection.Text == "")
             {
@@ -212,8 +212,336 @@ namespace GeoenrichmentTool
             }
             else
             {
+                /*
+                in_sparql_endpoint = parameters[0]
+                in_wikiplace_IRI = parameters[1]
+                in_do_single_ent_start = parameters[2]
+                in_single_ent = parameters[3]
+                in_relation_degree = parameters[4]
+                in_first_property_dir = parameters[5]
+                in_first_property = parameters[6]
+                in_second_property_dir = parameters[7]
+                in_second_property = parameters[8]
+                in_third_property_dir = parameters[9]
+                in_third_property = parameters[10]
+                in_fourth_property_dir = parameters[11]
+                in_fourth_property = parameters[12]
+                out_location = parameters[13]
+                out_table_name = parameters[14]
+                out_points_name = parameters[15]
+
+                sparql_endpoint = in_sparql_endpoint.valueAsText
+
+                relationDegree = int(in_relation_degree.valueAsText)
+                outLocation = out_location.valueAsText
+                outTableName = out_table_name.valueAsText
+                outFeatureClassName = out_points_name.valueAsText
+                outputTableName = os.path.join(outLocation,outTableName)
+                outputFeatureClassName = os.path.join(outLocation,outFeatureClassName)
+
+                # check whether outputTableName or outputFeatureClassName already exist
+                if arcpy.Exists(outputTableName) or arcpy.Exists(outputFeatureClassName):
+                    messages.addErrorMessage("The output table or feature class already exists in current workspace!")
+                    raise arcpy.ExecuteError
+                    return
+                */
                 
+                /*
+                if not in_do_single_ent_start
+                */
+                BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+
+                List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
+                /*
+                else:
+                    # we use single iri as the start node
+                    inplaceIRIList = [in_single_ent.valueAsText]
+                */
+
+                //# for the direction list, change "BOTH" to "OROIGIN" and "DESTINATION"
+                List<List<string>> directionExpendedLists = DirectionListFromBoth2OD();
+
+                //tripleStore = dict()
+
+                foreach(var currentDirectionList in directionExpendedLists)
+                {
+                    RelFinderTripleQuery(inplaceIRIList, currentDirectionList);
+                    //# get a list of triples for curent specified property path
+                    /*
+                    newTripleStore = SPARQLQuery.relFinderTripleQuery(inplaceIRIList, 
+                                                                    propertyDirectionList = currentDirectionList, 
+                                                                    selectPropertyURLList = selectPropertyURLList,
+                                                                    sparql_endpoint = sparql_endpoint)
+            
+                    tripleStore = UTIL.mergeTripleStoreDicts(tripleStore, newTripleStore)
+                     */
+                }
+
+                /*
+                triplePropertyURLList = []
+                for triple in tripleStore:
+                    if triple.p not in triplePropertyURLList:
+                        triplePropertyURLList.append(triple.p)
+
+                if sparql_endpoint == SPARQLUtil._WIKIDATA_SPARQL_ENDPOINT:
+                    triplePropertyLabelJSON = SPARQLQuery.locationCommonPropertyLabelQuery(triplePropertyURLList,
+                                                                sparql_endpoint = sparql_endpoint)
+
+                    triplePropertyURLList = []
+                    triplePropertyLabelList = []
+                    for jsonItem in triplePropertyLabelJSON:
+                        propertyURL = jsonItem["p"]["value"]
+                        triplePropertyURLList.append(propertyURL)
+                        propertyName = jsonItem["propertyLabel"]["value"]
+                        triplePropertyLabelList.append(propertyName)
+                else:
+                    triplePropertyLabelList = SPARQLUtil.make_prefixed_iri_batch(triplePropertyURLList)
+
+                triplePropertyURLLabelDict = dict(zip(triplePropertyURLList, triplePropertyLabelList))
+
+                tripleStoreTable = arcpy.CreateTable_management(outLocation,outTableName)
+
+        
+                arcpy.AddField_management(tripleStoreTable, "Subject", "TEXT", 
+                                field_length = Json2Field.fieldLengthDecideByList([triple.s for triple in tripleStore]) )
+                arcpy.AddField_management(tripleStoreTable, "Predicate", "TEXT",
+                                field_length = Json2Field.fieldLengthDecideByList([triple.p for triple in tripleStore]) )
+                arcpy.AddField_management(tripleStoreTable, "Object", "TEXT", 
+                                field_length = Json2Field.fieldLengthDecideByList([triple.o for triple in tripleStore]) )
+                arcpy.AddField_management(tripleStoreTable, "Pred_Label", "TEXT", 
+                                field_length = Json2Field.fieldLengthDecideByList([triplePropertyURLLabelDict[triple.p] for triple in tripleStore]) )
+                arcpy.AddField_management(tripleStoreTable, "Degree", "LONG")
+
+                insertCursor = arcpy.da.InsertCursor(tripleStoreTable, ['Subject', 'Predicate', "Object", 'Pred_Label', "Degree"])
+                for triple in tripleStore:
+                    try:
+                        row = (triple.s, triple.p, triple.o, triplePropertyURLLabelDict[triple.p], tripleStore[triple] )
+                        insertCursor.insertRow( row )
+                    except Error:
+                        arcpy.AddMessage(row)
+                        arcpy.AddMessage("Error inserting triple data: {} {} {}".format(triple.s, triple.p, triple.o))
+                del insertCursor
+
+                ArcpyViz.visualize_current_layer(out_path = tripleStoreTable)
+
+                entitySet = set()
+                for triple in tripleStore:
+                    entitySet.add(triple.s)
+                    entitySet.add(triple.o)
+
+                arcpy.AddMessage("entitySet: {}".format(entitySet))
+                placeJSON = SPARQLQuery.endPlaceInformationQuery(list(entitySet), sparql_endpoint = sparql_endpoint)
+
+                arcpy.AddMessage("placeJSON: {}".format(placeJSON))
+
+                # create a Shapefile/FeatuerClass for all geographic entities in the triplestore
+                Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult = placeJSON, 
+                                                            out_path = outputFeatureClassName, 
+                                                            inPlaceType = "", 
+                                                            selectedURL = "", 
+                                                            isDirectInstance = False, 
+                                                            viz_res = True)
+                # Json2Field.creatPlaceFeatureClassFromJSON(placeJSON, outputFeatureClassName, None, "")
+
+                # add their centrold point of each geometry
+                arcpy.AddField_management(outputFeatureClassName, "POINT_X", "DOUBLE")
+                arcpy.AddField_management(outputFeatureClassName, "POINT_Y", "DOUBLE")
+                arcpy.CalculateField_management(outputFeatureClassName, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3")
+                arcpy.CalculateField_management(outputFeatureClassName, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3")
+
+                arcpy.env.workspace = outLocation
+
+                originFeatureRelationshipClassName = outputFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass"
+                arcpy.CreateRelationshipClass_management(outputFeatureClassName, outTableName, originFeatureRelationshipClassName, "SIMPLE",
+                    "S-P-O Link", "Origin of S-P-O Link",
+                                     "FORWARD", "ONE_TO_MANY", "NONE", "URL", "Subject")
+
+                endFeatureRelationshipClassName = outputFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass"
+                arcpy.CreateRelationshipClass_management(outputFeatureClassName, outTableName, endFeatureRelationshipClassName, "SIMPLE",
+                    "S-P-O Link", "Destination of S-P-O Link",
+                                     "FORWARD", "ONE_TO_MANY", "NONE", "URL", "Object")
+                */
             }
+        }
+
+        //# given a list of direction, return a list of lists which change a list with "BOTH" to two list with "ORIGIN" and "DESTINATION"
+        //# e.g. ["BOTH", "ORIGIN", "DESTINATION", "ORIGIN"] -> ["ORIGIN", "ORIGIN", "DESTINATION", "ORIGIN"] and ["DESTINATION", "ORIGIN", "DESTINATION", "ORIGIN"]
+        //# propertyDirectionList: a list of direction from ["BOTH", "ORIGIN", "DESTINATION"], it has at most 4 elements
+        private List<List<string>> DirectionListFromBoth2OD()
+        {
+            List<List<string>> propertyDirectionExpandedLists = new List<List<string>>() { };
+            propertyDirectionExpandedLists.Add(propertyDirectionList);
+
+            List<List<string>> resultList = new List<List<string>>() { };
+
+            foreach(var currentPropertyDirectionList in propertyDirectionExpandedLists)
+            {
+                int i = 0;
+                int indexOfBOTH = -1;
+                while(i < currentPropertyDirectionList.Count)
+                {
+                    if(currentPropertyDirectionList[i] == "BOTH")
+                    {
+                        indexOfBOTH = i;
+                        break;
+                    }
+
+                    i++;
+                }
+
+                if(indexOfBOTH != -1)
+                {
+                    List<string> newList1 = currentPropertyDirectionList;
+                    newList1[indexOfBOTH] = "ORIGIN";
+                    propertyDirectionExpandedLists.Add(newList1);
+
+                    List<string> newList2 = currentPropertyDirectionList;
+                    newList2[indexOfBOTH] = "DESTINATION";
+                    propertyDirectionExpandedLists.Add(newList2);
+                }
+                else
+                {
+                    if(!resultList.Contains(currentPropertyDirectionList))
+                    {
+                        resultList.Add(currentPropertyDirectionList);
+                    }
+                }
+            }
+
+            return resultList;
+        }
+
+        // # get the triple set in the specific degree path from the inplaceIRIList
+        //# inplaceIRIList: the URL list of wikidata locations
+        //# propertyDirectionList: the list of property direction, it has at most 4 elements, the length is the path degree. The element value is from ["ORIGIN", "DESTINATION"]
+        //# selectPropertyURLList: the selected peoperty URL list, it always has 4 elements, "" if no property has been selected
+        private void RelFinderTripleQuery(List<string> inplaceIRIList, List<string> currentDirectionList)
+        {
+            string selectParam = "?place ";
+            int relationDegree = selectPropertyURLList.Count();
+
+            for(int i=0; i< relationDegree; i++)
+            {
+                int currDegree = i + 1;
+                //if selectPropertyURLList[0] == "":
+                //    selectParam += "?p"+ currDegree.ToString() +" "
+
+                selectParam += "?o" + currDegree.ToString() + " ";
+            }
+
+            string relationFinderQuery = "SELECT distinct " + selectParam + " WHERE {";
+            char[] delimPipe = { '|' };
+
+            for (int index = 0; index < relationDegree; index++)
+            {
+                string currDirection = currentDirectionList[index];
+                int currDegree = index + 1;
+                string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
+                string oValHigh = "?o" + currDegree.ToString();
+                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0].Split(delimPipe).Last().Trim() + ">";
+
+                switch (currDirection)
+                {
+                    case "Both":
+                        relationFinderQuery += "{" + oValLow + " " + pVal + " " + oValHigh + ".} UNION {" + oValHigh + " " + pVal + " " + oValLow + ".}\n";
+                        break;
+                    case "Origin":
+                        relationFinderQuery += oValLow + " " + pVal + " " + oValHigh + ".\n";
+                        break;
+                    case "Destination":
+                        relationFinderQuery += oValHigh + " " + pVal + " " + oValLow + ".\n";
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            relationFinderQuery += " VALUES ?place { ";
+
+            foreach (var iri in inplaceIRIList)
+            {
+                relationFinderQuery += "<" + iri + "> \n";
+            }
+            relationFinderQuery += "} }";
+
+            JToken resultsJSON = GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+
+            /*
+            tripleStore = dict()
+            Triple = namedtuple("Triple", ["s", "p", "o"])
+            for jsonItem in jsonBindingObject:
+                if len(propertyDirectionList) > 0:
+                    if selectPropertyURLList[0] == "":
+                        if propertyDirectionList[0] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["place"]["value"], p = jsonItem["p1"]["value"], o = jsonItem["o1"]["value"])
+                        elif propertyDirectionList[0] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = jsonItem["p1"]["value"], o = jsonItem["place"]["value"])
+                    else:
+                        if propertyDirectionList[0] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["place"]["value"], p = selectPropertyURLList[0], o = jsonItem["o1"]["value"])
+                        elif propertyDirectionList[0] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = selectPropertyURLList[0], o = jsonItem["place"]["value"])
+
+                    if currentTriple not in tripleStore:
+                        tripleStore[currentTriple] = 1
+                    else:
+                        if tripleStore[currentTriple] > 1:
+                            tripleStore[currentTriple] = 1
+                
+
+                if len(propertyDirectionList) > 1:
+                    if selectPropertyURLList[1] == "":
+                        if propertyDirectionList[1] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = jsonItem["p2"]["value"], o = jsonItem["o2"]["value"])
+                        elif propertyDirectionList[1] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = jsonItem["p2"]["value"], o = jsonItem["o1"]["value"])
+                    else:
+                        if propertyDirectionList[1] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = selectPropertyURLList[1], o = jsonItem["o2"]["value"])
+                        elif propertyDirectionList[1] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = selectPropertyURLList[1], o = jsonItem["o1"]["value"])
+
+                    if currentTriple not in tripleStore:
+                        tripleStore[currentTriple] = 2
+                    else:
+                        if tripleStore[currentTriple] > 2:
+                            tripleStore[currentTriple] = 2
+
+                if len(propertyDirectionList) > 2:
+                    if selectPropertyURLList[2] == "":
+                        if propertyDirectionList[2] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = jsonItem["p3"]["value"], o = jsonItem["o3"]["value"])
+                        elif propertyDirectionList[2] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = jsonItem["p3"]["value"], o = jsonItem["o2"]["value"])
+                    else:
+                        if propertyDirectionList[2] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = selectPropertyURLList[2], o = jsonItem["o3"]["value"])
+                        elif propertyDirectionList[2] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = selectPropertyURLList[2], o = jsonItem["o2"]["value"])
+
+                    if currentTriple not in tripleStore:
+                        tripleStore[currentTriple] = 3
+                    else:
+                        if tripleStore[currentTriple] > 3:
+                            tripleStore[currentTriple] = 3
+
+                if len(propertyDirectionList) > 3:
+                    if selectPropertyURLList[3] == "":
+                        if propertyDirectionList[3] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = jsonItem["p4"]["value"], o = jsonItem["o4"]["value"])
+                        elif propertyDirectionList[3] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o4"]["value"], p = jsonItem["p4"]["value"], o = jsonItem["o3"]["value"])
+                    else:
+                        if propertyDirectionList[3] == "ORIGIN":
+                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = selectPropertyURLList[3], o = jsonItem["o4"]["value"])
+                        elif propertyDirectionList[3] == "DESTINATION":
+                            currentTriple = Triple(s = jsonItem["o4"]["value"], p = selectPropertyURLList[3], o = jsonItem["o3"]["value"])
+
+                    if currentTriple not in tripleStore:
+                        tripleStore[currentTriple] = 4
+
+            return tripleStore
+            */
         }
     }
 }
