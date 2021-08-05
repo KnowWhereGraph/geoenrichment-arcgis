@@ -691,9 +691,8 @@ namespace GeoenrichmentTool
             }
         }
 
-        public async static void CreateRelationshipFinderTable(List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
+        public async static void CreateRelationshipFinderTable(List<Dictionary<string, string>> tripleStore, List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
         {
-            //triplePropertyURLLabelDict = dict(zip(triplePropertyURLList, triplePropertyLabelList))
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
             var datastore = mainLayer.GetTable().GetDatastore();
@@ -710,28 +709,54 @@ namespace GeoenrichmentTool
             await AddField(tripleStoreTable, "Pred_Label", "TEXT");
             await AddField(tripleStoreTable, "Degree", "LONG");
 
+            string message = String.Empty;
+            bool creationResult = false;
+            EditOperation editOperation = new EditOperation();
+
+            await QueuedTask.Run(() => {
+                editOperation.Callback(context =>
+                {
+                    using (RowBuffer rowBuffer = tripleStoreTable.CreateRowBuffer())
+                    {
+                        foreach (var triple in tripleStore)
+                        {
+                            rowBuffer["Subject"] = triple["s"];
+                            rowBuffer["Predicate"] = triple["p"];
+                            rowBuffer["Object"] = triple["o"];
+                            rowBuffer["Pred_Label"] = triplePropertyLabelList[triplePropertyURLList.IndexOf(triple["p"])];
+                            rowBuffer["Degree"] = tripleStore.IndexOf(triple);
+                            using (Row row = tripleStoreTable.CreateRow(rowBuffer))
+                            {
+                                // To Indicate that the attribute table has to be updated.
+                                context.Invalidate(row);
+                            }
+                        }
+                    }
+                }, tripleStoreTable);
+
+                try
+                {
+                    creationResult = editOperation.Execute();
+                    if (!creationResult) message = editOperation.ErrorMessage;
+                }
+                catch (GeodatabaseException exObj)
+                {
+                    message = exObj.Message;
+                }
+
+                MapView.Active.Redraw(false);
+            });
+
+            if (!string.IsNullOrEmpty(message))
+                MessageBox.Show(message);
+
             /*
-            insertCursor = arcpy.da.InsertCursor(tripleStoreTable, ['Subject', 'Predicate', "Object", 'Pred_Label', "Degree"])
-            for triple in tripleStore:
-                try:
-                    row = (triple.s, triple.p, triple.o, triplePropertyURLLabelDict[triple.p], tripleStore[triple] )
-                    insertCursor.insertRow( row )
-                except Error:
-                    arcpy.AddMessage(row)
-                    arcpy.AddMessage("Error inserting triple data: {} {} {}".format(triple.s, triple.p, triple.o))
-            del insertCursor
-
-            ArcpyViz.visualize_current_layer(out_path = tripleStoreTable)
-
             entitySet = set()
             for triple in tripleStore:
                 entitySet.add(triple.s)
                 entitySet.add(triple.o)
 
-            arcpy.AddMessage("entitySet: {}".format(entitySet))
             placeJSON = SPARQLQuery.endPlaceInformationQuery(list(entitySet), sparql_endpoint = sparql_endpoint)
-
-            arcpy.AddMessage("placeJSON: {}".format(placeJSON))
 
             # create a Shapefile/FeatuerClass for all geographic entities in the triplestore
             Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult = placeJSON, 
@@ -740,7 +765,6 @@ namespace GeoenrichmentTool
                                                         selectedURL = "", 
                                                         isDirectInstance = False, 
                                                         viz_res = True)
-            # Json2Field.creatPlaceFeatureClassFromJSON(placeJSON, outputFeatureClassName, None, "")
 
             # add their centrold point of each geometry
             arcpy.AddField_management(outputFeatureClassName, "POINT_X", "DOUBLE")

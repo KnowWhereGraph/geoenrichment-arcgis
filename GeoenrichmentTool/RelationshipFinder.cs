@@ -281,7 +281,7 @@ namespace GeoenrichmentTool
                     }
                 }
 
-                FeatureClassHelper.CreateRelationshipFinderTable(triplePropertyURLList, triplePropertyLabelList, ""); //TODO
+                FeatureClassHelper.CreateRelationshipFinderTable(tripleStore, triplePropertyURLList, triplePropertyLabelList, ""); //TODO
             }
         }
 
