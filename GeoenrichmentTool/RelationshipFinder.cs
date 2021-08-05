@@ -261,42 +261,27 @@ namespace GeoenrichmentTool
                 //# for the direction list, change "BOTH" to "OROIGIN" and "DESTINATION"
                 List<List<string>> directionExpendedLists = DirectionListFromBoth2OD();
 
-                //tripleStore = dict()
+                List<Dictionary<string, string>> tripleStore = new List<Dictionary<string, string>>() { };
 
-                foreach(var currentDirectionList in directionExpendedLists)
+                foreach (var currentDirectionList in directionExpendedLists)
                 {
-                    RelFinderTripleQuery(inplaceIRIList, currentDirectionList);
                     //# get a list of triples for curent specified property path
-                    /*
-                    newTripleStore = SPARQLQuery.relFinderTripleQuery(inplaceIRIList, 
-                                                                    propertyDirectionList = currentDirectionList, 
-                                                                    selectPropertyURLList = selectPropertyURLList,
-                                                                    sparql_endpoint = sparql_endpoint)
-            
-                    tripleStore = UTIL.mergeTripleStoreDicts(tripleStore, newTripleStore)
-                     */
+                    List<Dictionary<string, string>> newTripleStore = RelFinderTripleQuery(inplaceIRIList, currentDirectionList);
+                    tripleStore = tripleStore.Union(newTripleStore).ToList();
+                }
+
+                List<string> triplePropertyURLList = new List<string>() { };
+                List<string> triplePropertyLabelList = new List<string>() { };
+                foreach(var triple in tripleStore)
+                {
+                    if(!triplePropertyURLList.Contains(triple["p"]))
+                    {
+                        triplePropertyURLList.Add(triple["p"]);
+                        triplePropertyLabelList.Add(GeoModule.Current.GetQueryClass().MakeIRIPrefix(triple["p"]));
+                    }
                 }
 
                 /*
-                triplePropertyURLList = []
-                for triple in tripleStore:
-                    if triple.p not in triplePropertyURLList:
-                        triplePropertyURLList.append(triple.p)
-
-                if sparql_endpoint == SPARQLUtil._WIKIDATA_SPARQL_ENDPOINT:
-                    triplePropertyLabelJSON = SPARQLQuery.locationCommonPropertyLabelQuery(triplePropertyURLList,
-                                                                sparql_endpoint = sparql_endpoint)
-
-                    triplePropertyURLList = []
-                    triplePropertyLabelList = []
-                    for jsonItem in triplePropertyLabelJSON:
-                        propertyURL = jsonItem["p"]["value"]
-                        triplePropertyURLList.append(propertyURL)
-                        propertyName = jsonItem["propertyLabel"]["value"]
-                        triplePropertyLabelList.append(propertyName)
-                else:
-                    triplePropertyLabelList = SPARQLUtil.make_prefixed_iri_batch(triplePropertyURLList)
-
                 triplePropertyURLLabelDict = dict(zip(triplePropertyURLList, triplePropertyLabelList))
 
                 tripleStoreTable = arcpy.CreateTable_management(outLocation,outTableName)
@@ -411,11 +396,11 @@ namespace GeoenrichmentTool
             return resultList;
         }
 
-        // # get the triple set in the specific degree path from the inplaceIRIList
+        //# get the triple set in the specific degree path from the inplaceIRIList
         //# inplaceIRIList: the URL list of wikidata locations
         //# propertyDirectionList: the list of property direction, it has at most 4 elements, the length is the path degree. The element value is from ["ORIGIN", "DESTINATION"]
         //# selectPropertyURLList: the selected peoperty URL list, it always has 4 elements, "" if no property has been selected
-        private void RelFinderTripleQuery(List<string> inplaceIRIList, List<string> currentDirectionList)
+        private List<Dictionary<string, string>> RelFinderTripleQuery(List<string> inplaceIRIList, List<string> currentDirectionList)
         {
             string selectParam = "?place ";
             int relationDegree = selectPropertyURLList.Count();
@@ -466,82 +451,38 @@ namespace GeoenrichmentTool
 
             JToken resultsJSON = GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
 
-            /*
-            tripleStore = dict()
-            Triple = namedtuple("Triple", ["s", "p", "o"])
-            for jsonItem in jsonBindingObject:
-                if len(propertyDirectionList) > 0:
-                    if selectPropertyURLList[0] == "":
-                        if propertyDirectionList[0] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["place"]["value"], p = jsonItem["p1"]["value"], o = jsonItem["o1"]["value"])
-                        elif propertyDirectionList[0] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = jsonItem["p1"]["value"], o = jsonItem["place"]["value"])
-                    else:
-                        if propertyDirectionList[0] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["place"]["value"], p = selectPropertyURLList[0], o = jsonItem["o1"]["value"])
-                        elif propertyDirectionList[0] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = selectPropertyURLList[0], o = jsonItem["place"]["value"])
+            List<Dictionary<string, string>> tripleStore = new List<Dictionary<string, string>>() { };
+            foreach (var jsonItem in resultsJSON)
+            {
+                for (int index = 0; index < relationDegree; index++)
+                {
+                    string currDirection = currentDirectionList[index];
+                    int currDegree = index + 1;
+                    string oValLow = (index == 0) ? "place" : "o" + index.ToString();
+                    string oValHigh = "o" + currDegree.ToString();
 
-                    if currentTriple not in tripleStore:
-                        tripleStore[currentTriple] = 1
-                    else:
-                        if tripleStore[currentTriple] > 1:
-                            tripleStore[currentTriple] = 1
-                
+                    Dictionary<string, string> currentTriple = new Dictionary<string, string>() { };
+                    switch (currDirection)
+                    {
+                        case "Origin":
+                            currentTriple = new Dictionary<string, string>() { 
+                                { "s", jsonItem[oValLow]["value"].ToString() }, { "p", selectPropertyURLList[index] }, { "o", jsonItem[oValHigh]["value"].ToString() } 
+                            };
+                            break;
+                        case "Destination":
+                            currentTriple = new Dictionary<string, string>() {
+                                { "s", jsonItem[oValHigh]["value"].ToString() }, { "p", selectPropertyURLList[index] }, { "o", jsonItem[oValLow]["value"].ToString() }
+                            };
+                            break;
+                        default:
+                            break;
+                    }
 
-                if len(propertyDirectionList) > 1:
-                    if selectPropertyURLList[1] == "":
-                        if propertyDirectionList[1] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = jsonItem["p2"]["value"], o = jsonItem["o2"]["value"])
-                        elif propertyDirectionList[1] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = jsonItem["p2"]["value"], o = jsonItem["o1"]["value"])
-                    else:
-                        if propertyDirectionList[1] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["o1"]["value"], p = selectPropertyURLList[1], o = jsonItem["o2"]["value"])
-                        elif propertyDirectionList[1] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = selectPropertyURLList[1], o = jsonItem["o1"]["value"])
+                    tripleStore.Add(currentTriple);
+                }
+            }
 
-                    if currentTriple not in tripleStore:
-                        tripleStore[currentTriple] = 2
-                    else:
-                        if tripleStore[currentTriple] > 2:
-                            tripleStore[currentTriple] = 2
-
-                if len(propertyDirectionList) > 2:
-                    if selectPropertyURLList[2] == "":
-                        if propertyDirectionList[2] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = jsonItem["p3"]["value"], o = jsonItem["o3"]["value"])
-                        elif propertyDirectionList[2] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = jsonItem["p3"]["value"], o = jsonItem["o2"]["value"])
-                    else:
-                        if propertyDirectionList[2] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["o2"]["value"], p = selectPropertyURLList[2], o = jsonItem["o3"]["value"])
-                        elif propertyDirectionList[2] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = selectPropertyURLList[2], o = jsonItem["o2"]["value"])
-
-                    if currentTriple not in tripleStore:
-                        tripleStore[currentTriple] = 3
-                    else:
-                        if tripleStore[currentTriple] > 3:
-                            tripleStore[currentTriple] = 3
-
-                if len(propertyDirectionList) > 3:
-                    if selectPropertyURLList[3] == "":
-                        if propertyDirectionList[3] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = jsonItem["p4"]["value"], o = jsonItem["o4"]["value"])
-                        elif propertyDirectionList[3] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o4"]["value"], p = jsonItem["p4"]["value"], o = jsonItem["o3"]["value"])
-                    else:
-                        if propertyDirectionList[3] == "ORIGIN":
-                            currentTriple = Triple(s = jsonItem["o3"]["value"], p = selectPropertyURLList[3], o = jsonItem["o4"]["value"])
-                        elif propertyDirectionList[3] == "DESTINATION":
-                            currentTriple = Triple(s = jsonItem["o4"]["value"], p = selectPropertyURLList[3], o = jsonItem["o3"]["value"])
-
-                    if currentTriple not in tripleStore:
-                        tripleStore[currentTriple] = 4
-
-            return tripleStore
-            */
+            return tripleStore;
         }
     }
 }
