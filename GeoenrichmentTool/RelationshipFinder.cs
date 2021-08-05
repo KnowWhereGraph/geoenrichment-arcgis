@@ -175,7 +175,7 @@ namespace GeoenrichmentTool
                 int currDegree = index + 1;
                 string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
                 string oValHigh = "?o" + currDegree.ToString();
-                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0].Split(delimPipe).First().Trim() + ">";
+                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0].Split(delimPipe).Last().Trim() + ">";
 
                 switch (currDirection)
                 {
