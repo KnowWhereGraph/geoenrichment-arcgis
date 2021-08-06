@@ -21,10 +21,26 @@ namespace GeoenrichmentTool
          */
         List<string> propertyDirectionList;
         List<string> selectPropertyURLList;
+        string outTableName;
+        string outFeatureClassName;
 
         public RelationshipFinder()
         {
             InitializeComponent();
+
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            string featureClassName = mainLayer.Name;
+
+            outTableName = featureClassName + "PathQueryTripleStore";
+            outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
+
+            /*
+            # check whether outputTableName or outputFeatureClassName already exist
+            if arcpy.Exists(outputTableName) or arcpy.Exists(outputFeatureClassName):
+                messages.addErrorMessage("The output table or feature class already exists in current workspace!")
+                raise arcpy.ExecuteError
+                return
+            */
 
             propertyDirectionList = new List<string>() { };
             selectPropertyURLList = new List<string>() { };
@@ -42,15 +58,11 @@ namespace GeoenrichmentTool
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
-            string featureClassName = mainLayer.Name;
             /*
             elif in_single_ent.value and in_do_single_ent_start.value:
                 inplaceIRIList = [in_single_ent.valueAsText]
                 featureClassName = "entity"
             */
-
-            string outTableName = featureClassName + "PathQueryTripleStore";
-            string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
             propertyDirectionList = new List<string>() { firstPropDirection.Text };
             selectPropertyURLList = new List<string>() { };
@@ -86,15 +98,11 @@ namespace GeoenrichmentTool
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
-            string featureClassName = mainLayer.Name;
             /*
             elif in_single_ent.value and in_do_single_ent_start.value:
                 inplaceIRIList = [in_single_ent.valueAsText]
                 featureClassName = "entity"
             */
-
-            string outTableName = featureClassName + "PathQueryTripleStore";
-            string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
             propertyDirectionList = new List<string>() { propertyDirectionList[0], secondPropDirection.Text };
             selectPropertyURLList = new List<string>() { selectPropertyURLList[0] };
@@ -126,15 +134,11 @@ namespace GeoenrichmentTool
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
-            string featureClassName = mainLayer.Name;
             /*
             elif in_single_ent.value and in_do_single_ent_start.value:
                 inplaceIRIList = [in_single_ent.valueAsText]
                 featureClassName = "entity"
             */
-
-            string outTableName = featureClassName + "PathQueryTripleStore";
-            string outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
 
             propertyDirectionList = new List<string>() { propertyDirectionList[0], propertyDirectionList[1], thirdPropDirection.Text };
             selectPropertyURLList = new List<string>() { selectPropertyURLList[0], selectPropertyURLList[1] };
@@ -211,41 +215,7 @@ namespace GeoenrichmentTool
                 MessageBox.Show($@"Required fields missing!");
             }
             else
-            {
-                /*
-                in_sparql_endpoint = parameters[0]
-                in_wikiplace_IRI = parameters[1]
-                in_do_single_ent_start = parameters[2]
-                in_single_ent = parameters[3]
-                in_relation_degree = parameters[4]
-                in_first_property_dir = parameters[5]
-                in_first_property = parameters[6]
-                in_second_property_dir = parameters[7]
-                in_second_property = parameters[8]
-                in_third_property_dir = parameters[9]
-                in_third_property = parameters[10]
-                in_fourth_property_dir = parameters[11]
-                in_fourth_property = parameters[12]
-                out_location = parameters[13]
-                out_table_name = parameters[14]
-                out_points_name = parameters[15]
-
-                sparql_endpoint = in_sparql_endpoint.valueAsText
-
-                relationDegree = int(in_relation_degree.valueAsText)
-                outLocation = out_location.valueAsText
-                outTableName = out_table_name.valueAsText
-                outFeatureClassName = out_points_name.valueAsText
-                outputTableName = os.path.join(outLocation,outTableName)
-                outputFeatureClassName = os.path.join(outLocation,outFeatureClassName)
-
-                # check whether outputTableName or outputFeatureClassName already exist
-                if arcpy.Exists(outputTableName) or arcpy.Exists(outputFeatureClassName):
-                    messages.addErrorMessage("The output table or feature class already exists in current workspace!")
-                    raise arcpy.ExecuteError
-                    return
-                */
-                
+            {   
                 /*
                 if not in_do_single_ent_start
                 */
@@ -281,7 +251,7 @@ namespace GeoenrichmentTool
                     }
                 }
 
-                FeatureClassHelper.CreateRelationshipFinderTable(tripleStore, triplePropertyURLList, triplePropertyLabelList, ""); //TODO
+                FeatureClassHelper.CreateRelationshipFinderTable(tripleStore, triplePropertyURLList, triplePropertyLabelList, outTableName);
 
                 List<string> entitySet = new List<string>() { };
                 foreach(var triple in tripleStore)
@@ -292,7 +262,7 @@ namespace GeoenrichmentTool
 
                 JToken placeJSON = EndPlaceInformationQuery(entitySet);
 
-                FeatureClassHelper.CreateRelationshipFinderFeatureClass(placeJSON);
+                FeatureClassHelper.CreateRelationshipFinderFeatureClass(placeJSON, outTableName, outFeatureClassName);
             }
         }
 

@@ -768,11 +768,11 @@ namespace GeoenrichmentTool
                 MessageBox.Show(message);  
         }
 
-        public async static void CreateRelationshipFinderFeatureClass(JToken placeJSON)
+        public async static void CreateRelationshipFinderFeatureClass(JToken placeJSON, string outTableName, string outFeatureClassName)
         {
             //create a Shapefile/FeatuerClass for all geographic entities in the triplestore
-            CreateClassFromSPARQL(placeJSON, "outputFeatureClassName"); //TODO
-            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == "outputFeatureClassName").FirstOrDefault() as BasicFeatureLayer;
+            CreateClassFromSPARQL(placeJSON, outFeatureClassName);
+            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
 
             await Project.Current.SaveEditsAsync();
 
@@ -782,11 +782,18 @@ namespace GeoenrichmentTool
             await CalculateField(fcLayer, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3");
             await CalculateField(fcLayer, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3");
 
-            string originFeatureRelationshipClassName = "outputFeatureClassName" + "_" + "outTableName" + "_Origin" + "_RelClass"; //TODO
-            string endFeatureRelationshipClassName = "outputFeatureClassName" + "_" + "outTableName" + "_Destination" + "_RelClass"; //TODO
+            Table outTable = await QueuedTask.Run(() =>
+            {
+                var datastore = fcLayer.GetTable().GetDatastore();
+                var geodatabase = datastore as Geodatabase;
+                return geodatabase.OpenDataset<Table>(outTableName);
+            });
 
-            await CreateRelationshipClass(fcLayer, "outTableName", originFeatureRelationshipClassName, "S-P-O Link", "Origin of S-P-O Link", "Subject"); //TODO
-            await CreateRelationshipClass(fcLayer, "outTableName", endFeatureRelationshipClassName, "S-P-O Link", "Destination of S-P-O Link", "Object"); //TODO
+            string originFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass";
+            string endFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass";
+
+            await CreateRelationshipClass(fcLayer, outTable, originFeatureRelationshipClassName, "S-P-O Link", "Origin of S-P-O Link", "Subject");
+            await CreateRelationshipClass(fcLayer, outTable, endFeatureRelationshipClassName, "S-P-O Link", "Destination of S-P-O Link", "Object");
         }
 
         private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)
