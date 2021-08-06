@@ -711,11 +711,15 @@ namespace GeoenrichmentTool
         public async static void CreateRelationshipFinderTable(List<Dictionary<string, string>> tripleStore, List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
         {
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
-
-            var datastore = mainLayer.GetTable().GetDatastore();
-            var geodatabase = datastore as Geodatabase;
+            Geodatabase geodatabase = await QueuedTask.Run(() =>
+            {
+                var datastore = mainLayer.GetTable().GetDatastore();
+                geodatabase = datastore as Geodatabase;
+                return geodatabase;
+            });
 
             await CreateTable(tableName);
+
             var tripleStoreTable = geodatabase.OpenDataset<Table>(tableName);
 
             await Project.Current.SaveEditsAsync();
