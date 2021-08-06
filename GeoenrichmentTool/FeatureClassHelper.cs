@@ -109,6 +109,23 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
+        public static async Task CalculateField(BasicFeatureLayer featureLayer, string fieldName, string expression, string expressionType)
+        {
+            List<object> arguments = new List<object>
+            {
+                //feature layer
+                featureLayer, 
+                //field name
+                fieldName, 
+                //expression
+                expression, 
+                //expression type
+                expressionType
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("CalculateField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
+
         public static async Task CreateRelationshipClass(BasicFeatureLayer featureClass, Table dataTable, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
         {
             List<object> arguments = new List<object>
@@ -748,42 +765,28 @@ namespace GeoenrichmentTool
             });
 
             if (!string.IsNullOrEmpty(message))
-                MessageBox.Show(message);
+                MessageBox.Show(message);  
+        }
 
-            /*
-            entitySet = set()
-            for triple in tripleStore:
-                entitySet.add(triple.s)
-                entitySet.add(triple.o)
+        public async static void CreateRelationshipFinderFeatureClass(JToken placeJSON)
+        {
+            //create a Shapefile/FeatuerClass for all geographic entities in the triplestore
+            CreateClassFromSPARQL(placeJSON, "outputFeatureClassName"); //TODO
+            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == "outputFeatureClassName").FirstOrDefault() as BasicFeatureLayer;
 
-            placeJSON = SPARQLQuery.endPlaceInformationQuery(list(entitySet), sparql_endpoint = sparql_endpoint)
+            await Project.Current.SaveEditsAsync();
 
-            # create a Shapefile/FeatuerClass for all geographic entities in the triplestore
-            Json2Field.createFeatureClassFromSPARQLResult(GeoQueryResult = placeJSON, 
-                                                        out_path = outputFeatureClassName, 
-                                                        inPlaceType = "", 
-                                                        selectedURL = "", 
-                                                        isDirectInstance = False, 
-                                                        viz_res = True)
+            //# add their centrold point of each geometry
+            await AddField(fcLayer, "POINT_X", "DOUBLE");
+            await AddField(fcLayer, "POINT_Y", "DOUBLE");
+            await CalculateField(fcLayer, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3");
+            await CalculateField(fcLayer, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3");
 
-            # add their centrold point of each geometry
-            arcpy.AddField_management(outputFeatureClassName, "POINT_X", "DOUBLE")
-            arcpy.AddField_management(outputFeatureClassName, "POINT_Y", "DOUBLE")
-            arcpy.CalculateField_management(outputFeatureClassName, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3")
-            arcpy.CalculateField_management(outputFeatureClassName, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3")
+            string originFeatureRelationshipClassName = "outputFeatureClassName" + "_" + "outTableName" + "_Origin" + "_RelClass"; //TODO
+            string endFeatureRelationshipClassName = "outputFeatureClassName" + "_" + "outTableName" + "_Destination" + "_RelClass"; //TODO
 
-            arcpy.env.workspace = outLocation
-
-            originFeatureRelationshipClassName = outputFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass"
-            arcpy.CreateRelationshipClass_management(outputFeatureClassName, outTableName, originFeatureRelationshipClassName, "SIMPLE",
-                "S-P-O Link", "Origin of S-P-O Link",
-                                    "FORWARD", "ONE_TO_MANY", "NONE", "URL", "Subject")
-
-            endFeatureRelationshipClassName = outputFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass"
-            arcpy.CreateRelationshipClass_management(outputFeatureClassName, outTableName, endFeatureRelationshipClassName, "SIMPLE",
-                "S-P-O Link", "Destination of S-P-O Link",
-                                    "FORWARD", "ONE_TO_MANY", "NONE", "URL", "Object")
-            */
+            await CreateRelationshipClass(fcLayer, "outTableName", originFeatureRelationshipClassName, "S-P-O Link", "Origin of S-P-O Link", "Subject"); //TODO
+            await CreateRelationshipClass(fcLayer, "outTableName", endFeatureRelationshipClassName, "S-P-O Link", "Destination of S-P-O Link", "Object"); //TODO
         }
 
         private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)

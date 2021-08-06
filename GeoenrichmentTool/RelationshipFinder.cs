@@ -282,6 +282,17 @@ namespace GeoenrichmentTool
                 }
 
                 FeatureClassHelper.CreateRelationshipFinderTable(tripleStore, triplePropertyURLList, triplePropertyLabelList, ""); //TODO
+
+                List<string> entitySet = new List<string>() { };
+                foreach(var triple in tripleStore)
+                {
+                    entitySet.Add(triple["s"]);
+                    entitySet.Add(triple["o"]);
+                }
+
+                JToken placeJSON = EndPlaceInformationQuery(entitySet);
+
+                FeatureClassHelper.CreateRelationshipFinderFeatureClass(placeJSON);
             }
         }
 
@@ -419,6 +430,21 @@ namespace GeoenrichmentTool
             }
 
             return tripleStore;
+        }
+
+        private JToken EndPlaceInformationQuery(List<string> endPlaceIRIList)
+        {
+            string endPlaceQuery = "SELECT distinct ?place ?placeLabel ?placeFlatType ?wkt WHERE { " +
+                "?place geo:hasGeometry ?geometry . ?place rdfs:label ?placeLabel . ?geometry geo:asWKT ?wkt. " +
+                "VALUES ?place {";
+
+            foreach (var iri in endPlaceIRIList)
+            {
+                endPlaceQuery += "<" + iri + "> \n";
+            }
+            endPlaceQuery += "} }";
+
+            return GeoModule.Current.GetQueryClass().SubmitQuery(endPlaceQuery);
         }
     }
 }
