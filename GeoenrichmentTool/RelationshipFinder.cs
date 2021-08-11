@@ -364,7 +364,7 @@ namespace GeoenrichmentTool
             {
                 relationFinderQuery += "<" + iri + "> \n";
             }
-            relationFinderQuery += "} }";
+            relationFinderQuery += "}. FILTER(!isLiteral(?o1))  }";
 
             JToken resultsJSON = GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
 
