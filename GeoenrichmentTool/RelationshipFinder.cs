@@ -36,14 +36,6 @@ namespace GeoenrichmentTool
             outTableName = featureClassName + "PathQueryTripleStore_" + identifier;
             outFeatureClassName = featureClassName + "PathQueryGeographicEntity_" + identifier;
 
-            /*
-            # check whether outputTableName or outputFeatureClassName already exist
-            if arcpy.Exists(outputTableName) or arcpy.Exists(outputFeatureClassName):
-                messages.addErrorMessage("The output table or feature class already exists in current workspace!")
-                raise arcpy.ExecuteError
-                return
-            */
-
             propertyDirectionList = new List<string>() { };
             selectPropertyURLList = new List<string>() { };
         }
@@ -217,7 +209,9 @@ namespace GeoenrichmentTool
                 MessageBox.Show($@"Required fields missing!");
             }
             else
-            {   
+            {
+                Close();
+
                 /*
                 if not in_do_single_ent_start
                 */

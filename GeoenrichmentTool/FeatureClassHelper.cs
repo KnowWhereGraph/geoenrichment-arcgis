@@ -801,18 +801,20 @@ namespace GeoenrichmentTool
                 await CalculateField(fcLayer, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3");
                 await CalculateField(fcLayer, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3");
 
-                Table outTable = await QueuedTask.Run(() =>
+                await Project.Current.SaveEditsAsync();
+
+                await QueuedTask.Run(() =>
                 {
                     var datastore = fcLayer.GetTable().GetDatastore();
                     var geodatabase = datastore as Geodatabase;
-                    return geodatabase.OpenDataset<Table>(outTableName);
+                    Table outTable = geodatabase.OpenDataset<Table>(outTableName);
+
+                    string originFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass";
+                    string endFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass";
+
+                    CreateRelationshipClass(fcLayer, outTable, originFeatureRelationshipClassName, "SPO Link", "Origin of SPO Link", "Subject").Wait();
+                    CreateRelationshipClass(fcLayer, outTable, endFeatureRelationshipClassName, "SPO Link", "Destination of SPO Link", "Object").Wait();
                 });
-
-                string originFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass";
-                string endFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass";
-
-                await CreateRelationshipClass(fcLayer, outTable, originFeatureRelationshipClassName, "S-P-O Link", "Origin of S-P-O Link", "Subject");
-                await CreateRelationshipClass(fcLayer, outTable, endFeatureRelationshipClassName, "S-P-O Link", "Destination of S-P-O Link", "Object");
             }
         }
 
