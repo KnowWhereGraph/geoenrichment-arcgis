@@ -720,15 +720,20 @@ namespace GeoenrichmentTool
 
             await CreateTable(tableName);
 
-            var tripleStoreTable = geodatabase.OpenDataset<Table>(tableName);
+            Table tripleStoreTable = await QueuedTask.Run(() =>
+            {
+                var tripTbl = geodatabase.OpenDataset<Table>(tableName);
 
-            await Project.Current.SaveEditsAsync();
+                Project.Current.SaveEditsAsync();
 
-            await AddField(tripleStoreTable, "Subject", "TEXT");
-            await AddField(tripleStoreTable, "Predicate", "TEXT");
-            await AddField(tripleStoreTable, "Object", "TEXT");
-            await AddField(tripleStoreTable, "Pred_Label", "TEXT");
-            await AddField(tripleStoreTable, "Degree", "LONG");
+                AddField(tripTbl, "Subject", "TEXT").Wait();
+                AddField(tripTbl, "Predicate", "TEXT").Wait();
+                AddField(tripTbl, "Object", "TEXT").Wait();
+                AddField(tripTbl, "Pred_Label", "TEXT").Wait();
+                AddField(tripTbl, "Degree", "LONG").Wait();
+
+                return tripTbl;
+            });
 
             string message = String.Empty;
             bool creationResult = false;
@@ -775,29 +780,40 @@ namespace GeoenrichmentTool
         public async static void CreateRelationshipFinderFeatureClass(JToken placeJSON, string outTableName, string outFeatureClassName)
         {
             //create a Shapefile/FeatuerClass for all geographic entities in the triplestore
-            CreateClassFromSPARQL(placeJSON, outFeatureClassName);
-            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
+            await QueuedTask.Run(() =>
+            {
+                CreateClassFromSPARQL(placeJSON, outFeatureClassName);
+            });
 
             await Project.Current.SaveEditsAsync();
 
-            //# add their centrold point of each geometry
-            await AddField(fcLayer, "POINT_X", "DOUBLE");
-            await AddField(fcLayer, "POINT_Y", "DOUBLE");
-            await CalculateField(fcLayer, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3");
-            await CalculateField(fcLayer, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3");
+            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
 
-            Table outTable = await QueuedTask.Run(() =>
+            if (fcLayer == null)
             {
-                var datastore = fcLayer.GetTable().GetDatastore();
-                var geodatabase = datastore as Geodatabase;
-                return geodatabase.OpenDataset<Table>(outTableName);
-            });
+                MessageBox.Show($@"Unable to find {outFeatureClassName} in the active map");
+            }
+            else
+            {
+                //# add their centrold point of each geometry
+                await AddField(fcLayer, "POINT_X", "DOUBLE");
+                await AddField(fcLayer, "POINT_Y", "DOUBLE");
+                await CalculateField(fcLayer, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3");
+                await CalculateField(fcLayer, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3");
 
-            string originFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass";
-            string endFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass";
+                Table outTable = await QueuedTask.Run(() =>
+                {
+                    var datastore = fcLayer.GetTable().GetDatastore();
+                    var geodatabase = datastore as Geodatabase;
+                    return geodatabase.OpenDataset<Table>(outTableName);
+                });
 
-            await CreateRelationshipClass(fcLayer, outTable, originFeatureRelationshipClassName, "S-P-O Link", "Origin of S-P-O Link", "Subject");
-            await CreateRelationshipClass(fcLayer, outTable, endFeatureRelationshipClassName, "S-P-O Link", "Destination of S-P-O Link", "Object");
+                string originFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass";
+                string endFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass";
+
+                await CreateRelationshipClass(fcLayer, outTable, originFeatureRelationshipClassName, "S-P-O Link", "Origin of S-P-O Link", "Subject");
+                await CreateRelationshipClass(fcLayer, outTable, endFeatureRelationshipClassName, "S-P-O Link", "Destination of S-P-O Link", "Object");
+            }
         }
 
         private static Dictionary<string, string> ProcessPropertyValueQueryResult(JToken propertyValues, string keyPropertyName, string valuePropertyName)

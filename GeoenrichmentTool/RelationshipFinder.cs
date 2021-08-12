@@ -31,8 +31,10 @@ namespace GeoenrichmentTool
             BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
             string featureClassName = mainLayer.Name;
 
-            outTableName = featureClassName + "PathQueryTripleStore";
-            outFeatureClassName = featureClassName + "PathQueryGeographicEntity";
+            Random gen = new Random();
+            string identifier = gen.Next(999999).ToString();
+            outTableName = featureClassName + "PathQueryTripleStore_" + identifier;
+            outFeatureClassName = featureClassName + "PathQueryGeographicEntity_" + identifier;
 
             /*
             # check whether outputTableName or outputFeatureClassName already exist
@@ -404,17 +406,36 @@ namespace GeoenrichmentTool
 
         private JToken EndPlaceInformationQuery(List<string> endPlaceIRIList)
         {
-            string endPlaceQuery = "SELECT distinct ?place ?placeLabel ?placeFlatType ?wkt WHERE { " +
+            JToken results = null;
+
+            string endPlaceQueryPrefix = "SELECT distinct ?place ?placeLabel ?placeFlatType ?wkt WHERE { " +
                 "?place geo:hasGeometry ?geometry . ?place rdfs:label ?placeLabel . ?geometry geo:asWKT ?wkt. " +
                 "VALUES ?place {";
+            string endPlaceQuerySuffix = "} }";
 
-            foreach (var iri in endPlaceIRIList)
-            {
-                endPlaceQuery += "<" + iri + "> \n";
+            string endPlaceQueryIRI = "";
+            for (var i=0; i<endPlaceIRIList.Count(); i++) {
+                endPlaceQueryIRI += "<" + endPlaceIRIList[i] + "> \n";
+
+                if (i % 50 == 0)
+                {
+                    string endPlaceQuery = endPlaceQueryPrefix + endPlaceQueryIRI + endPlaceQuerySuffix;
+                    JToken subresults =  GeoModule.Current.GetQueryClass().SubmitQuery(endPlaceQuery);
+
+                    if(results == null)
+                    {
+                        results = subresults;
+                    }
+                    else
+                    {
+                        results.Append(subresults);
+                    }
+
+                    endPlaceQueryIRI = "";
+                }
             }
-            endPlaceQuery += "} }";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(endPlaceQuery);
+            return results;
         }
     }
 }
