@@ -328,6 +328,7 @@ namespace GeoenrichmentTool
             }
 
             string relationFinderQuery = "SELECT distinct " + selectParam + " WHERE {";
+            string queryFilter = "";
             char[] delimPipe = { '|' };
 
             for (int index = 0; index < relationDegree; index++)
@@ -337,6 +338,7 @@ namespace GeoenrichmentTool
                 string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
                 string oValHigh = "?o" + currDegree.ToString();
                 string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0].Split(delimPipe).Last().Trim() + ">";
+                queryFilter += ". FILTER(!isLiteral(" + oValHigh + "))";
 
                 switch (currDirection)
                 {
@@ -360,7 +362,7 @@ namespace GeoenrichmentTool
             {
                 relationFinderQuery += "<" + iri + "> \n";
             }
-            relationFinderQuery += "}. FILTER(!isLiteral(?o1))  }";
+            relationFinderQuery += "}" + queryFilter + "  }";
 
             JToken resultsJSON = GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
 
