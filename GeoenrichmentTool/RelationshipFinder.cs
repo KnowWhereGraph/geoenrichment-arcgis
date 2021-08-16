@@ -278,7 +278,7 @@ namespace GeoenrichmentTool
                 int indexOfBOTH = -1;
                 while(i < currentPropertyDirectionList.Count)
                 {
-                    if(currentPropertyDirectionList[i] == "BOTH")
+                    if(currentPropertyDirectionList[i] == "Both")
                     {
                         indexOfBOTH = i;
                         break;
@@ -290,11 +290,11 @@ namespace GeoenrichmentTool
                 if(indexOfBOTH != -1)
                 {
                     List<string> newList1 = currentPropertyDirectionList;
-                    newList1[indexOfBOTH] = "ORIGIN";
+                    newList1[indexOfBOTH] = "Origin";
                     propertyDirectionExpandedLists.Add(newList1);
 
                     List<string> newList2 = currentPropertyDirectionList;
-                    newList2[indexOfBOTH] = "DESTINATION";
+                    newList2[indexOfBOTH] = "Destination";
                     propertyDirectionExpandedLists.Add(newList2);
                 }
                 else
