@@ -309,6 +309,35 @@ namespace GeoenrichmentTool
             return resultList;
         }
 
+        private void ExpandBothDirectionLists ()
+        {
+            List<int> bothIndexes = new List<int>() { };
+
+            for(int i=0; i<propertyDirectionList.Count(); i++)
+            {
+                if (propertyDirectionList[i] == "Both")
+                {
+                    bothIndexes.Add(i);
+                }
+            }
+
+            List<List<string>> results = new List<List<string>>() { };
+            int bothCnt = bothIndexes.Count();
+        }
+
+        private void GeneratePermutations(int cnt, List<List<string>> permutations)
+        {
+            List<string> directions = new List<string>() { "Origin", "Destination" };
+            for(int i=0; i<cnt; i++)
+            {
+                List<string> currDir = new List<string>() { };
+                foreach (var dir in directions)
+                {
+                    //do the thing
+                }
+            }
+        }
+
         //# get the triple set in the specific degree path from the inplaceIRIList
         //# inplaceIRIList: the URL list of wikidata locations
         //# propertyDirectionList: the list of property direction, it has at most 4 elements, the length is the path degree. The element value is from ["ORIGIN", "DESTINATION"]
