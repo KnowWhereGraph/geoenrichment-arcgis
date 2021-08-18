@@ -64,6 +64,7 @@ namespace GeoenrichmentTool
 
             JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 1);
 
+            firstProp.Items.Clear();
             foreach (var item in finderJSON)
             {
                 string itemVal = item["p1"]["value"].ToString();
@@ -104,6 +105,7 @@ namespace GeoenrichmentTool
 
             JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 2);
 
+            secondProp.Items.Clear();
             foreach (var item in finderJSON)
             {
                 string itemVal = item["p2"]["value"].ToString();
@@ -140,6 +142,7 @@ namespace GeoenrichmentTool
 
             JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 3);
 
+            thirdProp.Items.Clear();
             foreach (var item in finderJSON)
             {
                 string itemVal = item["p3"]["value"].ToString();
