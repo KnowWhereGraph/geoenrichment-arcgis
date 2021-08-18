@@ -21,6 +21,7 @@ namespace GeoenrichmentTool
          */
         List<string> propertyDirectionList;
         List<string> selectPropertyURLList;
+        List<List<string>> permutations;
         string outTableName;
         string outFeatureClassName;
 
@@ -225,7 +226,7 @@ namespace GeoenrichmentTool
                 */
 
                 //# for the direction list, change "BOTH" to "OROIGIN" and "DESTINATION"
-                List<List<string>> directionExpendedLists = DirectionListFromBoth2OD();
+                List<List<string>> directionExpendedLists = ExpandBothDirectionLists();
 
                 List<Dictionary<string, string>> tripleStore = new List<Dictionary<string, string>>() { };
 
@@ -264,53 +265,10 @@ namespace GeoenrichmentTool
 
         //# given a list of direction, return a list of lists which change a list with "BOTH" to two list with "ORIGIN" and "DESTINATION"
         //# e.g. ["BOTH", "ORIGIN", "DESTINATION", "ORIGIN"] -> ["ORIGIN", "ORIGIN", "DESTINATION", "ORIGIN"] and ["DESTINATION", "ORIGIN", "DESTINATION", "ORIGIN"]
-        //# propertyDirectionList: a list of direction from ["BOTH", "ORIGIN", "DESTINATION"], it has at most 4 elements
-        private List<List<string>> DirectionListFromBoth2OD()
+        //Rewrite of DirectionListFromBoth2OD
+        private List<List<string>> ExpandBothDirectionLists ()
         {
             List<List<string>> propertyDirectionExpandedLists = new List<List<string>>() { };
-            propertyDirectionExpandedLists.Add(propertyDirectionList);
-
-            List<List<string>> resultList = new List<List<string>>() { };
-
-            foreach(var currentPropertyDirectionList in propertyDirectionExpandedLists)
-            {
-                int i = 0;
-                int indexOfBOTH = -1;
-                while(i < currentPropertyDirectionList.Count)
-                {
-                    if(currentPropertyDirectionList[i] == "Both")
-                    {
-                        indexOfBOTH = i;
-                        break;
-                    }
-
-                    i++;
-                }
-
-                if(indexOfBOTH != -1)
-                {
-                    List<string> newList1 = currentPropertyDirectionList;
-                    newList1[indexOfBOTH] = "Origin";
-                    propertyDirectionExpandedLists.Add(newList1);
-
-                    List<string> newList2 = currentPropertyDirectionList;
-                    newList2[indexOfBOTH] = "Destination";
-                    propertyDirectionExpandedLists.Add(newList2);
-                }
-                else
-                {
-                    if(!resultList.Contains(currentPropertyDirectionList))
-                    {
-                        resultList.Add(currentPropertyDirectionList);
-                    }
-                }
-            }
-
-            return resultList;
-        }
-
-        private void ExpandBothDirectionLists ()
-        {
             List<int> bothIndexes = new List<int>() { };
 
             for(int i=0; i<propertyDirectionList.Count(); i++)
@@ -321,20 +279,49 @@ namespace GeoenrichmentTool
                 }
             }
 
-            List<List<string>> results = new List<List<string>>() { };
+            permutations = new List<List<string>>() { };
             int bothCnt = bothIndexes.Count();
+            GeneratePermutations(bothCnt);
+
+            foreach(var perm in permutations)
+            {
+                List<string> newDirList = new List<string>(propertyDirectionList);
+
+                int j = 0;
+                foreach(var idx in bothIndexes)
+                {
+                    newDirList[idx] = perm[j];
+                    j++;
+                }
+
+                propertyDirectionExpandedLists.Add(newDirList);
+            }
+
+            return propertyDirectionExpandedLists;
         }
 
-        private void GeneratePermutations(int cnt, List<List<string>> permutations)
+        private void GeneratePermutations(int cnt, int curr = 0, List<string> prevList = null)
         {
-            List<string> directions = new List<string>() { "Origin", "Destination" };
-            for(int i=0; i<cnt; i++)
+            List<string> listOne = new List<string>() { };
+            List<string> listTwo = new List<string>() { };
+
+            if (prevList != null) {
+                listOne = new List<string>(prevList); ;
+                listTwo = new List<string>(prevList); ;
+            }
+
+            listOne.Add("Origin");
+            listTwo.Add("Destination");
+
+            curr++;
+            if(curr < cnt)
             {
-                List<string> currDir = new List<string>() { };
-                foreach (var dir in directions)
-                {
-                    //do the thing
-                }
+                GeneratePermutations(cnt, curr, listOne);
+                GeneratePermutations(cnt, curr, listTwo);
+            } else
+            {
+                permutations.Add(listOne);
+                permutations.Add(listTwo);
             }
         }
 
