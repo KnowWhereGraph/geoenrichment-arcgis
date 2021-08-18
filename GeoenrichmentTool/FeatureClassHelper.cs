@@ -109,6 +109,23 @@ namespace GeoenrichmentTool
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
 
+        public static async Task CalculateField(BasicFeatureLayer featureLayer, string fieldName, string expression, string expressionType)
+        {
+            List<object> arguments = new List<object>
+            {
+                //feature layer
+                featureLayer, 
+                //field name
+                fieldName, 
+                //expression
+                expression, 
+                //expression type
+                expressionType
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("CalculateField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
+
         public static async Task CreateRelationshipClass(BasicFeatureLayer featureClass, Table dataTable, string relationshipClassName, string forwardLabel, string backwardLabel, string foreignKey = "URL")
         {
             List<object> arguments = new List<object>
@@ -678,7 +695,7 @@ namespace GeoenrichmentTool
             }
         }
 
-    public static string GetPropertyName(string valuePropertyURL) {
+        public static string GetPropertyName(string valuePropertyURL) {
             char[] delimSharp = { '#' };
             char[] delimSlash = { '/' };
             if (valuePropertyURL.Contains("#"))
@@ -688,6 +705,116 @@ namespace GeoenrichmentTool
             else
             {
                 return valuePropertyURL.Split(delimSlash).Last();
+            }
+        }
+
+        public async static void CreateRelationshipFinderTable(List<Dictionary<string, string>> tripleStore, List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
+        {
+            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            Geodatabase geodatabase = await QueuedTask.Run(() =>
+            {
+                var datastore = mainLayer.GetTable().GetDatastore();
+                geodatabase = datastore as Geodatabase;
+                return geodatabase;
+            });
+
+            await CreateTable(tableName);
+
+            Table tripleStoreTable = await QueuedTask.Run(() =>
+            {
+                var tripTbl = geodatabase.OpenDataset<Table>(tableName);
+
+                Project.Current.SaveEditsAsync();
+
+                AddField(tripTbl, "Subject", "TEXT").Wait();
+                AddField(tripTbl, "Predicate", "TEXT").Wait();
+                AddField(tripTbl, "Object", "TEXT").Wait();
+                AddField(tripTbl, "Pred_Label", "TEXT").Wait();
+                AddField(tripTbl, "Degree", "LONG").Wait();
+
+                return tripTbl;
+            });
+
+            string message = String.Empty;
+            bool creationResult = false;
+            EditOperation editOperation = new EditOperation();
+
+            await QueuedTask.Run(() => {
+                editOperation.Callback(context =>
+                {
+                    using (RowBuffer rowBuffer = tripleStoreTable.CreateRowBuffer())
+                    {
+                        foreach (var triple in tripleStore)
+                        {
+                            rowBuffer["Subject"] = triple["s"];
+                            rowBuffer["Predicate"] = triple["p"];
+                            rowBuffer["Object"] = triple["o"];
+                            rowBuffer["Pred_Label"] = triplePropertyLabelList[triplePropertyURLList.IndexOf(triple["p"])];
+                            rowBuffer["Degree"] = tripleStore.IndexOf(triple);
+                            using (Row row = tripleStoreTable.CreateRow(rowBuffer))
+                            {
+                                // To Indicate that the attribute table has to be updated.
+                                context.Invalidate(row);
+                            }
+                        }
+                    }
+                }, tripleStoreTable);
+
+                try
+                {
+                    creationResult = editOperation.Execute();
+                    if (!creationResult) message = editOperation.ErrorMessage;
+                }
+                catch (GeodatabaseException exObj)
+                {
+                    message = exObj.Message;
+                }
+
+                MapView.Active.Redraw(false);
+            });
+
+            if (!string.IsNullOrEmpty(message))
+                MessageBox.Show(message);  
+        }
+
+        public async static void CreateRelationshipFinderFeatureClass(JToken placeJSON, string outTableName, string outFeatureClassName)
+        {
+            //create a Shapefile/FeatuerClass for all geographic entities in the triplestore
+            await QueuedTask.Run(() =>
+            {
+                CreateClassFromSPARQL(placeJSON, outFeatureClassName);
+            });
+
+            await Project.Current.SaveEditsAsync();
+
+            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
+
+            if (fcLayer == null)
+            {
+                MessageBox.Show($@"Unable to find {outFeatureClassName} in the active map");
+            }
+            else
+            {
+                //# add their centrold point of each geometry
+                await AddField(fcLayer, "POINT_X", "DOUBLE");
+                await AddField(fcLayer, "POINT_Y", "DOUBLE");
+                await CalculateField(fcLayer, "POINT_X", "!SHAPE.CENTROID.X!", "PYTHON_9.3");
+                await CalculateField(fcLayer, "POINT_Y", "!SHAPE.CENTROID.Y!", "PYTHON_9.3");
+
+                await Project.Current.SaveEditsAsync();
+
+                await QueuedTask.Run(() =>
+                {
+                    var datastore = fcLayer.GetTable().GetDatastore();
+                    var geodatabase = datastore as Geodatabase;
+                    Table outTable = geodatabase.OpenDataset<Table>(outTableName);
+
+                    string originFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Origin" + "_RelClass";
+                    string endFeatureRelationshipClassName = outFeatureClassName + "_" + outTableName + "_Destination" + "_RelClass";
+
+                    CreateRelationshipClass(fcLayer, outTable, originFeatureRelationshipClassName, "SPO Link", "Origin of SPO Link", "Subject").Wait();
+                    CreateRelationshipClass(fcLayer, outTable, endFeatureRelationshipClassName, "SPO Link", "Destination of SPO Link", "Object").Wait();
+                });
             }
         }
 

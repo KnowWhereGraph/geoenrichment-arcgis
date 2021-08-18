@@ -31,6 +31,7 @@
           <tool refID="GeoenrichmentTool_PolygonSelect" size="large" />
           <button refID="GeoenrichmentTool_CommonProperties" size="large" />
           <button refID="GeoenrichmentTool_MergeTableDashboard" size="large" />
+          <button refID="GeoenrichmentTool_LinkedData" size="large" />
         </group>
       </groups>
       <controls>
@@ -45,10 +46,16 @@
 			  Enrich query result using common properties
 			  <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
         </button>
-		<button id="GeoenrichmentTool_MergeTableDashboard" caption="Merge Data" className="MergeTableDashboard" loadOnClick="true" smallImage="Images\merge-data.png" largeImage="Images\merge-data.png" condition="kwg_geosparql_active">
-		    <tooltip heading="Non Functional Property Merge">
+        <button id="GeoenrichmentTool_MergeTableDashboard" caption="Merge Data" className="MergeTableDashboard" loadOnClick="true" smallImage="Images\merge-data.png" largeImage="Images\merge-data.png" condition="kwg_geosparql_active">
+          <tooltip heading="Non Functional Property Merge">
 			    Enrich query result by merging non functional properties
 			    <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
+        </button>
+		<button id="GeoenrichmentTool_LinkedData" caption="Linked Data" className="LinkedData" loadOnClick="true" smallImage="Images\linked-relationships.png" largeImage="Images\linked-relationships.png" condition="kwg_geosparql_active">
+			<tooltip heading="Linked Data Relationship Finder">
+				Enrich query result by searching for related linked data
+				<disabledText>Requires GeoSPARQL query layer</disabledText>
+			</tooltip>
 		</button>
       </controls>
     </insertModule>

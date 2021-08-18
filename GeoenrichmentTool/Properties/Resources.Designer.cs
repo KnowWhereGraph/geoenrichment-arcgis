@@ -59,5 +59,15 @@ namespace GeoenrichmentTool.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap background_landing__2_ {
+            get {
+                object obj = ResourceManager.GetObject("background-landing (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
