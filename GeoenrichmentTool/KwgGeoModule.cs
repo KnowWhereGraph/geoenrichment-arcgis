@@ -18,26 +18,26 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
-    internal class GeoModule : Module
+    internal class KwgGeoModule : Module
     {
-        private static GeoModule _this = null;
+        private static KwgGeoModule _this = null;
         private readonly QuerySPARQL queryClass;
         protected List<BasicFeatureLayer> activeLayers;
 
         /// <summary>
         /// Retrieve the singleton instance to this module here
         /// </summary>
-        public static GeoModule Current
+        public static KwgGeoModule Current
         {
             get
             {
-                return _this ?? (_this = (GeoModule)FrameworkApplication.FindModule("GeoenrichmentTool_Module"));
+                return _this ?? (_this = (KwgGeoModule)FrameworkApplication.FindModule("KWG_Geoenrichment_Module"));
             }
         }
 
-        GeoModule()
+        KwgGeoModule()
         {
             queryClass = new QuerySPARQL();
             activeLayers = new List<BasicFeatureLayer> { };

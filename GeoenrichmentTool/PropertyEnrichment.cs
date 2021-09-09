@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     public partial class PropertyEnrichment : Form
     {
@@ -37,10 +37,6 @@ namespace GeoenrichmentTool
 
             for (var i = 0; i < sosaObsProperties[0].Count(); i++)
             {
-                ///TODO::DEV CODE///
-                break;
-                ////////////////////
-                
                 string url = sosaObsProperties[0][i];
                 string name = sosaObsProperties[1][i];
 
@@ -85,7 +81,7 @@ namespace GeoenrichmentTool
         {
             Close();
 
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             if (commonCheckBox.CheckedItems.Count > 0)
             {
@@ -238,7 +234,7 @@ namespace GeoenrichmentTool
 
             funcQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
         }
 
         private JToken PropertyValueQuery(string property, bool doSameAs = true)
@@ -261,7 +257,7 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
         private JToken SosaObsPropertyValueQuery(string property)
@@ -276,7 +272,7 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
         private JToken InversePropertyValueQuery(string property, bool doSameAs = true)
@@ -299,7 +295,7 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
         private JToken CheckGeoPropertyQuery(string propertyURL, bool doSameAs = true)
@@ -324,7 +320,7 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
         private JToken TwoDegreePropertyValueWKTquery(string propertyURL, bool doSameAs = true)
@@ -350,7 +346,7 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
     }
 }

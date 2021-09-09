@@ -1,5 +1,5 @@
 ﻿
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     partial class RelationshipFinder
     {
@@ -258,7 +258,7 @@ namespace GeoenrichmentTool
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.BackgroundImage = global::GeoenrichmentTool.Properties.Resources.background_landing__2_;
+            this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(778, 471);
             this.Controls.Add(this.thirdProp);

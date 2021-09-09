@@ -1,5 +1,5 @@
 ﻿
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     partial class PropertyEnrichment
     {

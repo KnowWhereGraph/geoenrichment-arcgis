@@ -19,13 +19,13 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     internal class MergeTableDashboard : Button
     {
         protected async override void OnClick()
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             List<string> tablePropValueList = new List<string>() { };
             Dictionary<string, List<string>> propMergeValueDict = new Dictionary<string, List<string>>() { };

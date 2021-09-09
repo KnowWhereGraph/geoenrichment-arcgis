@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     public partial class MergePropertyTable : Form
     {

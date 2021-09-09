@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31313.79
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeoenrichmentTool", "GeoenrichmentTool\GeoenrichmentTool.csproj", "{2C67F191-2703-4291-BCE4-994CF0016027}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KWG_Geoenrichment", "GeoenrichmentTool\KWG_Geoenrichment.csproj", "{2C67F191-2703-4291-BCE4-994CF0016027}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

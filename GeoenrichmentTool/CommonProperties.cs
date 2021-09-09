@@ -22,13 +22,13 @@ using System.Windows.Forms;
 using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     internal class CommonProperties : Button
     {
         protected async override void OnClick()
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
             List<string> uris = await FeatureClassHelper.GetURIs(mainLayer);
 
             if(uris.Count > 0)
@@ -69,7 +69,7 @@ namespace GeoenrichmentTool
 
             cpQuery += "} } group by ?p order by DESC(?NumofSub)";
 
-            var results = GeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
+            var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
             return ProcessProperties(results);
         }
 
@@ -89,7 +89,7 @@ namespace GeoenrichmentTool
 
             cpQuery += "} } group by ?p ?pLabel order by DESC(?NumofSub)";
 
-            var results = GeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
+            var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
             return ProcessProperties(results);
         }
 
@@ -113,7 +113,7 @@ namespace GeoenrichmentTool
                     }
                     if(label.Trim() == "")
                     {
-                        label = GeoModule.Current.GetQueryClass().MakeIRIPrefix(propertyURL);
+                        label = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(propertyURL);
                     }
 
                     string propertyName = label + " [" + item["NumofSub"]["value"] + "]";

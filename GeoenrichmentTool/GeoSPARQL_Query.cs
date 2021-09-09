@@ -12,7 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     public partial class GeoSPARQL_Query : Form
     {
@@ -24,9 +24,9 @@ namespace GeoenrichmentTool
             InitializeComponent();
             endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
             ///TODO::DEV CODE///
-            calculator.Text = "Contain or Intersect";
-            Random gen = new Random();
-            className.Text = "layerName" + gen.Next(999999).ToString();
+            //calculator.Text = "Contain or Intersect";
+            //Random gen = new Random();
+            //className.Text = "layerName" + gen.Next(999999).ToString();
             ////////////////////
             polyString = geo;
             PopulatePlaceTypes();
@@ -36,7 +36,7 @@ namespace GeoenrichmentTool
         {
             placeType.Items.Clear();
             placeType.ResetText();
-            GeoModule.Current.GetQueryClass().UpdateActiveEndPoint(endPoint.Text);
+            KwgGeoModule.Current.GetQueryClass().UpdateActiveEndPoint(endPoint.Text);
 
             try
             {
@@ -52,7 +52,7 @@ namespace GeoenrichmentTool
         private void PopulatePlaceTypes()
         {
             var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
-            QuerySPARQL queryClass = GeoModule.Current.GetQueryClass();
+            QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
 
             JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
 
@@ -89,7 +89,7 @@ namespace GeoenrichmentTool
                 string gfClassName = className.Text.Replace(" ", "_");
                 string gfPlaceURI = (gfPlaceType != "") ? ptArray[gfPlaceType] : "";
 
-                QuerySPARQL queryClass = GeoModule.Current.GetQueryClass();
+                QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
                 queryClass.UpdateActiveEndPoint(gfEndPoint);
 
                 string[] geoFunc = new string[] { };

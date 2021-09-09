@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     public partial class RelationshipFinder : Form
     {
@@ -29,7 +29,7 @@ namespace GeoenrichmentTool
         {
             InitializeComponent();
 
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
             string featureClassName = mainLayer.Name;
 
             Random gen = new Random();
@@ -50,7 +50,7 @@ namespace GeoenrichmentTool
             thirdProp.Enabled = false; thirdProp.Text = "";
 
             //populate first box
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
             /*
@@ -68,7 +68,7 @@ namespace GeoenrichmentTool
             foreach (var item in finderJSON)
             {
                 string itemVal = item["p1"]["value"].ToString();
-                string itemLabel = GeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
+                string itemLabel = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
                 firstProp.Items.Add(itemLabel + " | " + itemVal);
             }
         }
@@ -91,7 +91,7 @@ namespace GeoenrichmentTool
             thirdProp.Enabled = false; thirdProp.Text = "";
 
             //populate second box
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
             /*
@@ -109,7 +109,7 @@ namespace GeoenrichmentTool
             foreach (var item in finderJSON)
             {
                 string itemVal = item["p2"]["value"].ToString();
-                string itemLabel = GeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
+                string itemLabel = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
                 secondProp.Items.Add(itemLabel + " | " + itemVal);
             }
         }
@@ -128,7 +128,7 @@ namespace GeoenrichmentTool
             thirdProp.Enabled = true; thirdProp.Text = "";
 
             //populate third box
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
             /*
@@ -146,7 +146,7 @@ namespace GeoenrichmentTool
             foreach (var item in finderJSON)
             {
                 string itemVal = item["p3"]["value"].ToString();
-                string itemLabel = GeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
+                string itemLabel = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
                 thirdProp.Items.Add(itemLabel + " | " + itemVal);
             }
         }
@@ -203,7 +203,7 @@ namespace GeoenrichmentTool
             }
             relationFinderQuery += "} }";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
         }
 
         private async void FindRelatedLinkedData(object sender, EventArgs e)
@@ -219,7 +219,7 @@ namespace GeoenrichmentTool
                 /*
                 if not in_do_single_ent_start
                 */
-                BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+                BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
                 List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
                 /*
@@ -247,7 +247,7 @@ namespace GeoenrichmentTool
                     if(!triplePropertyURLList.Contains(triple["p"]))
                     {
                         triplePropertyURLList.Add(triple["p"]);
-                        triplePropertyLabelList.Add(GeoModule.Current.GetQueryClass().MakeIRIPrefix(triple["p"]));
+                        triplePropertyLabelList.Add(KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(triple["p"]));
                     }
                 }
 
@@ -383,7 +383,7 @@ namespace GeoenrichmentTool
             }
             relationFinderQuery += "}" + queryFilter + "  }";
 
-            JToken resultsJSON = GeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+            JToken resultsJSON = KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
 
             List<Dictionary<string, string>> tripleStore = new List<Dictionary<string, string>>() { };
             foreach (var jsonItem in resultsJSON)
@@ -435,7 +435,7 @@ namespace GeoenrichmentTool
                 if (i % 50 == 0)
                 {
                     string endPlaceQuery = endPlaceQueryPrefix + endPlaceQueryIRI + endPlaceQuerySuffix;
-                    JToken subresults =  GeoModule.Current.GetQueryClass().SubmitQuery(endPlaceQuery);
+                    JToken subresults =  KwgGeoModule.Current.GetQueryClass().SubmitQuery(endPlaceQuery);
 
                     if(results == null)
                     {

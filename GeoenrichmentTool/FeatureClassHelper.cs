@@ -16,7 +16,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     public enum EnumFeatureClassType
     {
@@ -269,7 +269,7 @@ namespace GeoenrichmentTool
                         MapView.Active.Redraw(false);
 
                         //Save layer name to main list of active layers so other tools can access them
-                        GeoModule.Current.AddLayer(fcLayer);
+                        KwgGeoModule.Current.AddLayer(fcLayer);
                     });
                 }
             }
@@ -286,7 +286,7 @@ namespace GeoenrichmentTool
          */
         public static async Task AddFieldInTableByMapping(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
@@ -370,7 +370,7 @@ namespace GeoenrichmentTool
          */
         public static async Task<Table> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
@@ -454,7 +454,7 @@ namespace GeoenrichmentTool
         public static async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
         {
             Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             await QueuedTask.Run(() =>
             {
@@ -499,7 +499,7 @@ namespace GeoenrichmentTool
         public static async Task AppendFieldInFeatureClassByMergeRule(Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
             string relatedTableName, string mergeRule)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             string appendFieldType = "";
             //int appendFieldLength = 0;
@@ -710,7 +710,7 @@ namespace GeoenrichmentTool
 
         public async static void CreateRelationshipFinderTable(List<Dictionary<string, string>> tripleStore, List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
             Geodatabase geodatabase = await QueuedTask.Run(() =>
             {
                 var datastore = mainLayer.GetTable().GetDatastore();

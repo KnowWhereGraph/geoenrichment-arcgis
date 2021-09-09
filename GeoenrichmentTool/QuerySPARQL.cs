@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     class QuerySPARQL
     {

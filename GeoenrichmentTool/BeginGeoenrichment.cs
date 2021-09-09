@@ -21,12 +21,13 @@ using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 
 namespace KWG_Geoenrichment
 {
-    internal class LinkedData : Button
+    internal class BeginGeoenrichment : Button
     {
         protected override void OnClick()
         {
-            Form linkedForm = new RelationshipFinder();
-            linkedForm.ShowDialog();
+            ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("On Click");
+            Form geoenrichmentForm = new GeoenrichmentForm();
+            geoenrichmentForm.ShowDialog();
         }
     }
 }

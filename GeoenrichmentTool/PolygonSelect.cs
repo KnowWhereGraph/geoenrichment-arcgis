@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     internal class PolygonSelect : MapTool
     {
@@ -23,7 +23,7 @@ namespace GeoenrichmentTool
             SketchOutputMode = SketchOutputMode.Map;
         }
 
-        private string defaultLayerPrefix = "GeoSPARQLQueryLayer_";
+        private string defaultLayerPrefix = "KWG_";
         private SpatialReference sr;
 
         protected override Task OnToolActivateAsync(bool active)
