@@ -25,7 +25,6 @@ namespace KWG_Geoenrichment
     {
         protected override void OnClick()
         {
-            ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("On Click");
             Form geoenrichmentForm = new GeoenrichmentForm();
             geoenrichmentForm.ShowDialog();
         }

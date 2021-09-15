@@ -140,6 +140,7 @@
     <Compile Include="GeoenrichmentForm.Designer.cs">
       <DependentUpon>GeoenrichmentForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="DrawPolygon.cs" />
     <Compile Include="RelationshipFinder.cs">
       <SubType>Form</SubType>
     </Compile>

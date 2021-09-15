@@ -44,6 +44,15 @@ namespace KWG_Geoenrichment
             this.requiredSaveLayerAs = new System.Windows.Forms.Label();
             this.saveLayerAsLabel = new System.Windows.Forms.Label();
             this.saveLayerAs = new System.Windows.Forms.TextBox();
+            this.selectAreaBtn = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
+            this.commonCheckBox = new System.Windows.Forms.CheckedListBox();
+            this.commonCheckBoxLabel = new System.Windows.Forms.Label();
+            this.inverseCheckBoxLabel = new System.Windows.Forms.Label();
+            this.inverseCheckBox = new System.Windows.Forms.CheckedListBox();
+            this.mergeRuleLabel = new System.Windows.Forms.Label();
+            this.requiredMergeRule = new System.Windows.Forms.Label();
+            this.mergeRule = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // geoFormName
@@ -100,6 +109,7 @@ namespace KWG_Geoenrichment
             this.featureType.Name = "featureType";
             this.featureType.Size = new System.Drawing.Size(661, 26);
             this.featureType.TabIndex = 17;
+            this.featureType.SelectedIndexChanged += new System.EventHandler(this.getPropertiesForFeature);
             // 
             // requiredFeatureType
             // 
@@ -132,13 +142,13 @@ namespace KWG_Geoenrichment
             this.refreshPlaceTypeBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.refreshPlaceTypeBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.refreshPlaceTypeBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.refreshPlaceTypeBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.refreshPlaceTypeBtn.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold);
             this.refreshPlaceTypeBtn.ForeColor = System.Drawing.Color.White;
             this.refreshPlaceTypeBtn.Location = new System.Drawing.Point(717, 304);
             this.refreshPlaceTypeBtn.Name = "refreshPlaceTypeBtn";
             this.refreshPlaceTypeBtn.Size = new System.Drawing.Size(98, 26);
             this.refreshPlaceTypeBtn.TabIndex = 20;
-            this.refreshPlaceTypeBtn.Text = "Refresh";
+            this.refreshPlaceTypeBtn.Text = "REFRESH";
             this.refreshPlaceTypeBtn.UseVisualStyleBackColor = false;
             this.refreshPlaceTypeBtn.Click += new System.EventHandler(this.RefreshFeatureTypes);
             // 
@@ -148,7 +158,7 @@ namespace KWG_Geoenrichment
             this.ignoreSubclasses.BackColor = System.Drawing.Color.Transparent;
             this.ignoreSubclasses.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.ignoreSubclasses.ForeColor = System.Drawing.Color.White;
-            this.ignoreSubclasses.Location = new System.Drawing.Point(50, 366);
+            this.ignoreSubclasses.Location = new System.Drawing.Point(50, 728);
             this.ignoreSubclasses.Name = "ignoreSubclasses";
             this.ignoreSubclasses.Size = new System.Drawing.Size(336, 33);
             this.ignoreSubclasses.TabIndex = 21;
@@ -161,7 +171,7 @@ namespace KWG_Geoenrichment
             this.spatialRelationLabel.BackColor = System.Drawing.Color.Transparent;
             this.spatialRelationLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.spatialRelationLabel.ForeColor = System.Drawing.Color.White;
-            this.spatialRelationLabel.Location = new System.Drawing.Point(60, 428);
+            this.spatialRelationLabel.Location = new System.Drawing.Point(60, 790);
             this.spatialRelationLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.spatialRelationLabel.Name = "spatialRelationLabel";
             this.spatialRelationLabel.Size = new System.Drawing.Size(260, 29);
@@ -174,7 +184,7 @@ namespace KWG_Geoenrichment
             this.requiredSpatialRelation.BackColor = System.Drawing.Color.Transparent;
             this.requiredSpatialRelation.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.requiredSpatialRelation.ForeColor = System.Drawing.Color.Red;
-            this.requiredSpatialRelation.Location = new System.Drawing.Point(45, 428);
+            this.requiredSpatialRelation.Location = new System.Drawing.Point(45, 790);
             this.requiredSpatialRelation.Name = "requiredSpatialRelation";
             this.requiredSpatialRelation.Size = new System.Drawing.Size(22, 29);
             this.requiredSpatialRelation.TabIndex = 23;
@@ -189,7 +199,7 @@ namespace KWG_Geoenrichment
             "Contain",
             "Within",
             "Intersect"});
-            this.spatialRelation.Location = new System.Drawing.Point(50, 466);
+            this.spatialRelation.Location = new System.Drawing.Point(50, 828);
             this.spatialRelation.Name = "spatialRelation";
             this.spatialRelation.Size = new System.Drawing.Size(765, 26);
             this.spatialRelation.TabIndex = 24;
@@ -200,7 +210,7 @@ namespace KWG_Geoenrichment
             this.requiredSaveLayerAs.BackColor = System.Drawing.Color.Transparent;
             this.requiredSaveLayerAs.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.requiredSaveLayerAs.ForeColor = System.Drawing.Color.Red;
-            this.requiredSaveLayerAs.Location = new System.Drawing.Point(45, 528);
+            this.requiredSaveLayerAs.Location = new System.Drawing.Point(45, 890);
             this.requiredSaveLayerAs.Name = "requiredSaveLayerAs";
             this.requiredSaveLayerAs.Size = new System.Drawing.Size(22, 29);
             this.requiredSaveLayerAs.TabIndex = 25;
@@ -212,7 +222,7 @@ namespace KWG_Geoenrichment
             this.saveLayerAsLabel.BackColor = System.Drawing.Color.Transparent;
             this.saveLayerAsLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.saveLayerAsLabel.ForeColor = System.Drawing.Color.White;
-            this.saveLayerAsLabel.Location = new System.Drawing.Point(60, 528);
+            this.saveLayerAsLabel.Location = new System.Drawing.Point(60, 890);
             this.saveLayerAsLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.saveLayerAsLabel.Name = "saveLayerAsLabel";
             this.saveLayerAsLabel.Size = new System.Drawing.Size(267, 29);
@@ -223,10 +233,133 @@ namespace KWG_Geoenrichment
             // 
             this.saveLayerAs.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.saveLayerAs.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.saveLayerAs.Location = new System.Drawing.Point(50, 566);
+            this.saveLayerAs.Location = new System.Drawing.Point(50, 928);
             this.saveLayerAs.Name = "saveLayerAs";
             this.saveLayerAs.Size = new System.Drawing.Size(765, 26);
             this.saveLayerAs.TabIndex = 27;
+            // 
+            // selectAreaBtn
+            // 
+            this.selectAreaBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(214)))), ((int)(((byte)(237)))));
+            this.selectAreaBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.selectAreaBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.selectAreaBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.selectAreaBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.selectAreaBtn.ForeColor = System.Drawing.Color.Black;
+            this.selectAreaBtn.Location = new System.Drawing.Point(591, 1013);
+            this.selectAreaBtn.Name = "selectAreaBtn";
+            this.selectAreaBtn.Size = new System.Drawing.Size(224, 63);
+            this.selectAreaBtn.TabIndex = 28;
+            this.selectAreaBtn.Text = "SELECT AREA";
+            this.selectAreaBtn.UseVisualStyleBackColor = false;
+            this.selectAreaBtn.Click += new System.EventHandler(this.DrawAreaOfInterest);
+            // 
+            // button1
+            // 
+            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(193)))), ((int)(((byte)(193)))), ((int)(((byte)(193)))));
+            this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.button1.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button1.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.button1.ForeColor = System.Drawing.Color.Black;
+            this.button1.Location = new System.Drawing.Point(350, 1013);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(224, 63);
+            this.button1.TabIndex = 29;
+            this.button1.Text = "OPEN GDB FILE";
+            this.button1.UseVisualStyleBackColor = false;
+            // 
+            // commonCheckBox
+            // 
+            this.commonCheckBox.BackColor = System.Drawing.Color.White;
+            this.commonCheckBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.commonCheckBox.Font = new System.Drawing.Font("Arial", 10F);
+            this.commonCheckBox.FormattingEnabled = true;
+            this.commonCheckBox.Location = new System.Drawing.Point(89, 386);
+            this.commonCheckBox.Name = "commonCheckBox";
+            this.commonCheckBox.Size = new System.Drawing.Size(726, 90);
+            this.commonCheckBox.TabIndex = 30;
+            // 
+            // commonCheckBoxLabel
+            // 
+            this.commonCheckBoxLabel.AutoSize = true;
+            this.commonCheckBoxLabel.BackColor = System.Drawing.Color.Transparent;
+            this.commonCheckBoxLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.commonCheckBoxLabel.ForeColor = System.Drawing.Color.White;
+            this.commonCheckBoxLabel.Location = new System.Drawing.Point(84, 354);
+            this.commonCheckBoxLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.commonCheckBoxLabel.Name = "commonCheckBoxLabel";
+            this.commonCheckBoxLabel.Size = new System.Drawing.Size(386, 29);
+            this.commonCheckBoxLabel.TabIndex = 31;
+            this.commonCheckBoxLabel.Text = "Select Properties for Enrichment";
+            // 
+            // inverseCheckBoxLabel
+            // 
+            this.inverseCheckBoxLabel.AutoSize = true;
+            this.inverseCheckBoxLabel.BackColor = System.Drawing.Color.Transparent;
+            this.inverseCheckBoxLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.inverseCheckBoxLabel.ForeColor = System.Drawing.Color.White;
+            this.inverseCheckBoxLabel.Location = new System.Drawing.Point(82, 494);
+            this.inverseCheckBoxLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.inverseCheckBoxLabel.Name = "inverseCheckBoxLabel";
+            this.inverseCheckBoxLabel.Size = new System.Drawing.Size(332, 29);
+            this.inverseCheckBoxLabel.TabIndex = 33;
+            this.inverseCheckBoxLabel.Text = "Inverse Common Properties";
+            // 
+            // inverseCheckBox
+            // 
+            this.inverseCheckBox.BackColor = System.Drawing.Color.White;
+            this.inverseCheckBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.inverseCheckBox.Font = new System.Drawing.Font("Arial", 10F);
+            this.inverseCheckBox.FormattingEnabled = true;
+            this.inverseCheckBox.Location = new System.Drawing.Point(87, 526);
+            this.inverseCheckBox.Name = "inverseCheckBox";
+            this.inverseCheckBox.Size = new System.Drawing.Size(726, 90);
+            this.inverseCheckBox.TabIndex = 32;
+            // 
+            // mergeRuleLabel
+            // 
+            this.mergeRuleLabel.AutoSize = true;
+            this.mergeRuleLabel.BackColor = System.Drawing.Color.Transparent;
+            this.mergeRuleLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.mergeRuleLabel.ForeColor = System.Drawing.Color.White;
+            this.mergeRuleLabel.Location = new System.Drawing.Point(97, 632);
+            this.mergeRuleLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.mergeRuleLabel.Name = "mergeRuleLabel";
+            this.mergeRuleLabel.Size = new System.Drawing.Size(143, 29);
+            this.mergeRuleLabel.TabIndex = 36;
+            this.mergeRuleLabel.Text = "Merge Rule";
+            // 
+            // requiredMergeRule
+            // 
+            this.requiredMergeRule.AutoSize = true;
+            this.requiredMergeRule.BackColor = System.Drawing.Color.Transparent;
+            this.requiredMergeRule.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.requiredMergeRule.ForeColor = System.Drawing.Color.Red;
+            this.requiredMergeRule.Location = new System.Drawing.Point(82, 632);
+            this.requiredMergeRule.Name = "requiredMergeRule";
+            this.requiredMergeRule.Size = new System.Drawing.Size(22, 29);
+            this.requiredMergeRule.TabIndex = 35;
+            this.requiredMergeRule.Text = "*";
+            // 
+            // mergeRule
+            // 
+            this.mergeRule.Font = new System.Drawing.Font("Arial", 12F);
+            this.mergeRule.FormattingEnabled = true;
+            this.mergeRule.Items.AddRange(new object[] {
+            "SUM",
+            "MIN",
+            "MAX",
+            "STDEV",
+            "MEAN",
+            "COUNT",
+            "FIRST",
+            "LAST",
+            "CONCATENATE"});
+            this.mergeRule.Location = new System.Drawing.Point(87, 664);
+            this.mergeRule.Name = "mergeRule";
+            this.mergeRule.Size = new System.Drawing.Size(728, 26);
+            this.mergeRule.TabIndex = 34;
             // 
             // GeoenrichmentForm
             // 
@@ -234,7 +367,16 @@ namespace KWG_Geoenrichment
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.ClientSize = new System.Drawing.Size(894, 746);
+            this.ClientSize = new System.Drawing.Size(894, 1121);
+            this.Controls.Add(this.mergeRuleLabel);
+            this.Controls.Add(this.requiredMergeRule);
+            this.Controls.Add(this.mergeRule);
+            this.Controls.Add(this.inverseCheckBoxLabel);
+            this.Controls.Add(this.inverseCheckBox);
+            this.Controls.Add(this.commonCheckBoxLabel);
+            this.Controls.Add(this.commonCheckBox);
+            this.Controls.Add(this.button1);
+            this.Controls.Add(this.selectAreaBtn);
             this.Controls.Add(this.saveLayerAs);
             this.Controls.Add(this.saveLayerAsLabel);
             this.Controls.Add(this.requiredSaveLayerAs);
@@ -276,5 +418,14 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label requiredSaveLayerAs;
         private System.Windows.Forms.Label saveLayerAsLabel;
         private System.Windows.Forms.TextBox saveLayerAs;
+        private System.Windows.Forms.Button selectAreaBtn;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.CheckedListBox commonCheckBox;
+        private System.Windows.Forms.Label commonCheckBoxLabel;
+        private System.Windows.Forms.Label inverseCheckBoxLabel;
+        private System.Windows.Forms.CheckedListBox inverseCheckBox;
+        private System.Windows.Forms.Label mergeRuleLabel;
+        private System.Windows.Forms.Label requiredMergeRule;
+        private System.Windows.Forms.ComboBox mergeRule;
     }
 }

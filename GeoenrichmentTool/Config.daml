@@ -19,8 +19,8 @@
       <tabs>
         <tab id="KWG_Geoenrichment_Main" caption="KWG Geoenrichment">
           <group refID="KWG_Geoenrichment_Group_Main" />
-          <group refID="KWG_Geoenrichment_Group_Draw"/>
-		  <group refID="KWG_Geoenrichment_Group_Modify"/>
+          <group refID="KWG_Geoenrichment_Group_Draw" />
+          <group refID="KWG_Geoenrichment_Group_Modify" />
         </tab>
       </tabs>
       <groups>
@@ -28,30 +28,29 @@
               an empty group-->
         <!-- host controls within groups -->
         <group id="KWG_Geoenrichment_Group_Main" caption="Explore an Area" appearsOnAddInTab="false">
-			<button refID="KWG_Geoenrichment_BeginGeoenrichment" size="large" />
+          <button refID="KWG_Geoenrichment_BeginGeoenrichment" size="large" />
         </group>
         <group id="KWG_Geoenrichment_Group_Draw" caption="Graph Query" appearsOnAddInTab="false">
           <tool refID="KWG_Geoenrichment_PolygonSelect" size="large" />
         </group>
-		<group id="KWG_Geoenrichment_Group_Modify" caption="Expand Query" appearsOnAddInTab="false">
-			<button refID="KWG_Geoenrichment_CommonProperties" size="large" />
-			<button refID="KWG_Geoenrichment_MergeTableDashboard" size="large" />
-			<button refID="KWG_Geoenrichment_LinkedData" size="large" />
-		</group>
+        <group id="KWG_Geoenrichment_Group_Modify" caption="Expand Query" appearsOnAddInTab="false">
+          <button refID="KWG_Geoenrichment_CommonProperties" size="large" />
+          <button refID="KWG_Geoenrichment_MergeTableDashboard" size="large" />
+          <button refID="KWG_Geoenrichment_LinkedData" size="large" />
+        </group>
       </groups>
       <controls>
-		  <button id="KWG_Geoenrichment_BeginGeoenrichment" caption="Explore" className="BeginGeoenrichment" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
-			  <tooltip heading="Begin Geoenrichment">
-				  Begin exploring a knowledge graph<disabledText>Map pane required</disabledText>
-			  </tooltip>
-		  </button>
+        <button id="KWG_Geoenrichment_BeginGeoenrichment" caption="Explore" className="BeginGeoenrichment" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
+          <tooltip heading="Begin Geoenrichment">
+				  Begin exploring a knowledge graph<disabledText>Map pane required</disabledText></tooltip>
+        </button>
         <!-- add your controls here -->
         <tool id="KWG_Geoenrichment_PolygonSelect" caption="Select Area" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
           <tooltip heading="Select Area">
 			  Manually draw the polygonal area of interest for the initial query to a SPARQL endpoint
 			  <disabledText>Map pane required</disabledText></tooltip>
         </tool>
-		<button id="KWG_Geoenrichment_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_geosparql_active">
+        <button id="KWG_Geoenrichment_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_geosparql_active">
           <tooltip heading="Property Enrichment">
 			  Enrich query result using common properties
 			  <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
@@ -61,12 +60,11 @@
 			    Enrich query result by merging non functional properties
 			    <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
         </button>
-		<button id="KWG_Geoenrichment_LinkedData" caption="Linked Data" className="LinkedData" loadOnClick="true" smallImage="Images\linked-relationships.png" largeImage="Images\linked-relationships.png" condition="kwg_geosparql_active">
-			<tooltip heading="Linked Data Relationship Finder">
+        <button id="KWG_Geoenrichment_LinkedData" caption="Linked Data" className="LinkedData" loadOnClick="true" smallImage="Images\linked-relationships.png" largeImage="Images\linked-relationships.png" condition="kwg_geosparql_active">
+          <tooltip heading="Linked Data Relationship Finder">
 				Enrich query result by searching for related linked data
-				<disabledText>Requires GeoSPARQL query layer</disabledText>
-			</tooltip>
-		</button>
+				<disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
+        </button>
       </controls>
     </insertModule>
   </modules>
