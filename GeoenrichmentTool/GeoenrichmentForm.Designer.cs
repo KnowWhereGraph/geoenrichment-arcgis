@@ -52,6 +52,7 @@ namespace KWG_Geoenrichment
             this.Use = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Property = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.MergeRule = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.URI = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -302,7 +303,8 @@ namespace KWG_Geoenrichment
             this.commonPropertiesBox.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Use,
             this.Property,
-            this.MergeRule});
+            this.MergeRule,
+            this.URI});
             this.commonPropertiesBox.Location = new System.Drawing.Point(89, 386);
             this.commonPropertiesBox.Name = "commonPropertiesBox";
             this.commonPropertiesBox.ReadOnly = true;
@@ -321,14 +323,21 @@ namespace KWG_Geoenrichment
             this.Property.HeaderText = "Property";
             this.Property.Name = "Property";
             this.Property.ReadOnly = true;
-            this.Property.Width = 300;
+            this.Property.Width = 200;
             // 
             // MergeRule
             // 
             this.MergeRule.HeaderText = "Merge Rule";
             this.MergeRule.Name = "MergeRule";
             this.MergeRule.ReadOnly = true;
-            this.MergeRule.Width = 343;
+            this.MergeRule.Width = 150;
+            // 
+            // URI
+            // 
+            this.URI.HeaderText = "URI";
+            this.URI.Name = "URI";
+            this.URI.ReadOnly = true;
+            this.URI.Width = 293;
             // 
             // GeoenrichmentForm
             // 
@@ -392,5 +401,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.DataGridViewCheckBoxColumn Use;
         private System.Windows.Forms.DataGridViewTextBoxColumn Property;
         private System.Windows.Forms.DataGridViewComboBoxColumn MergeRule;
+        private System.Windows.Forms.DataGridViewTextBoxColumn URI;
     }
 }

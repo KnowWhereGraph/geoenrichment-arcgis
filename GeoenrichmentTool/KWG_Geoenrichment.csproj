@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BeginGeoenrichment.cs" />
+    <Compile Include="PropertyEnrichment.cs" />
     <Compile Include="GeoenrichmentForm.cs">
       <SubType>Form</SubType>
     </Compile>
