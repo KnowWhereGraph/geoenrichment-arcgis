@@ -15,12 +15,12 @@ using System.Windows.Forms;
 
 namespace KWG_Geoenrichment
 {
-    public partial class PropertyEnrichment : Form
+    public partial class PropertyEnrichmentOld : Form
     {
         private List<string> soList;
         private List<string> uriList;
 
-        public PropertyEnrichment(List<string>[] commonProperties, List<string>[] sosaObsProperties, List<string>[] inverseProperties, List<string> uris)
+        public PropertyEnrichmentOld(List<string>[] commonProperties, List<string>[] sosaObsProperties, List<string>[] inverseProperties, List<string> uris)
         {
             InitializeComponent();
             soList = new List<string>() { };

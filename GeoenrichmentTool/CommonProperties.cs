@@ -37,7 +37,7 @@ namespace KWG_Geoenrichment
                 List<string>[] sosaObsProps = GetSosaObsProperties(uris);
                 List<string>[] inverseProps = GetCommonProperties(uris, true);
 
-                Form propForm = new PropertyEnrichment(commonProps, sosaObsProps, inverseProps, uris);
+                Form propForm = new PropertyEnrichmentOld(commonProps, sosaObsProps, inverseProps, uris);
                 propForm.ShowDialog();
             } 
             else

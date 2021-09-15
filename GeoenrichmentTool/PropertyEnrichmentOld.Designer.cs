@@ -1,7 +1,7 @@
 ﻿
 namespace KWG_Geoenrichment
 {
-    partial class PropertyEnrichment
+    partial class PropertyEnrichmentOld
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,7 @@ namespace KWG_Geoenrichment
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PropertyEnrichment));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PropertyEnrichmentOld));
             this.propFormLabel = new System.Windows.Forms.Label();
             this.commonCheckBox = new System.Windows.Forms.CheckedListBox();
             this.commonLabel = new System.Windows.Forms.Label();

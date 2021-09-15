@@ -46,13 +46,13 @@ namespace KWG_Geoenrichment
             this.saveLayerAs = new System.Windows.Forms.TextBox();
             this.selectAreaBtn = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.commonCheckBox = new System.Windows.Forms.CheckedListBox();
             this.commonCheckBoxLabel = new System.Windows.Forms.Label();
             this.inverseCheckBoxLabel = new System.Windows.Forms.Label();
-            this.inverseCheckBox = new System.Windows.Forms.CheckedListBox();
-            this.mergeRuleLabel = new System.Windows.Forms.Label();
-            this.requiredMergeRule = new System.Windows.Forms.Label();
-            this.mergeRule = new System.Windows.Forms.ComboBox();
+            this.commonPropertiesBox = new System.Windows.Forms.DataGridView();
+            this.Use = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.Property = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.MergeRule = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).BeginInit();
             this.SuspendLayout();
             // 
             // geoFormName
@@ -269,17 +269,6 @@ namespace KWG_Geoenrichment
             this.button1.Text = "OPEN GDB FILE";
             this.button1.UseVisualStyleBackColor = false;
             // 
-            // commonCheckBox
-            // 
-            this.commonCheckBox.BackColor = System.Drawing.Color.White;
-            this.commonCheckBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.commonCheckBox.Font = new System.Drawing.Font("Arial", 10F);
-            this.commonCheckBox.FormattingEnabled = true;
-            this.commonCheckBox.Location = new System.Drawing.Point(89, 386);
-            this.commonCheckBox.Name = "commonCheckBox";
-            this.commonCheckBox.Size = new System.Drawing.Size(726, 90);
-            this.commonCheckBox.TabIndex = 30;
-            // 
             // commonCheckBoxLabel
             // 
             this.commonCheckBoxLabel.AutoSize = true;
@@ -306,60 +295,40 @@ namespace KWG_Geoenrichment
             this.inverseCheckBoxLabel.TabIndex = 33;
             this.inverseCheckBoxLabel.Text = "Inverse Common Properties";
             // 
-            // inverseCheckBox
+            // commonPropertiesBox
             // 
-            this.inverseCheckBox.BackColor = System.Drawing.Color.White;
-            this.inverseCheckBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.inverseCheckBox.Font = new System.Drawing.Font("Arial", 10F);
-            this.inverseCheckBox.FormattingEnabled = true;
-            this.inverseCheckBox.Location = new System.Drawing.Point(87, 526);
-            this.inverseCheckBox.Name = "inverseCheckBox";
-            this.inverseCheckBox.Size = new System.Drawing.Size(726, 90);
-            this.inverseCheckBox.TabIndex = 32;
+            this.commonPropertiesBox.AllowUserToDeleteRows = false;
+            this.commonPropertiesBox.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.commonPropertiesBox.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Use,
+            this.Property,
+            this.MergeRule});
+            this.commonPropertiesBox.Location = new System.Drawing.Point(89, 386);
+            this.commonPropertiesBox.Name = "commonPropertiesBox";
+            this.commonPropertiesBox.ReadOnly = true;
+            this.commonPropertiesBox.Size = new System.Drawing.Size(726, 150);
+            this.commonPropertiesBox.TabIndex = 35;
             // 
-            // mergeRuleLabel
+            // Use
             // 
-            this.mergeRuleLabel.AutoSize = true;
-            this.mergeRuleLabel.BackColor = System.Drawing.Color.Transparent;
-            this.mergeRuleLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
-            this.mergeRuleLabel.ForeColor = System.Drawing.Color.White;
-            this.mergeRuleLabel.Location = new System.Drawing.Point(97, 632);
-            this.mergeRuleLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.mergeRuleLabel.Name = "mergeRuleLabel";
-            this.mergeRuleLabel.Size = new System.Drawing.Size(143, 29);
-            this.mergeRuleLabel.TabIndex = 36;
-            this.mergeRuleLabel.Text = "Merge Rule";
+            this.Use.HeaderText = "Use";
+            this.Use.Name = "Use";
+            this.Use.ReadOnly = true;
+            this.Use.Width = 40;
             // 
-            // requiredMergeRule
+            // Property
             // 
-            this.requiredMergeRule.AutoSize = true;
-            this.requiredMergeRule.BackColor = System.Drawing.Color.Transparent;
-            this.requiredMergeRule.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
-            this.requiredMergeRule.ForeColor = System.Drawing.Color.Red;
-            this.requiredMergeRule.Location = new System.Drawing.Point(82, 632);
-            this.requiredMergeRule.Name = "requiredMergeRule";
-            this.requiredMergeRule.Size = new System.Drawing.Size(22, 29);
-            this.requiredMergeRule.TabIndex = 35;
-            this.requiredMergeRule.Text = "*";
+            this.Property.HeaderText = "Property";
+            this.Property.Name = "Property";
+            this.Property.ReadOnly = true;
+            this.Property.Width = 300;
             // 
-            // mergeRule
+            // MergeRule
             // 
-            this.mergeRule.Font = new System.Drawing.Font("Arial", 12F);
-            this.mergeRule.FormattingEnabled = true;
-            this.mergeRule.Items.AddRange(new object[] {
-            "SUM",
-            "MIN",
-            "MAX",
-            "STDEV",
-            "MEAN",
-            "COUNT",
-            "FIRST",
-            "LAST",
-            "CONCATENATE"});
-            this.mergeRule.Location = new System.Drawing.Point(87, 664);
-            this.mergeRule.Name = "mergeRule";
-            this.mergeRule.Size = new System.Drawing.Size(728, 26);
-            this.mergeRule.TabIndex = 34;
+            this.MergeRule.HeaderText = "Merge Rule";
+            this.MergeRule.Name = "MergeRule";
+            this.MergeRule.ReadOnly = true;
+            this.MergeRule.Width = 343;
             // 
             // GeoenrichmentForm
             // 
@@ -368,13 +337,9 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(894, 1121);
-            this.Controls.Add(this.mergeRuleLabel);
-            this.Controls.Add(this.requiredMergeRule);
-            this.Controls.Add(this.mergeRule);
+            this.Controls.Add(this.commonPropertiesBox);
             this.Controls.Add(this.inverseCheckBoxLabel);
-            this.Controls.Add(this.inverseCheckBox);
             this.Controls.Add(this.commonCheckBoxLabel);
-            this.Controls.Add(this.commonCheckBox);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.selectAreaBtn);
             this.Controls.Add(this.saveLayerAs);
@@ -396,6 +361,7 @@ namespace KWG_Geoenrichment
             this.HelpButton = true;
             this.Name = "GeoenrichmentForm";
             this.Text = "KnowWhereGraph Geoenrichment";
+            ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -420,12 +386,11 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.TextBox saveLayerAs;
         private System.Windows.Forms.Button selectAreaBtn;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.CheckedListBox commonCheckBox;
         private System.Windows.Forms.Label commonCheckBoxLabel;
         private System.Windows.Forms.Label inverseCheckBoxLabel;
-        private System.Windows.Forms.CheckedListBox inverseCheckBox;
-        private System.Windows.Forms.Label mergeRuleLabel;
-        private System.Windows.Forms.Label requiredMergeRule;
-        private System.Windows.Forms.ComboBox mergeRule;
+        private System.Windows.Forms.DataGridView commonPropertiesBox;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Use;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Property;
+        private System.Windows.Forms.DataGridViewComboBoxColumn MergeRule;
     }
 }

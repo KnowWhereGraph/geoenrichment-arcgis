@@ -85,7 +85,7 @@ namespace KWG_Geoenrichment
 
                 string value = name + " | " + url;
 
-                commonCheckBox.Items.Add(value);
+                //commonCheckBox.Items.Add(value);
             }
 
             for (var i = 0; i < sosaObsProperties[0].Count(); i++)
@@ -96,7 +96,7 @@ namespace KWG_Geoenrichment
                 string value = name + " | " + url;
 
                 //We want to add the value to main user selection list for common properties
-                commonCheckBox.Items.Add(value);
+                //commonCheckBox.Items.Add(value);
                 //But we also want to keep track of the fact its a sosa observation value
                 //soList.Add(value);
             }
@@ -108,7 +108,7 @@ namespace KWG_Geoenrichment
 
                 string value = name + " | " + url;
 
-                inverseCheckBox.Items.Add(value);
+                //inverseCheckBox.Items.Add(value);
             }
         }
 
