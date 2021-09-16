@@ -46,14 +46,21 @@ namespace KWG_Geoenrichment
             this.saveLayerAs = new System.Windows.Forms.TextBox();
             this.selectAreaBtn = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.commonCheckBoxLabel = new System.Windows.Forms.Label();
+            this.commonPropertiesBoxLabel = new System.Windows.Forms.Label();
             this.inverseCheckBoxLabel = new System.Windows.Forms.Label();
             this.commonPropertiesBox = new System.Windows.Forms.DataGridView();
             this.Use = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Property = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.MergeRule = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.URI = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.inversePropertiesBoxLabel = new System.Windows.Forms.Label();
+            this.inversePropertiesBox = new System.Windows.Forms.DataGridView();
+            this.dataGridViewCheckBoxColumn1 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewComboBoxColumn1 = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.inversePropertiesBox)).BeginInit();
             this.SuspendLayout();
             // 
             // geoFormName
@@ -159,7 +166,7 @@ namespace KWG_Geoenrichment
             this.ignoreSubclasses.BackColor = System.Drawing.Color.Transparent;
             this.ignoreSubclasses.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.ignoreSubclasses.ForeColor = System.Drawing.Color.White;
-            this.ignoreSubclasses.Location = new System.Drawing.Point(50, 728);
+            this.ignoreSubclasses.Location = new System.Drawing.Point(50, 336);
             this.ignoreSubclasses.Name = "ignoreSubclasses";
             this.ignoreSubclasses.Size = new System.Drawing.Size(336, 33);
             this.ignoreSubclasses.TabIndex = 21;
@@ -172,7 +179,7 @@ namespace KWG_Geoenrichment
             this.spatialRelationLabel.BackColor = System.Drawing.Color.Transparent;
             this.spatialRelationLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.spatialRelationLabel.ForeColor = System.Drawing.Color.White;
-            this.spatialRelationLabel.Location = new System.Drawing.Point(60, 790);
+            this.spatialRelationLabel.Location = new System.Drawing.Point(60, 789);
             this.spatialRelationLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.spatialRelationLabel.Name = "spatialRelationLabel";
             this.spatialRelationLabel.Size = new System.Drawing.Size(260, 29);
@@ -185,7 +192,7 @@ namespace KWG_Geoenrichment
             this.requiredSpatialRelation.BackColor = System.Drawing.Color.Transparent;
             this.requiredSpatialRelation.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.requiredSpatialRelation.ForeColor = System.Drawing.Color.Red;
-            this.requiredSpatialRelation.Location = new System.Drawing.Point(45, 790);
+            this.requiredSpatialRelation.Location = new System.Drawing.Point(45, 789);
             this.requiredSpatialRelation.Name = "requiredSpatialRelation";
             this.requiredSpatialRelation.Size = new System.Drawing.Size(22, 29);
             this.requiredSpatialRelation.TabIndex = 23;
@@ -200,7 +207,7 @@ namespace KWG_Geoenrichment
             "Contain",
             "Within",
             "Intersect"});
-            this.spatialRelation.Location = new System.Drawing.Point(50, 828);
+            this.spatialRelation.Location = new System.Drawing.Point(50, 827);
             this.spatialRelation.Name = "spatialRelation";
             this.spatialRelation.Size = new System.Drawing.Size(765, 26);
             this.spatialRelation.TabIndex = 24;
@@ -211,7 +218,7 @@ namespace KWG_Geoenrichment
             this.requiredSaveLayerAs.BackColor = System.Drawing.Color.Transparent;
             this.requiredSaveLayerAs.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.requiredSaveLayerAs.ForeColor = System.Drawing.Color.Red;
-            this.requiredSaveLayerAs.Location = new System.Drawing.Point(45, 890);
+            this.requiredSaveLayerAs.Location = new System.Drawing.Point(45, 889);
             this.requiredSaveLayerAs.Name = "requiredSaveLayerAs";
             this.requiredSaveLayerAs.Size = new System.Drawing.Size(22, 29);
             this.requiredSaveLayerAs.TabIndex = 25;
@@ -223,7 +230,7 @@ namespace KWG_Geoenrichment
             this.saveLayerAsLabel.BackColor = System.Drawing.Color.Transparent;
             this.saveLayerAsLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.saveLayerAsLabel.ForeColor = System.Drawing.Color.White;
-            this.saveLayerAsLabel.Location = new System.Drawing.Point(60, 890);
+            this.saveLayerAsLabel.Location = new System.Drawing.Point(60, 889);
             this.saveLayerAsLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.saveLayerAsLabel.Name = "saveLayerAsLabel";
             this.saveLayerAsLabel.Size = new System.Drawing.Size(267, 29);
@@ -234,7 +241,7 @@ namespace KWG_Geoenrichment
             // 
             this.saveLayerAs.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.saveLayerAs.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.saveLayerAs.Location = new System.Drawing.Point(50, 928);
+            this.saveLayerAs.Location = new System.Drawing.Point(50, 927);
             this.saveLayerAs.Name = "saveLayerAs";
             this.saveLayerAs.Size = new System.Drawing.Size(765, 26);
             this.saveLayerAs.TabIndex = 27;
@@ -247,7 +254,7 @@ namespace KWG_Geoenrichment
             this.selectAreaBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.selectAreaBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.selectAreaBtn.ForeColor = System.Drawing.Color.Black;
-            this.selectAreaBtn.Location = new System.Drawing.Point(591, 1013);
+            this.selectAreaBtn.Location = new System.Drawing.Point(591, 1012);
             this.selectAreaBtn.Name = "selectAreaBtn";
             this.selectAreaBtn.Size = new System.Drawing.Size(224, 63);
             this.selectAreaBtn.TabIndex = 28;
@@ -263,25 +270,25 @@ namespace KWG_Geoenrichment
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.button1.ForeColor = System.Drawing.Color.Black;
-            this.button1.Location = new System.Drawing.Point(350, 1013);
+            this.button1.Location = new System.Drawing.Point(350, 1012);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(224, 63);
             this.button1.TabIndex = 29;
             this.button1.Text = "OPEN GDB FILE";
             this.button1.UseVisualStyleBackColor = false;
             // 
-            // commonCheckBoxLabel
+            // commonPropertiesBoxLabel
             // 
-            this.commonCheckBoxLabel.AutoSize = true;
-            this.commonCheckBoxLabel.BackColor = System.Drawing.Color.Transparent;
-            this.commonCheckBoxLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
-            this.commonCheckBoxLabel.ForeColor = System.Drawing.Color.White;
-            this.commonCheckBoxLabel.Location = new System.Drawing.Point(84, 354);
-            this.commonCheckBoxLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.commonCheckBoxLabel.Name = "commonCheckBoxLabel";
-            this.commonCheckBoxLabel.Size = new System.Drawing.Size(386, 29);
-            this.commonCheckBoxLabel.TabIndex = 31;
-            this.commonCheckBoxLabel.Text = "Select Properties for Enrichment";
+            this.commonPropertiesBoxLabel.AutoSize = true;
+            this.commonPropertiesBoxLabel.BackColor = System.Drawing.Color.Transparent;
+            this.commonPropertiesBoxLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.commonPropertiesBoxLabel.ForeColor = System.Drawing.Color.White;
+            this.commonPropertiesBoxLabel.Location = new System.Drawing.Point(84, 372);
+            this.commonPropertiesBoxLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.commonPropertiesBoxLabel.Name = "commonPropertiesBoxLabel";
+            this.commonPropertiesBoxLabel.Size = new System.Drawing.Size(386, 29);
+            this.commonPropertiesBoxLabel.TabIndex = 31;
+            this.commonPropertiesBoxLabel.Text = "Select Properties for Enrichment";
             // 
             // inverseCheckBoxLabel
             // 
@@ -289,7 +296,7 @@ namespace KWG_Geoenrichment
             this.inverseCheckBoxLabel.BackColor = System.Drawing.Color.Transparent;
             this.inverseCheckBoxLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.inverseCheckBoxLabel.ForeColor = System.Drawing.Color.White;
-            this.inverseCheckBoxLabel.Location = new System.Drawing.Point(82, 494);
+            this.inverseCheckBoxLabel.Location = new System.Drawing.Point(82, 512);
             this.inverseCheckBoxLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.inverseCheckBoxLabel.Name = "inverseCheckBoxLabel";
             this.inverseCheckBoxLabel.Size = new System.Drawing.Size(332, 29);
@@ -298,6 +305,7 @@ namespace KWG_Geoenrichment
             // 
             // commonPropertiesBox
             // 
+            this.commonPropertiesBox.AllowUserToAddRows = false;
             this.commonPropertiesBox.AllowUserToDeleteRows = false;
             this.commonPropertiesBox.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.commonPropertiesBox.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -305,9 +313,8 @@ namespace KWG_Geoenrichment
             this.Property,
             this.MergeRule,
             this.URI});
-            this.commonPropertiesBox.Location = new System.Drawing.Point(89, 386);
+            this.commonPropertiesBox.Location = new System.Drawing.Point(89, 404);
             this.commonPropertiesBox.Name = "commonPropertiesBox";
-            this.commonPropertiesBox.ReadOnly = true;
             this.commonPropertiesBox.Size = new System.Drawing.Size(726, 150);
             this.commonPropertiesBox.TabIndex = 35;
             // 
@@ -315,7 +322,7 @@ namespace KWG_Geoenrichment
             // 
             this.Use.HeaderText = "Use";
             this.Use.Name = "Use";
-            this.Use.ReadOnly = true;
+            this.Use.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.Use.Width = 40;
             // 
             // Property
@@ -328,8 +335,17 @@ namespace KWG_Geoenrichment
             // MergeRule
             // 
             this.MergeRule.HeaderText = "Merge Rule";
+            this.MergeRule.Items.AddRange(new object[] {
+            "SUM",
+            "MIN",
+            "MAX",
+            "STDEV",
+            "MEAN",
+            "COUNT",
+            "FIRST",
+            "LAST",
+            "CONCATENATE"});
             this.MergeRule.Name = "MergeRule";
-            this.MergeRule.ReadOnly = true;
             this.MergeRule.Width = 150;
             // 
             // URI
@@ -339,6 +355,71 @@ namespace KWG_Geoenrichment
             this.URI.ReadOnly = true;
             this.URI.Width = 293;
             // 
+            // inversePropertiesBoxLabel
+            // 
+            this.inversePropertiesBoxLabel.AutoSize = true;
+            this.inversePropertiesBoxLabel.BackColor = System.Drawing.Color.Transparent;
+            this.inversePropertiesBoxLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.inversePropertiesBoxLabel.ForeColor = System.Drawing.Color.White;
+            this.inversePropertiesBoxLabel.Location = new System.Drawing.Point(84, 558);
+            this.inversePropertiesBoxLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.inversePropertiesBoxLabel.Name = "inversePropertiesBoxLabel";
+            this.inversePropertiesBoxLabel.Size = new System.Drawing.Size(332, 29);
+            this.inversePropertiesBoxLabel.TabIndex = 36;
+            this.inversePropertiesBoxLabel.Text = "Inverse Common Properties";
+            // 
+            // inversePropertiesBox
+            // 
+            this.inversePropertiesBox.AllowUserToAddRows = false;
+            this.inversePropertiesBox.AllowUserToDeleteRows = false;
+            this.inversePropertiesBox.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.inversePropertiesBox.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dataGridViewCheckBoxColumn1,
+            this.dataGridViewTextBoxColumn1,
+            this.dataGridViewComboBoxColumn1,
+            this.dataGridViewTextBoxColumn2});
+            this.inversePropertiesBox.Location = new System.Drawing.Point(87, 590);
+            this.inversePropertiesBox.Name = "inversePropertiesBox";
+            this.inversePropertiesBox.Size = new System.Drawing.Size(726, 150);
+            this.inversePropertiesBox.TabIndex = 37;
+            // 
+            // dataGridViewCheckBoxColumn1
+            // 
+            this.dataGridViewCheckBoxColumn1.HeaderText = "Use";
+            this.dataGridViewCheckBoxColumn1.Name = "dataGridViewCheckBoxColumn1";
+            this.dataGridViewCheckBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridViewCheckBoxColumn1.Width = 40;
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.HeaderText = "Property";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
+            this.dataGridViewTextBoxColumn1.Width = 200;
+            // 
+            // dataGridViewComboBoxColumn1
+            // 
+            this.dataGridViewComboBoxColumn1.HeaderText = "Merge Rule";
+            this.dataGridViewComboBoxColumn1.Items.AddRange(new object[] {
+            "SUM",
+            "MIN",
+            "MAX",
+            "STDEV",
+            "MEAN",
+            "COUNT",
+            "FIRST",
+            "LAST",
+            "CONCATENATE"});
+            this.dataGridViewComboBoxColumn1.Name = "dataGridViewComboBoxColumn1";
+            this.dataGridViewComboBoxColumn1.Width = 150;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            this.dataGridViewTextBoxColumn2.HeaderText = "URI";
+            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.dataGridViewTextBoxColumn2.ReadOnly = true;
+            this.dataGridViewTextBoxColumn2.Width = 293;
+            // 
             // GeoenrichmentForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -346,9 +427,11 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(894, 1121);
+            this.Controls.Add(this.inversePropertiesBox);
+            this.Controls.Add(this.inversePropertiesBoxLabel);
             this.Controls.Add(this.commonPropertiesBox);
             this.Controls.Add(this.inverseCheckBoxLabel);
-            this.Controls.Add(this.commonCheckBoxLabel);
+            this.Controls.Add(this.commonPropertiesBoxLabel);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.selectAreaBtn);
             this.Controls.Add(this.saveLayerAs);
@@ -371,6 +454,7 @@ namespace KWG_Geoenrichment
             this.Name = "GeoenrichmentForm";
             this.Text = "KnowWhereGraph Geoenrichment";
             ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.inversePropertiesBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -395,12 +479,18 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.TextBox saveLayerAs;
         private System.Windows.Forms.Button selectAreaBtn;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label commonCheckBoxLabel;
+        private System.Windows.Forms.Label commonPropertiesBoxLabel;
         private System.Windows.Forms.Label inverseCheckBoxLabel;
         private System.Windows.Forms.DataGridView commonPropertiesBox;
+        private System.Windows.Forms.Label inversePropertiesBoxLabel;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Use;
         private System.Windows.Forms.DataGridViewTextBoxColumn Property;
         private System.Windows.Forms.DataGridViewComboBoxColumn MergeRule;
         private System.Windows.Forms.DataGridViewTextBoxColumn URI;
+        private System.Windows.Forms.DataGridView inversePropertiesBox;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn dataGridViewCheckBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+        private System.Windows.Forms.DataGridViewComboBoxColumn dataGridViewComboBoxColumn1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
     }
 }

@@ -86,11 +86,7 @@ namespace KWG_Geoenrichment
 
                 string value = name + " | " + url;
 
-                //commonCheckBox.Items.Add(value);
-                DataGridViewComboBoxCell cmb = new DataGridViewComboBoxCell();
-                cmb.ValueType = typeof(string);
-                cmb.DataSource = new List<string>() { "SUM", "MIN", "MAX", "STDEV", "MEAN", "COUNT", "FIRST", "LAST", "CONCATENATE" };
-                commonPropertiesBox.Rows.Add(false, name, cmb, url);
+                commonPropertiesBox.Rows.Add(false, name, null, url);
             }
 
             for (var i = 0; i < sosaObsProperties[0].Count(); i++)
@@ -101,7 +97,7 @@ namespace KWG_Geoenrichment
                 string value = name + " | " + url;
 
                 //We want to add the value to main user selection list for common properties
-                //commonCheckBox.Items.Add(value);
+                commonPropertiesBox.Rows.Add(false, name, null, url);
                 //But we also want to keep track of the fact its a sosa observation value
                 //soList.Add(value);
             }
@@ -113,10 +109,8 @@ namespace KWG_Geoenrichment
 
                 string value = name + " | " + url;
 
-                //inverseCheckBox.Items.Add(value);
+                inversePropertiesBox.Rows.Add(false, name, null, url);
             }
         }
-
-        
     }
 }
