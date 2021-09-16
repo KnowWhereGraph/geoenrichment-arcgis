@@ -1,4 +1,6 @@
-﻿using ArcGIS.Desktop.Mapping;
+﻿using ArcGIS.Desktop.Framework;
+using ArcGIS.Desktop.Framework.Contracts;
+using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -65,11 +67,6 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private void DrawAreaOfInterest(object sender, EventArgs e)
-        {
-            DrawPolygon drawTool = new DrawPolygon();
-        }
-
         private void getPropertiesForFeature(object sender, EventArgs e)
         {
             string selectedType = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(featureTypeArray[featureType.Text]);
@@ -111,6 +108,12 @@ namespace KWG_Geoenrichment
 
                 inversePropertiesBox.Rows.Add(false, name, null, url);
             }
+        }
+
+        private void DrawAreaOfInterest(object sender, EventArgs e)
+        {
+            Close();
+            FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
         }
     }
 }

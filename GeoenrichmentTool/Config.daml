@@ -65,6 +65,12 @@
 				Enrich query result by searching for related linked data
 				<disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
         </button>
+		<tool id="KWG_Geoenrichment_DrawPolygon" caption="Select Area" className="DrawPolygon" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
+			<tooltip heading="Select Area">
+				Manually draw the polygonal area of interest for the initial query to a SPARQL endpoint
+				<disabledText>Map pane required</disabledText>
+			</tooltip>
+		</tool>
       </controls>
     </insertModule>
   </modules>
