@@ -34,7 +34,6 @@ namespace KWG_Geoenrichment
             this.requiredKnowledgeGraph = new System.Windows.Forms.Label();
             this.knowledgeGraphLabel = new System.Windows.Forms.Label();
             this.featureType = new System.Windows.Forms.ComboBox();
-            this.requiredFeatureType = new System.Windows.Forms.Label();
             this.featureTypeLabel = new System.Windows.Forms.Label();
             this.refreshPlaceTypeBtn = new System.Windows.Forms.Button();
             this.ignoreSubclasses = new System.Windows.Forms.CheckBox();
@@ -119,25 +118,13 @@ namespace KWG_Geoenrichment
             this.featureType.TabIndex = 17;
             this.featureType.SelectedIndexChanged += new System.EventHandler(this.getPropertiesForFeature);
             // 
-            // requiredFeatureType
-            // 
-            this.requiredFeatureType.AutoSize = true;
-            this.requiredFeatureType.BackColor = System.Drawing.Color.Transparent;
-            this.requiredFeatureType.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
-            this.requiredFeatureType.ForeColor = System.Drawing.Color.Red;
-            this.requiredFeatureType.Location = new System.Drawing.Point(45, 266);
-            this.requiredFeatureType.Name = "requiredFeatureType";
-            this.requiredFeatureType.Size = new System.Drawing.Size(22, 29);
-            this.requiredFeatureType.TabIndex = 18;
-            this.requiredFeatureType.Text = "*";
-            // 
             // featureTypeLabel
             // 
             this.featureTypeLabel.AutoSize = true;
             this.featureTypeLabel.BackColor = System.Drawing.Color.Transparent;
             this.featureTypeLabel.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
             this.featureTypeLabel.ForeColor = System.Drawing.Color.White;
-            this.featureTypeLabel.Location = new System.Drawing.Point(60, 266);
+            this.featureTypeLabel.Location = new System.Drawing.Point(50, 266);
             this.featureTypeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.featureTypeLabel.Name = "featureTypeLabel";
             this.featureTypeLabel.Size = new System.Drawing.Size(160, 29);
@@ -443,7 +430,6 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.ignoreSubclasses);
             this.Controls.Add(this.refreshPlaceTypeBtn);
             this.Controls.Add(this.featureTypeLabel);
-            this.Controls.Add(this.requiredFeatureType);
             this.Controls.Add(this.featureType);
             this.Controls.Add(this.knowledgeGraphLabel);
             this.Controls.Add(this.requiredKnowledgeGraph);
@@ -467,7 +453,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label requiredKnowledgeGraph;
         private System.Windows.Forms.Label knowledgeGraphLabel;
         private System.Windows.Forms.ComboBox featureType;
-        private System.Windows.Forms.Label requiredFeatureType;
         private System.Windows.Forms.Label featureTypeLabel;
         private System.Windows.Forms.Button refreshPlaceTypeBtn;
         private System.Windows.Forms.CheckBox ignoreSubclasses;
