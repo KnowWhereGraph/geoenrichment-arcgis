@@ -66,7 +66,7 @@ namespace KWG_Geoenrichment
                 MapPoint geoCoor = coor.ToMapPoint();
                 coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
             }
-            string polyString = "Polygon((" + String.Join(", ", coorArray) + "))";
+            string polygonString = "Polygon((" + String.Join(", ", coorArray) + "))";
 
             //Create layer for the polygon
             Random gen = new Random();
@@ -90,7 +90,7 @@ namespace KWG_Geoenrichment
 
                     RowBuffer buff = mainLayer.GetTable().CreateRowBuffer();
                     IGeometryEngine geoEngine = GeometryEngine.Instance;
-                    Geometry geo = geoEngine.ImportFromWKT(0, polyString, sr);
+                    Geometry geo = geoEngine.ImportFromWKT(0, polygonString, sr);
 
                     buff["Shape"] = geo;
                     cursor.Insert(buff);
@@ -99,6 +99,8 @@ namespace KWG_Geoenrichment
 
                     MapView.Active.Redraw(false);
                 });
+
+                KwgGeoModule.Current.activeGeoenrichmentForm.SubmitGeoenrichmentForm(polygonString);
             }
         }
     }

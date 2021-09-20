@@ -24,6 +24,7 @@ namespace KWG_Geoenrichment
     {
         private static KwgGeoModule _this = null;
         private readonly QuerySPARQL queryClass;
+        public GeoenrichmentForm activeGeoenrichmentForm { get; set; }
         protected List<BasicFeatureLayer> activeLayers;
 
         /// <summary>

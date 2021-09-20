@@ -23,8 +23,8 @@ namespace KWG_Geoenrichment
         {
             InitializeComponent();
 
-
-            knowledgeGraph.Text = QuerySPARQL.GetDefaultEndPoint();
+            KwgGeoModule.Current.activeGeoenrichmentForm = this;
+            knowledgeGraph.Text = KwgGeoModule.Current.GetQueryClass().GetActiveEndPoint();
             PopulateFeatureTypes();
         }
 
@@ -81,8 +81,6 @@ namespace KWG_Geoenrichment
                 string url = commonProperties[0][i];
                 string name = commonProperties[1][i];
 
-                string value = name + " | " + url;
-
                 commonPropertiesBox.Rows.Add(false, name, null, url);
             }
 
@@ -90,8 +88,6 @@ namespace KWG_Geoenrichment
             {
                 string url = sosaObsProperties[0][i];
                 string name = sosaObsProperties[1][i];
-
-                string value = name + " | " + url;
 
                 //We want to add the value to main user selection list for common properties
                 commonPropertiesBox.Rows.Add(false, name, null, url);
@@ -104,8 +100,6 @@ namespace KWG_Geoenrichment
                 string url = inverseProperties[0][i];
                 string name = inverseProperties[1][i];
 
-                string value = name + " | " + url;
-
                 inversePropertiesBox.Rows.Add(false, name, null, url);
             }
         }
@@ -114,6 +108,98 @@ namespace KWG_Geoenrichment
         {
             Close();
             FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
+        }
+
+        public void SubmitGeoenrichmentForm(string polygonString)
+        {
+            if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
+            {
+                MessageBox.Show($@"Required fields missing!");
+            }
+            else
+            {
+                //We need to update our global query module to point at the specified knowledge graph endpoint
+                QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
+                queryClass.UpdateActiveEndPoint(knowledgeGraph.Text);
+
+                string featureTypeURI = (featureType.Text != "") ? featureTypeArray[featureType.Text] : "";
+
+                string[] geoFunctions = new string[] { };
+                switch (spatialRelation.Text)
+                {
+                    case "Contain or Intersect":
+                        geoFunctions = new string[] { "geo:sfContains", "geo:sfIntersects" };
+                        break;
+                    case "Contain":
+                        geoFunctions = new string[] { "geo:sfContains" };
+                        break;
+                    case "Within":
+                        geoFunctions = new string[] { "geo:sfWithin" };
+                        break;
+                    case "Intersect":
+                    default:
+                        geoFunctions = new string[] { "geo:sfIntersects" };
+                        break;
+                }
+
+                //Build proper WKT value
+                string polygonWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + polygonString + " '''";
+
+                var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, ignoreSubclasses.Checked, geoFunctions);
+
+                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, saveLayerAs.Text.Replace(" ", "_"), featureTypeURI, ignoreSubclasses.Checked);
+
+                //TODO:: Integrate merge code
+
+                //Enable the property enrichment tool since we have a layer for it to use
+                FrameworkApplication.State.Activate("kwg_query_layer_added");
+            }
+        }
+
+        /**
+         * Format GeoSPARQL query
+         * 
+         * polygonWKT: the wkt literal for the user polygon
+         * featureTypeUri: the user spercified feature type
+         * ignoreSubclasses: ignore use of subclasses for feature type
+         * geoFunctions: a list of geosparql functions
+         **/
+        private JToken TypeAndGeoSPARQLQuery(string polygonWKT, string featureTypeURI, bool ignoreSubclasses, string[] geoFunctions)
+        {
+            string query = "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
+                "where" +
+                "{" +
+                "?place geo:hasGeometry ?geometry . " +
+                "?place rdfs:label ?placeLabel . " +
+                "?geometry geo:asWKT ?wkt . " +
+                "?place rdf:type ?placeFlatType ." +
+                "{ " + polygonWKT + "^^geo:wktLiteral " +
+                geoFunctions[0] + "  ?geometry .}";
+
+            if (geoFunctions.Length == 2)
+            {
+                query += " union" +
+                    "{ " + polygonWKT + "^^geo:wktLiteral " +
+                    geoFunctions[1] + "   ?geometry . }";
+            }
+
+            if (featureTypeURI != "")
+            {
+                if (!ignoreSubclasses)
+                {
+                    query += "?place rdf:type ?placeFlatType ." +
+                    "?placeFlatType rdfs:subClassOf* <" + featureTypeURI + ">.";
+                }
+                else
+                {
+                    query += "?place rdf:type  <" + featureTypeURI + ">.";
+                }
+
+            }
+
+            query += "}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(query);
         }
     }
 }

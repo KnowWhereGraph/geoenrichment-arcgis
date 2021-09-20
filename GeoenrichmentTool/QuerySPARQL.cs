@@ -47,9 +47,9 @@ namespace KWG_Geoenrichment
             }
         }
 
-        public static string GetDefaultEndPoint()
+        public string GetActiveEndPoint()
         {
-            return defaultEndpoint;
+            return activeEndpoint;
         }
 
         public void UpdateActiveEndPoint(string endPoint)

@@ -177,17 +177,12 @@ namespace KWG_Geoenrichment
         /**
          * Format GeoSPARQL query by given query_geo_wkt and type
          * 
-         * geoQueryResult: a sparql query result json obj serialized as a list of dict()
-         *           SPARQL query like this:
-         *           select distinct ?place ?placeLabel ?placeFlatType ?wkt
-         *           where
-         *           {...}
-         * className: Name of feature layer class
-         * inPlaceType: the label of user spercified type IRI
-         * selectedURL: the user spercified type IRI
-         * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
+         * geoQueryResult: a sparql query result json obj
+         * layerName: Name of feature layer class
+         * featureTypeURI: the user spercified feature type IRI
+         * ignoreSubclasses: Do we ignore all subclasses of our feature type
          **/
-        public static async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType = "", string selectedURL = "", bool isDirectInstance = false)
+        public static async void CreateClassFromSPARQL(JToken geoQueryResult, string layerName, string featureTypeURI = "", bool ignoreSubclasses = false)
         {
             List<string> placeIRISet = new List<string>();
             List<string[]> placeList = new List<string[]>();
@@ -211,9 +206,9 @@ namespace KWG_Geoenrichment
                 }*/
 
                 string placeType = (item["placeFlatType"] != null) ? item["placeFlatType"]["value"].ToString() : "";
-                if (isDirectInstance)
+                if (ignoreSubclasses)
                 {
-                    placeType = selectedURL;
+                    placeType = featureTypeURI;
                 }
 
                 string place = item["place"]["value"].ToString();
@@ -228,13 +223,13 @@ namespace KWG_Geoenrichment
 
             if (placeList.Count != 0)
             {
-                await FeatureClassHelper.CreatePolygonFeatureLayer(className);
+                await FeatureClassHelper.CreatePolygonFeatureLayer(layerName);
 
-                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == className).FirstOrDefault() as BasicFeatureLayer;
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
 
                 if (fcLayer == null)
                 {
-                    MessageBox.Show($@"Unable to find {className} in the active map");
+                    MessageBox.Show($@"Unable to find {layerName} in the active map");
                 }
                 else
                 {

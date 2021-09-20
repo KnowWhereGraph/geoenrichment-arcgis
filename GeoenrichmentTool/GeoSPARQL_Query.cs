@@ -22,7 +22,7 @@ namespace KWG_Geoenrichment
         public GeoSPARQL_Query(string geo)
         {
             InitializeComponent();
-            endPoint.Text = QuerySPARQL.GetDefaultEndPoint();
+            endPoint.Text = KwgGeoModule.Current.GetQueryClass().GetActiveEndPoint();
             ///TODO::DEV CODE///
             //calculator.Text = "Contain or Intersect";
             //Random gen = new Random();
@@ -115,7 +115,7 @@ namespace KWG_Geoenrichment
 
                 var geoQueryResult = TypeAndGeoSPARQLQuery(geoWKT, gfPlaceURI, gfSubclassReasoning, geoFunc, queryClass);
 
-                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceType, gfPlaceURI, gfSubclassReasoning);
+                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, gfClassName, gfPlaceURI, gfSubclassReasoning);
 
                 //Enable the property enrichment tool since we have a layer for it to use
                 FrameworkApplication.State.Activate("kwg_query_layer_added");
