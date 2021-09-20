@@ -270,6 +270,28 @@ namespace KWG_Geoenrichment
             }
         }
 
+        private string GetShapeFromWKT(string WKT)
+        {
+            if (WKT.ToLower().Contains("point"))
+            {
+                return "POINT";
+            }
+            else if (WKT.ToLower().Contains("multipoint"))
+            {
+                return "MULTIPOINT";
+            }
+            else if (WKT.ToLower().Contains("linestring"))
+            {
+                return "POLYLINE";
+            }
+            else if (WKT.ToLower().Contains("polygon"))
+            {
+                return "polygon";
+            }
+
+            return "";
+        }
+
         /*
          * according to the json object from sparql query which contains the mapping from keyProperty to valueProperty, add field in the Table
             # valuePropertyURL: the URL of valueProperty, we use it to get the field name of valueProperty, ex. functionalProperty
