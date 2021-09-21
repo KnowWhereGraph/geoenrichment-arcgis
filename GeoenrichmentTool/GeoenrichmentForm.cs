@@ -164,6 +164,11 @@ namespace KWG_Geoenrichment
                 FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, ignoreSubclasses.Checked);
 
                 //TODO:: Integrate merge code
+                DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
+                foreach(DataGridViewRow row in propertyRows)
+                {
+                    DataGridViewCellCollection rowCells = row.Cells;
+                }
 
                 //TODO::Enable the property enrichment tool since we have a layer for it to use
                 FrameworkApplication.State.Activate("kwg_query_layer_added");
