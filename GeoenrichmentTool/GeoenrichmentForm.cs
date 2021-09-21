@@ -18,6 +18,9 @@ namespace KWG_Geoenrichment
     {
         //Array that maps the formatted feature type label to the respective URI
         protected Dictionary<string, string> featureTypeArray;
+        protected List<string> commonPropertyUrls;
+        protected List<string> sosaObsPropertyUrls;
+        protected List<string> inversePropertyUrls;
 
         public GeoenrichmentForm()
         {
@@ -69,6 +72,10 @@ namespace KWG_Geoenrichment
 
         private void getPropertiesForFeature(object sender, EventArgs e)
         {
+            commonPropertyUrls = new List<string>() { };
+            sosaObsPropertyUrls = new List<string>() { };
+            inversePropertyUrls = new List<string>() { };
+
             string selectedType = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(featureTypeArray[featureType.Text]);
             PropertyEnrichment propEnrichClass = new PropertyEnrichment(selectedType);
 
@@ -82,6 +89,8 @@ namespace KWG_Geoenrichment
                 string name = commonProperties[1][i];
 
                 commonPropertiesBox.Rows.Add(false, name, null, url);
+                //We want to keep track of the fact its a common value
+                commonPropertyUrls.Add(url);
             }
 
             for (var i = 0; i < sosaObsProperties[0].Count(); i++)
@@ -92,7 +101,7 @@ namespace KWG_Geoenrichment
                 //We want to add the value to main user selection list for common properties
                 commonPropertiesBox.Rows.Add(false, name, null, url);
                 //But we also want to keep track of the fact its a sosa observation value
-                //soList.Add(value);
+                sosaObsPropertyUrls.Add(url);
             }
 
             for (var i = 0; i < inverseProperties[0].Count(); i++)
@@ -100,7 +109,10 @@ namespace KWG_Geoenrichment
                 string url = inverseProperties[0][i];
                 string name = inverseProperties[1][i];
 
-                inversePropertiesBox.Rows.Add(false, name, null, url);
+                //We want to add the value to main user selection list for common properties
+                commonPropertiesBox.Rows.Add(false, name, null, url);
+                //But we also want to keep track of the fact its an inverse value
+                inversePropertyUrls.Add(url);
             }
         }
 
@@ -112,6 +124,7 @@ namespace KWG_Geoenrichment
 
         public void SubmitGeoenrichmentForm(string polygonString)
         {
+            //TODO:: We need vaildation for the common properties
             if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
@@ -147,11 +160,12 @@ namespace KWG_Geoenrichment
 
                 var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, ignoreSubclasses.Checked, geoFunctions);
 
-                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, saveLayerAs.Text.Replace(" ", "_"), featureTypeURI, ignoreSubclasses.Checked);
+                string layerName = saveLayerAs.Text.Replace(" ", "_");
+                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, ignoreSubclasses.Checked);
 
                 //TODO:: Integrate merge code
 
-                //Enable the property enrichment tool since we have a layer for it to use
+                //TODO::Enable the property enrichment tool since we have a layer for it to use
                 FrameworkApplication.State.Activate("kwg_query_layer_added");
             }
         }

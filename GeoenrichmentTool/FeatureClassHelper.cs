@@ -192,6 +192,8 @@ namespace KWG_Geoenrichment
             foreach (var item in geoQueryResult)
             {
                 /*
+                 * Not sure if this block will be needed but will leave in case the error eventaully needs to be caught
+                 * Basically this makes sure that returned results are also polygon objects
                 string wktLiteral = item["wkt"]["value"].ToString();
                 if(index == 0)
                 {
