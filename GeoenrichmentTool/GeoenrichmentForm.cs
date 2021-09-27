@@ -203,6 +203,8 @@ namespace KWG_Geoenrichment
                 }
             }
 
+            EnrichData(propertiesToMerge);
+
             //TODO::Enable the property enrichment tool since we have a layer for it to use
             FrameworkApplication.State.Activate("kwg_query_layer_added");
         }
@@ -251,6 +253,157 @@ namespace KWG_Geoenrichment
             query += "}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(query);
+        }
+
+        private async void EnrichData(List<List<string>> properties)
+        {
+            Close();
+
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
+
+            foreach(var property in properties)
+            {
+                if (commonPropertyUrls.Contains(property[1]))
+                {
+                    List<string> commonURIs = new List<string>() { };
+                    List<string> sosaObsURIs = new List<string>() { };
+                    char[] delimiterChars = { '|' };
+
+                    //Now that we have the selected common property values, separate the sosa observation values so that we can process them separately
+                    //While were at it, get rid of the name and isolate to just the URIs
+                    foreach (var checkedItem in commonCheckBox.CheckedItems)
+                    {
+                        string checkedVal = checkedItem.ToString();
+                        string checkedURI = checkedVal.Split(delimiterChars)[1].Trim();
+                        if (soList.Contains(checkedVal))
+                        {
+                            sosaObsURIs.Add(checkedURI);
+                        }
+                        else
+                        {
+                            commonURIs.Add(checkedURI);
+                        }
+                    }
+
+                    //Determine which selected URIs are functional and create a function and non-functional list
+                    JToken functionPropsResult = FunctionalPropertyQuery(commonURIs);
+                    List<string> functionProps = new List<string> { };
+                    foreach (var result in functionPropsResult)
+                    {
+                        functionProps.Add((string)result["property"]["value"]);
+                    }
+                    var noFunctionProps = commonURIs.Except(functionProps);
+
+                    foreach (var propURI in functionProps)
+                    {
+                        JToken propertyVal = PropertyValueQuery(propURI, false);
+                        await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", false);
+                    }
+
+                    foreach (var propURI in noFunctionProps)
+                    {
+                        JToken propertyVal = PropertyValueQuery(propURI, false);
+
+                        Table tableResult = null;
+                        string tableName = "";
+                        await QueuedTask.Run(() =>
+                        {
+                            tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                            Project.Current.SaveEditsAsync();
+                            tableName = tableResult.GetName();
+                            string relationshipClassName = tableName + "_RelClass";
+                            FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from Knowledge Graph").Wait();
+                        });
+                        //string currentValuePropertyName = tableResult[2];
+
+                        JToken geoCheckJSON = CheckGeoPropertyQuery(propURI, false);
+
+                        if ((int)geoCheckJSON[0]["cnt"]["value"] > 0)
+                        {
+                            JToken geoQueryResult = TwoDegreePropertyValueWKTquery(propURI, false);
+
+                            string propName = FeatureClassHelper.GetPropertyName(propURI);
+
+                            string outFeatureClassName = mainLayer.Name + "_" + propName;
+                            await QueuedTask.Run(() =>
+                            {
+                                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassName);
+                                var geoLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
+                                string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
+                                string currentValuePropertyName = tableResult.GetDefinition().GetFields().Last().Name;
+                                FeatureClassHelper.CreateRelationshipClass(geoLayer, tableResult, outRelationshipClassName, "is " + propURI + " Of", "features from Knowledge Graph", currentValuePropertyName).Wait();
+                            });
+                        }
+                    }
+
+                    foreach (var propURI in sosaObsURIs)
+                    {
+                        JToken propertyVal = null;
+                        try
+                        {
+                            propertyVal = SosaObsPropertyValueQuery(propURI);
+                        }
+                        catch (Exception ex)
+                        {
+                            //MessageBox.Show("Sosa property query error for: " + propURI);
+                            continue;
+                        }
+
+                        await QueuedTask.Run(() =>
+                        {
+                            Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
+                            Project.Current.SaveEditsAsync();
+                            string sosaRelationshipClassName = tableResult.GetName() + "_RelClass";
+                            FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, sosaRelationshipClassName, propURI, "features from Knowledge Graph").Wait();
+                        });
+                    }
+                }
+                else if (sosaObsPropertyUrls.Contains(property[1]))
+                {
+
+                }
+                else if (inversePropertyUrls.Contains(property[1]))
+                {
+                    List<string> inverseURIs = new List<string>() { };
+                    char[] delimiterChars = { '|' };
+
+                    //Get rid of the name and isolate to just the URIs
+                    foreach (var checkedItem in commonCheckBox.CheckedItems)
+                    {
+                        string checkedVal = checkedItem.ToString();
+                        string checkedURI = checkedVal.Split(delimiterChars)[1].Trim();
+                        inverseURIs.Add(checkedURI);
+                    }
+
+                    //Determine which selected URIs are functional and create a function and non-functional list
+                    JToken functionPropsResult = FunctionalPropertyQuery(inverseURIs, true);
+                    List<string> functionProps = new List<string> { };
+                    foreach (var result in functionPropsResult)
+                    {
+                        functionProps.Add((string)result["property"]["value"]);
+                    }
+                    List<string> noFunctionProps = (List<string>)inverseURIs.Except(functionProps);
+
+                    foreach (var propURI in functionProps)
+                    {
+                        JToken propertyVal = InversePropertyValueQuery(propURI, false);
+                        await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", true);
+                    }
+
+                    foreach (var propURI in noFunctionProps)
+                    {
+                        JToken propertyVal = InversePropertyValueQuery(propURI, false);
+
+                        await QueuedTask.Run(() =>
+                        {
+                            Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
+                            Project.Current.SaveEditsAsync();
+                            string relationshipClassName = tableResult.GetName() + "_RelClass";
+                            FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from wikidata").Wait();
+                        });
+                    }
+                }
+            }
         }
     }
 }
