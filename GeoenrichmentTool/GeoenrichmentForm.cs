@@ -116,63 +116,95 @@ namespace KWG_Geoenrichment
             }
         }
 
+        private bool HasFormError()
+        {
+            if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
+            {
+                MessageBox.Show("Required fields missing!");
+                return true;
+            }
+            else
+            {
+                //validation for property rows
+                DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
+                foreach (DataGridViewRow row in propertyRows)
+                {
+                    DataGridViewCellCollection rowCells = row.Cells;
+                    var useProperty = rowCells[0].Value.ToString();
+
+                    if (useProperty == "True")
+                    {
+                        if (rowCells[2].Value == null)
+                        {
+                            MessageBox.Show(rowCells[1].Value.ToString() + " is missing a merge rule!");
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
-            Close();
-            FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
+            if(!HasFormError())
+            {
+                Close();
+                FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
+            }
         }
 
         public void SubmitGeoenrichmentForm(string polygonString)
         {
-            //TODO:: We need vaildation for the common properties
-            if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
+            //We need to update our global query module to point at the specified knowledge graph endpoint
+            QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
+            queryClass.UpdateActiveEndPoint(knowledgeGraph.Text);
+
+            string featureTypeURI = (featureType.Text != "") ? featureTypeArray[featureType.Text] : "";
+
+            string[] geoFunctions = new string[] { };
+            switch (spatialRelation.Text)
             {
-                MessageBox.Show($@"Required fields missing!");
+                case "Contain or Intersect":
+                    geoFunctions = new string[] { "geo:sfContains", "geo:sfIntersects" };
+                    break;
+                case "Contain":
+                    geoFunctions = new string[] { "geo:sfContains" };
+                    break;
+                case "Within":
+                    geoFunctions = new string[] { "geo:sfWithin" };
+                    break;
+                case "Intersect":
+                default:
+                    geoFunctions = new string[] { "geo:sfIntersects" };
+                    break;
             }
-            else
+
+            //Build proper WKT value
+            string polygonWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + polygonString + " '''";
+
+            var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, ignoreSubclasses.Checked, geoFunctions);
+
+            string layerName = saveLayerAs.Text.Replace(" ", "_");
+            FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, ignoreSubclasses.Checked);
+
+            //TODO:: Integrate merge code
+            DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
+            List<List<string>> propertiesToMerge = new List<List<string>>() { };
+            foreach (DataGridViewRow row in propertyRows)
             {
-                //We need to update our global query module to point at the specified knowledge graph endpoint
-                QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
-                queryClass.UpdateActiveEndPoint(knowledgeGraph.Text);
+                DataGridViewCellCollection rowCells = row.Cells;
+                var useProperty = rowCells[0].Value.ToString();
 
-                string featureTypeURI = (featureType.Text != "") ? featureTypeArray[featureType.Text] : "";
-
-                string[] geoFunctions = new string[] { };
-                switch (spatialRelation.Text)
+                if (useProperty == "True")
                 {
-                    case "Contain or Intersect":
-                        geoFunctions = new string[] { "geo:sfContains", "geo:sfIntersects" };
-                        break;
-                    case "Contain":
-                        geoFunctions = new string[] { "geo:sfContains" };
-                        break;
-                    case "Within":
-                        geoFunctions = new string[] { "geo:sfWithin" };
-                        break;
-                    case "Intersect":
-                    default:
-                        geoFunctions = new string[] { "geo:sfIntersects" };
-                        break;
+                    propertiesToMerge.Add(new List<string>() { rowCells[1].Value.ToString(), rowCells[3].Value.ToString(), rowCells[2].Value.ToString() });
                 }
-
-                //Build proper WKT value
-                string polygonWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + polygonString + " '''";
-
-                var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, ignoreSubclasses.Checked, geoFunctions);
-
-                string layerName = saveLayerAs.Text.Replace(" ", "_");
-                FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, ignoreSubclasses.Checked);
-
-                //TODO:: Integrate merge code
-                DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
-                foreach(DataGridViewRow row in propertyRows)
-                {
-                    DataGridViewCellCollection rowCells = row.Cells;
-                }
-
-                //TODO::Enable the property enrichment tool since we have a layer for it to use
-                FrameworkApplication.State.Activate("kwg_query_layer_added");
             }
+
+            //TODO::Enable the property enrichment tool since we have a layer for it to use
+            FrameworkApplication.State.Activate("kwg_query_layer_added");
         }
 
         /**
