@@ -26,8 +26,7 @@ namespace KWG_Geoenrichment
 
             if (inverse)
             {
-                cpQuery += "select distinct ?p ?plabel where { ?s owl:sameAs ?wikidataSub. ?s ?p ?o. ?wikidataSub rdf:type " + feature +
-                    ". OPTIONAL {?p rdfs:label ?plabel .} }";
+                cpQuery += "select distinct ?inverse_p ?plabel where { ?s ?p ?o . ?o ?inverse_p ?s. ?o rdf:type " + feature + ". OPTIONAL {?inverse_p rdfs:label ?plabel .} }";
             }
             else
             {
@@ -35,7 +34,7 @@ namespace KWG_Geoenrichment
             }
 
             var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
-            return ProcessProperties(results);
+            return ProcessProperties(results, inverse);
         }
 
         private List<string>[] GenerateSosaObsProperties(string feature)
@@ -48,14 +47,14 @@ namespace KWG_Geoenrichment
             return ProcessProperties(results);
         }
 
-        private List<string>[] ProcessProperties(JToken properties)
+        private List<string>[] ProcessProperties(JToken properties, bool inverse = false)
         {
             List<string> urlList = new List<string>() { };
             List<string> nameList = new List<string>() { };
 
             foreach (var item in properties)
             {
-                string propertyURL = (string)item["p"]["value"];
+                string propertyURL = (inverse) ? (string)item["inverse_p"]["value"] : (string)item["p"]["value"];
 
                 if (!urlList.Contains(propertyURL))
                 {
