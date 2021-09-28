@@ -182,7 +182,7 @@ namespace KWG_Geoenrichment
          * featureTypeURI: the user spercified feature type IRI
          * ignoreSubclasses: Do we ignore all subclasses of our feature type
          **/
-        public static async void CreateClassFromSPARQL(JToken geoQueryResult, string layerName, string featureTypeURI = "", bool ignoreSubclasses = false)
+        public static async Task CreateClassFromSPARQL(JToken geoQueryResult, string layerName, string featureTypeURI = "", bool ignoreSubclasses = false)
         {
             List<string> placeIRISet = new List<string>();
             List<string[]> placeList = new List<string[]>();

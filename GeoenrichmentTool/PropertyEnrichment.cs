@@ -76,5 +76,133 @@ namespace KWG_Geoenrichment
 
             return new List<string>[] { urlList, nameList };
         }
+
+        public static JToken FunctionalPropertyQuery(List<string> properties, bool inverse = false)
+        {
+            string owlProp = (inverse) ? "owl:InverseFunctionalProperty" : "owl:FunctionalProperty";
+
+            string funcQuery = "select ?property where { ?property a " + owlProp + ". VALUES ?property {";
+
+            foreach (string propURI in properties)
+            {
+                funcQuery += "<" + propURI + "> \n";
+            }
+
+            funcQuery += "}}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
+        }
+
+        public static JToken PropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
+        {
+            string propValQuery = "";
+
+            if (doSameAs)
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?s owl:sameAs ?wikidataSub. ?s <" + property + "> ?o. VALUES ?wikidataSub {";
+            }
+            else
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?wikidataSub <" + property + "> ?o. VALUES ?wikidataSub {";
+            }
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        public static JToken SosaObsPropertyValueQuery(List<string> uriList, string property)
+        {
+            string propValQuery = "select ?wikidataSub ?o where { ?wikidataSub sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. " +
+                "?obs sosa:observedProperty <" + property + "> . ?obs sosa:hasSimpleResult ?o. VALUES ?wikidataSub {";
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        public static JToken InversePropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
+        {
+            string propValQuery = "";
+
+            if (doSameAs)
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?s owl:sameAs ?wikidataSub. ?o <" + property + "> ?s. VALUES ?wikidataSub {";
+            }
+            else
+            {
+                propValQuery = "select ?wikidataSub ?o where { ?o <" + property + "> ?wikidataSub. VALUES ?wikidataSub {";
+            }
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        public static JToken CheckGeoPropertyQuery(List<string> uriList, string propertyURL, bool doSameAs = true)
+        {
+            string propValQuery = "select (count(?geometry) as ?cnt) where {";
+
+            if (doSameAs)
+            {
+                propValQuery += " ?s owl:sameAs ?wikidataSub. ?s <" + propertyURL + "> ?place.";
+            }
+            else
+            {
+                propValQuery += " ?wikidataSub <" + propertyURL + "> ?place.";
+            }
+
+            propValQuery += " ?place geo:hasGeometry ?geometry . VALUES ?wikidataSub {";
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
+
+        public static JToken TwoDegreePropertyValueWKTquery(List<string> uriList, string propertyURL, bool doSameAs = true)
+        {
+            string propValQuery = "select distinct ?place ?placeLabel ?placeFlatType ?wkt where {";
+
+            if (doSameAs)
+            {
+                propValQuery += " ?s owl:sameAs ?wikidataSub. ?s <" + propertyURL + "> ?place.";
+            }
+            else
+            {
+                propValQuery += " ?wikidataSub <" + propertyURL + "> ?place.";
+            }
+
+            propValQuery += " ?place geo:hasGeometry ?geometry . ?place rdfs:label ?placeLabel . " +
+                "?geometry geo:asWKT ?wkt. ?place rdf:type ?placeFlatType. VALUES ?wikidataSub {";
+
+            foreach (var uri in uriList)
+            {
+                propValQuery += "<" + uri + "> \n";
+            }
+
+            propValQuery += "}}";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+        }
     }
 }
