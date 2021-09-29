@@ -149,13 +149,6 @@
       <DependentUpon>RelationshipFinder.cs</DependentUpon>
     </Compile>
     <Compile Include="LinkedData.cs" />
-    <Compile Include="MergePropertyTable.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="MergePropertyTable.Designer.cs">
-      <DependentUpon>MergePropertyTable.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MergeTableDashboard.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="KwgGeoModule.cs" />
@@ -172,9 +165,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="RelationshipFinder.resx">
       <DependentUpon>RelationshipFinder.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MergePropertyTable.resx">
-      <DependentUpon>MergePropertyTable.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

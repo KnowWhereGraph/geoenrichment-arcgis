@@ -319,14 +319,7 @@ namespace KWG_Geoenrichment
                         string relationshipClassName = tableName + "_RelClass";
                         FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from Knowledge Graph").Wait();
 
-                        //TODO:: Merge testing
-                        var property = properties[propURI];
-                        Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
-
-                        if (noFunctionalPropertyDict.Count() > 0)
-                        {
-                            FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
-                        }
+                        MergePropertyToTable(properties[propURI], tableName);
                     });
                     //string currentValuePropertyName = tableResult[2];
 
@@ -369,8 +362,11 @@ namespace KWG_Geoenrichment
                     {
                         Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
                         Project.Current.SaveEditsAsync();
-                        string sosaRelationshipClassName = tableResult.GetName() + "_RelClass";
+                        string tableName = tableResult.GetName();
+                        string sosaRelationshipClassName = tableName + "_RelClass";
                         FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, sosaRelationshipClassName, propURI, "features from Knowledge Graph").Wait();
+
+                        MergePropertyToTable(properties[propURI], tableName);
                     });
                 }
             }
@@ -400,10 +396,23 @@ namespace KWG_Geoenrichment
                     {
                         Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
                         Project.Current.SaveEditsAsync();
-                        string relationshipClassName = tableResult.GetName() + "_RelClass";
+                        string tableName = tableResult.GetName();
+                        string relationshipClassName = tableName + "_RelClass";
                         FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from wikidata").Wait();
+
+                        MergePropertyToTable(properties[propURI], tableName);
                     });
                 }
+            }
+        }
+
+        private async void MergePropertyToTable(List<string> property, string tableName)
+        {
+            Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
+
+            if (noFunctionalPropertyDict.Count() > 0)
+            {
+                await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
             }
         }
     }
