@@ -192,9 +192,8 @@ namespace KWG_Geoenrichment
             string layerName = saveLayerAs.Text.Replace(" ", "_");
             await FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, ignoreSubclasses.Checked);
 
-            //TODO:: Integrate merge code
             DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
-            List<List<string>> propertiesToMerge = new List<List<string>>() { };
+            Dictionary<string, List<string>> propertiesToMerge = new Dictionary<string, List<string>>() { };
             foreach (DataGridViewRow row in propertyRows)
             {
                 DataGridViewCellCollection rowCells = row.Cells;
@@ -202,11 +201,16 @@ namespace KWG_Geoenrichment
 
                 if (useProperty == "True")
                 {
-                    propertiesToMerge.Add(new List<string>() { rowCells[1].Value.ToString(), rowCells[3].Value.ToString(), rowCells[2].Value.ToString() });
+                    propertiesToMerge[rowCells[3].Value.ToString()] = new List<string>() { 
+                        FeatureClassHelper.GetPropertyName(rowCells[3].Value.ToString()), //We need the property name apart from the URI for merging logic
+                        rowCells[2].Value.ToString() 
+                    };
                 }
             }
 
             EnrichData(propertiesToMerge);
+
+            //TODO:: Integrate merge code
 
             //TODO::Enable the property enrichment tool since we have a layer for it to use
             FrameworkApplication.State.Activate("kwg_query_layer_added");
@@ -258,7 +262,7 @@ namespace KWG_Geoenrichment
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(query);
         }
 
-        private async void EnrichData(List<List<string>> properties)
+        private async void EnrichData(Dictionary<string, List<string>> properties)
         {
             Close();
 
@@ -270,17 +274,17 @@ namespace KWG_Geoenrichment
             List<string> inverseURIs = new List<string>() { };
             foreach (var property in properties)
             {
-                if (commonPropertyUrls.Contains(property[1]))
+                if (commonPropertyUrls.Contains(property.Key))
                 {
-                    commonURIs.Add(property[1]);
+                    commonURIs.Add(property.Key);
                 }
-                else if (sosaObsPropertyUrls.Contains(property[1]))
+                else if (sosaObsPropertyUrls.Contains(property.Key))
                 {
-                    sosaObsURIs.Add(property[1]);
+                    sosaObsURIs.Add(property.Key);
                 }
-                else if (inversePropertyUrls.Contains(property[1]))
+                else if (inversePropertyUrls.Contains(property.Key))
                 {
-                    inverseURIs.Add(property[1]);
+                    inverseURIs.Add(property.Key);
                 }
             }
 
@@ -314,6 +318,15 @@ namespace KWG_Geoenrichment
                         tableName = tableResult.GetName();
                         string relationshipClassName = tableName + "_RelClass";
                         FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from Knowledge Graph").Wait();
+
+                        //TODO:: Merge testing
+                        var property = properties[propURI];
+                        Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
+
+                        if (noFunctionalPropertyDict.Count() > 0)
+                        {
+                            FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
+                        }
                     });
                     //string currentValuePropertyName = tableResult[2];
 
