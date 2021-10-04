@@ -70,6 +70,7 @@ namespace KWG_Geoenrichment
             this.prop1.Name = "prop1";
             this.prop1.Size = new System.Drawing.Size(765, 26);
             this.prop1.TabIndex = 30;
+            this.prop1.SelectedValueChanged += new System.EventHandler(this.propertyChanged);
             // 
             // prop1Label
             // 
@@ -113,6 +114,7 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.TabIndex = 33;
             this.addPropertyBtn.Text = "ADD NEW PROPERTY";
             this.addPropertyBtn.UseVisualStyleBackColor = false;
+            this.addPropertyBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(this.AddNewProperty);
             // 
             // TraverseKnowledgeGraph
             // 

@@ -24,6 +24,9 @@ namespace KWG_Geoenrichment
         private string outTableName;
         private string outFeatureClassName;
 
+        protected int maxDegree = 1;
+        private int propertySpacing = 75;
+
         public TraverseKnowledgeGraph()
         {
             InitializeComponent();
@@ -95,6 +98,68 @@ namespace KWG_Geoenrichment
             relationFinderQuery += "} }";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+        }
+
+        private void propertyChanged(object sender, EventArgs e)
+        {
+            ComboBox propBox = (ComboBox)sender;
+            int degree = int.Parse(propBox.Name.Replace("prop", ""));
+
+            //TODO:: reset boxes
+
+            //TODO:: reset the selected property list
+            //selectPropertyURLList = new List<string>() { firstProp.Text };
+        }
+
+        private void AddNewProperty(object sender, MouseEventArgs e)
+        {
+            int newDegree = maxDegree + 1;
+
+            //Expand the form and move down the button elements
+            this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
+            this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y + propertySpacing);
+            this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
+
+            //Create new property elements based on old ones
+            Label propRequired = (Label)this.Controls.Find("prop" + maxDegree.ToString() + "Req", true).First();
+            Label propRequired_copy = new Label();
+            propRequired_copy.AutoSize = propRequired.AutoSize;
+            propRequired_copy.BackColor = propRequired.BackColor;
+            propRequired_copy.Font = propRequired.Font;
+            propRequired_copy.ForeColor = propRequired.ForeColor;
+            propRequired_copy.Location = new System.Drawing.Point(45, propRequired.Location.Y + propertySpacing); //TODO
+            propRequired_copy.Name = "prop" + newDegree.ToString() + "Req";
+            propRequired_copy.Size = propRequired.Size;
+            propRequired_copy.Text = propRequired.Text;
+            this.Controls.Add(propRequired_copy);
+
+            Label propLabel = (Label)this.Controls.Find("prop" + maxDegree.ToString() + "Label", true).First();
+            Label propLabel_copy = new Label();
+            propLabel_copy.AutoSize = propLabel.AutoSize;
+            propLabel_copy.BackColor = propLabel.BackColor;
+            propLabel_copy.Font = propLabel.Font;
+            propLabel_copy.ForeColor = propLabel.ForeColor;
+            propLabel_copy.Location = new System.Drawing.Point(60, propLabel.Location.Y + propertySpacing); //TODO
+            propLabel_copy.Margin = propLabel.Margin;
+            propLabel_copy.Name = "prop" + newDegree.ToString() + "Label";
+            propLabel_copy.Size = propLabel.Size;
+            propLabel_copy.Text = "More Content";
+            this.Controls.Add(propLabel_copy);
+
+            ComboBox propBox = (ComboBox)this.Controls.Find("prop" + maxDegree.ToString(), true).First();
+            ComboBox propBox_copy = new ComboBox();
+            propBox_copy.Enabled = false;
+            propBox_copy.Font = propBox.Font;
+            propBox_copy.FormattingEnabled = propBox.FormattingEnabled;
+            propBox_copy.Location = new System.Drawing.Point(50, propBox.Location.Y + propertySpacing); //TODO
+            propBox_copy.Name = "prop" + newDegree.ToString();
+            propBox_copy.Size = propBox.Size;
+            //TODO::propBox_copy.SelectedValueChanged += propBox.SelectedValueChanged;
+            this.Controls.Add(propBox_copy);
+
+            //TODO::Populate list options and enable if previous property is selected
+
+            maxDegree++;
         }
     }
 }
