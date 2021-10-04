@@ -187,10 +187,10 @@ namespace KWG_Geoenrichment
             //Build proper WKT value
             string polygonWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + polygonString + " '''";
 
-            var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, ignoreSubclasses.Checked, geoFunctions);
+            var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, false, geoFunctions); //Hardcoded false value for ignoreSubclasses.Checked since we are removing the checkbox for now
 
             string layerName = saveLayerAs.Text.Replace(" ", "_");
-            await FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, ignoreSubclasses.Checked);
+            await FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, false); //Hardcoded false value for ignoreSubclasses.Checked since we are removing the checkbox for now
 
             DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
             Dictionary<string, List<string>> propertiesToMerge = new Dictionary<string, List<string>>() { };
