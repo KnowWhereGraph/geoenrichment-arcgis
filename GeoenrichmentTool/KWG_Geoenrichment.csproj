@@ -134,6 +134,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BeginGeoenrichment.cs" />
+    <Compile Include="TraverseKnowledgeGraph.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TraverseKnowledgeGraph.Designer.cs">
+      <DependentUpon>TraverseKnowledgeGraph.cs</DependentUpon>
+    </Compile>
     <Compile Include="PropertyEnrichment.cs" />
     <Compile Include="GeoenrichmentForm.cs">
       <SubType>Form</SubType>
@@ -169,6 +175,9 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TraverseKnowledgeGraph.resx">
+      <DependentUpon>TraverseKnowledgeGraph.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
