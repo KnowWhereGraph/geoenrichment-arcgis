@@ -21,7 +21,7 @@ using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 
 namespace KWG_Geoenrichment
 {
-    internal class LinkedData : Button
+    internal class KeepExploring : Button
     {
         protected override void OnClick()
         {

@@ -148,7 +148,7 @@
     <Compile Include="RelationshipFinder.Designer.cs">
       <DependentUpon>RelationshipFinder.cs</DependentUpon>
     </Compile>
-    <Compile Include="LinkedData.cs" />
+    <Compile Include="KeepExploring.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="KwgGeoModule.cs" />
