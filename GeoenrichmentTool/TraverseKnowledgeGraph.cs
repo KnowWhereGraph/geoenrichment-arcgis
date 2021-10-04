@@ -17,7 +17,6 @@ namespace KWG_Geoenrichment
         /*
         # selectPropertyURLList: the selected peoperty URL list
          */
-        private List<string> selectPropertyURLList;
         private List<List<string>> permutations;
 
         private BasicFeatureLayer mainLayer;
@@ -39,13 +38,19 @@ namespace KWG_Geoenrichment
             outTableName = featureClassName + "PathQueryTripleStore_" + identifier;
             outFeatureClassName = featureClassName + "PathQueryGeographicEntity_" + identifier;
 
-            selectPropertyURLList = new List<string>() { };
-            populatePropertyBox(1);
+            PopulatePropertyBox(1);
         }
 
-        private async void populatePropertyBox(int degree)
+        private async void PopulatePropertyBox(int degree)
         {
-            //TODO::reset things
+            //Clear boxes that have a higher degree
+            for(int i=degree+1; i<=maxDegree; i++)
+            {
+                ComboBox otherBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
+                otherBox.Enabled = false;
+                otherBox.Text = "";
+                otherBox.Items.Clear();
+            }
 
             List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
             /*
@@ -54,10 +59,11 @@ namespace KWG_Geoenrichment
                 featureClassName = "entity"
             */
 
-            JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, 1);
+            JToken finderJSON = RelationshipFinderCommonPropertyQuery(inplaceIRIList, degree);
 
             ComboBox propBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
             propBox.Enabled = true;
+            propBox.Text = "";
             propBox.Items.Clear();
             foreach (var item in finderJSON)
             {
@@ -82,9 +88,10 @@ namespace KWG_Geoenrichment
             for (int index = 0; index < relationDegree; index++)
             {
                 int currDegree = index + 1;
+                ComboBox currentBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
                 string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
                 string oValHigh = "?o" + currDegree.ToString();
-                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + selectPropertyURLList[0].Split(delimPipe).Last().Trim() + ">";
+                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + currentBox.Text.Split(delimPipe).Last().Trim() + ">";
 
                 relationFinderQuery += "{" + oValLow + " " + pVal + " " + oValHigh + ".} UNION {" + oValHigh + " " + pVal + " " + oValLow + ".}\n";
             }
@@ -100,15 +107,15 @@ namespace KWG_Geoenrichment
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
         }
 
-        private void propertyChanged(object sender, EventArgs e)
+        private void PropertyChanged(object sender, EventArgs e)
         {
             ComboBox propBox = (ComboBox)sender;
             int degree = int.Parse(propBox.Name.Replace("prop", ""));
 
-            //TODO:: reset boxes
-
-            //TODO:: reset the selected property list
-            //selectPropertyURLList = new List<string>() { firstProp.Text };
+            if (degree < maxDegree)
+            {
+                PopulatePropertyBox(degree + 1);
+            }
         }
 
         private void AddNewProperty(object sender, MouseEventArgs e)
@@ -127,7 +134,7 @@ namespace KWG_Geoenrichment
             propRequired_copy.BackColor = propRequired.BackColor;
             propRequired_copy.Font = propRequired.Font;
             propRequired_copy.ForeColor = propRequired.ForeColor;
-            propRequired_copy.Location = new System.Drawing.Point(45, propRequired.Location.Y + propertySpacing); //TODO
+            propRequired_copy.Location = new System.Drawing.Point(45, propRequired.Location.Y + propertySpacing);
             propRequired_copy.Name = "prop" + newDegree.ToString() + "Req";
             propRequired_copy.Size = propRequired.Size;
             propRequired_copy.Text = propRequired.Text;
@@ -139,7 +146,7 @@ namespace KWG_Geoenrichment
             propLabel_copy.BackColor = propLabel.BackColor;
             propLabel_copy.Font = propLabel.Font;
             propLabel_copy.ForeColor = propLabel.ForeColor;
-            propLabel_copy.Location = new System.Drawing.Point(60, propLabel.Location.Y + propertySpacing); //TODO
+            propLabel_copy.Location = new System.Drawing.Point(60, propLabel.Location.Y + propertySpacing);
             propLabel_copy.Margin = propLabel.Margin;
             propLabel_copy.Name = "prop" + newDegree.ToString() + "Label";
             propLabel_copy.Size = propLabel.Size;
@@ -151,13 +158,18 @@ namespace KWG_Geoenrichment
             propBox_copy.Enabled = false;
             propBox_copy.Font = propBox.Font;
             propBox_copy.FormattingEnabled = propBox.FormattingEnabled;
-            propBox_copy.Location = new System.Drawing.Point(50, propBox.Location.Y + propertySpacing); //TODO
+            propBox_copy.Location = new System.Drawing.Point(50, propBox.Location.Y + propertySpacing);
             propBox_copy.Name = "prop" + newDegree.ToString();
             propBox_copy.Size = propBox.Size;
-            //TODO::propBox_copy.SelectedValueChanged += propBox.SelectedValueChanged;
+            propBox_copy.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
             this.Controls.Add(propBox_copy);
 
-            //TODO::Populate list options and enable if previous property is selected
+            //Populate list options and enable if previous property is selected
+            if (propBox.Text != "")
+            {
+                propBox_copy.Enabled = true;
+                PopulatePropertyBox(newDegree);
+            }
 
             maxDegree++;
         }

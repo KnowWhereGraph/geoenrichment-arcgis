@@ -70,7 +70,7 @@ namespace KWG_Geoenrichment
             this.prop1.Name = "prop1";
             this.prop1.Size = new System.Drawing.Size(765, 26);
             this.prop1.TabIndex = 30;
-            this.prop1.SelectedValueChanged += new System.EventHandler(this.propertyChanged);
+            this.prop1.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
             // 
             // prop1Label
             // 
@@ -110,9 +110,9 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.ForeColor = System.Drawing.Color.White;
             this.addPropertyBtn.Location = new System.Drawing.Point(50, 268);
             this.addPropertyBtn.Name = "addPropertyBtn";
-            this.addPropertyBtn.Size = new System.Drawing.Size(286, 55);
+            this.addPropertyBtn.Size = new System.Drawing.Size(195, 55);
             this.addPropertyBtn.TabIndex = 33;
-            this.addPropertyBtn.Text = "ADD NEW PROPERTY";
+            this.addPropertyBtn.Text = "LEARN MORE";
             this.addPropertyBtn.UseVisualStyleBackColor = false;
             this.addPropertyBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(this.AddNewProperty);
             // 
