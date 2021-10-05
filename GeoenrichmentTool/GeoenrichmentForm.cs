@@ -25,9 +25,13 @@ namespace KWG_Geoenrichment
         protected List<string> sosaObsPropertyUrls;
         protected List<string> inversePropertyUrls;
 
+        private int helpSpacing = 400;
+        private bool helpOpen = true;
+
         public GeoenrichmentForm()
         {
             InitializeComponent();
+            ToggleHelpMenu();
 
             KwgGeoModule.Current.activeGeoenrichmentForm = this;
             knowledgeGraph.Text = KwgGeoModule.Current.GetQueryClass().GetActiveEndPoint();
@@ -416,9 +420,22 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private void ToggleHelpMenu(object sender, EventArgs e)
+        private void ClickToggleHelpMenu(object sender, EventArgs e)
         {
+            ToggleHelpMenu();
+        }
 
+        private void ToggleHelpMenu()
+        {
+            if(helpOpen)
+            {
+                this.Size = new System.Drawing.Size(this.Size.Width - helpSpacing, this.Size.Height);
+                helpOpen = false;
+            } else
+            {
+                this.Size = new System.Drawing.Size(this.Size.Width + helpSpacing, this.Size.Height);
+                helpOpen = true;
+            }
         }
     }
 }
