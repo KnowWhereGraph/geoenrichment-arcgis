@@ -173,5 +173,249 @@ namespace KWG_Geoenrichment
 
             maxDegree++;
         }
+
+        private async void RunTraverseGraph(object sender, EventArgs e)
+        {
+            if (prop1.Text == "")
+            {
+                MessageBox.Show($@"Required fields missing!");
+            }
+            else
+            {
+                Close();
+
+                /*
+                if not in_do_single_ent_start
+                */
+                List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
+                /*
+                else:
+                    # we use single iri as the start node
+                    inplaceIRIList = [in_single_ent.valueAsText]
+                */
+
+                //Build the direction list
+                int degreesUsed = 1;
+                for (int i = 2; i <= maxDegree; i++)
+                {
+                    ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
+                    if (propBox.Text != "")
+                    {
+                        degreesUsed = i;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                List<List<string>> directionExpendedLists = ExpandBothDirectionLists(degreesUsed);
+
+                List<Dictionary<string, string>> tripleStore = new List<Dictionary<string, string>>() { };
+
+                foreach (var currentDirectionList in directionExpendedLists)
+                {
+                    //# get a list of triples for curent specified property path
+                    List<Dictionary<string, string>> newTripleStore = RelFinderTripleQuery(inplaceIRIList, currentDirectionList, degreesUsed);
+                    tripleStore = tripleStore.Union(newTripleStore).ToList();
+                }
+
+                List<string> triplePropertyURLList = new List<string>() { };
+                List<string> triplePropertyLabelList = new List<string>() { };
+                foreach (var triple in tripleStore)
+                {
+                    if (!triplePropertyURLList.Contains(triple["p"]))
+                    {
+                        triplePropertyURLList.Add(triple["p"]);
+                        triplePropertyLabelList.Add(KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(triple["p"]));
+                    }
+                }
+
+                FeatureClassHelper.CreateRelationshipFinderTable(tripleStore, triplePropertyURLList, triplePropertyLabelList, outTableName);
+
+                List<string> entitySet = new List<string>() { };
+                foreach (var triple in tripleStore)
+                {
+                    entitySet.Add(triple["s"]);
+                    entitySet.Add(triple["o"]);
+                }
+
+                JToken placeJSON = EndPlaceInformationQuery(entitySet);
+
+                FeatureClassHelper.CreateRelationshipFinderFeatureClass(placeJSON, outTableName, outFeatureClassName);
+            }
+        }
+
+        //Basically for the amount of degrees used, generate every binary list permutation of the values Origin and Destination
+        // i.e. for 2 degrees, makes Origin Origin, Origin Destination, Destination Origin, Destination Destination
+        private List<List<string>> ExpandBothDirectionLists(int degreeSize)
+        {
+            List<List<string>> propertyDirectionExpandedLists = new List<List<string>>() { };
+
+            permutations = new List<List<string>>() { };
+            GeneratePermutations(degreeSize);
+
+            foreach (var perm in permutations)
+            {
+                List<string> newDirList = new List<string>(perm);
+
+                propertyDirectionExpandedLists.Add(newDirList);
+            }
+
+            return propertyDirectionExpandedLists;
+        }
+
+        private void GeneratePermutations(int cnt, int curr = 0, List<string> prevList = null)
+        {
+            List<string> listOne = new List<string>() { };
+            List<string> listTwo = new List<string>() { };
+
+            if (prevList != null)
+            {
+                listOne = new List<string>(prevList); ;
+                listTwo = new List<string>(prevList); ;
+            }
+
+            listOne.Add("Origin");
+            listTwo.Add("Destination");
+
+            curr++;
+            if (curr < cnt)
+            {
+                GeneratePermutations(cnt, curr, listOne);
+                GeneratePermutations(cnt, curr, listTwo);
+            }
+            else
+            {
+                permutations.Add(listOne);
+                permutations.Add(listTwo);
+            }
+        }
+
+        //# get the triple set in the specific degree path from the inplaceIRIList
+        //# inplaceIRIList: the URL list of wikidata locations
+        //# propertyDirectionList: the list of property direction, it has at most 4 elements, the length is the path degree. The element value is from ["ORIGIN", "DESTINATION"]
+        //# selectPropertyURLList: the selected peoperty URL list, it always has 4 elements, "" if no property has been selected
+        private List<Dictionary<string, string>> RelFinderTripleQuery(List<string> inplaceIRIList, List<string> currentDirectionList, int degreeSize)
+        {
+            string selectParam = "?place ";
+
+            for (int i = 0; i < degreeSize; i++)
+            {
+                int currDegree = i + 1;
+                //if selectPropertyURLList[0] == "":
+                //    selectParam += "?p"+ currDegree.ToString() +" "
+
+                selectParam += "?o" + currDegree.ToString() + " ";
+            }
+
+            string relationFinderQuery = "SELECT distinct " + selectParam + " WHERE {";
+            string queryFilter = "";
+            char[] delimPipe = { '|' };
+
+            for (int index = 0; index < degreeSize; index++)
+            {
+                string currDirection = currentDirectionList[index];
+                int currDegree = index + 1;
+                ComboBox currentBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
+                string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
+                string oValHigh = "?o" + currDegree.ToString();
+                string pVal = (currDegree == degreeSize) ? "?p" + currDegree.ToString() : "<" + currentBox.Text.Split(delimPipe).Last().Trim() + ">";
+                queryFilter += ". FILTER(!isLiteral(" + oValHigh + "))";
+
+                switch (currDirection)
+                {
+                    case "Both":
+                        relationFinderQuery += "{" + oValLow + " " + pVal + " " + oValHigh + ".} UNION {" + oValHigh + " " + pVal + " " + oValLow + ".}\n";
+                        break;
+                    case "Origin":
+                        relationFinderQuery += oValLow + " " + pVal + " " + oValHigh + ".\n";
+                        break;
+                    case "Destination":
+                        relationFinderQuery += oValHigh + " " + pVal + " " + oValLow + ".\n";
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            relationFinderQuery += " VALUES ?place { ";
+
+            foreach (var iri in inplaceIRIList)
+            {
+                relationFinderQuery += "<" + iri + "> \n";
+            }
+            relationFinderQuery += "}" + queryFilter + "  }";
+
+            JToken resultsJSON = KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+
+            List<Dictionary<string, string>> tripleStore = new List<Dictionary<string, string>>() { };
+            foreach (var jsonItem in resultsJSON)
+            {
+                for (int index = 0; index < degreeSize; index++)
+                {
+                    string currDirection = currentDirectionList[index];
+                    int currDegree = index + 1;
+                    ComboBox currentBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
+                    string oValLow = (index == 0) ? "place" : "o" + index.ToString();
+                    string oValHigh = "o" + currDegree.ToString();
+
+                    Dictionary<string, string> currentTriple = new Dictionary<string, string>() { };
+                    switch (currDirection)
+                    {
+                        case "Origin":
+                            currentTriple = new Dictionary<string, string>() {
+                                { "s", jsonItem[oValLow]["value"].ToString() }, { "p", currentBox.Text.Split(delimPipe).Last().Trim() }, { "o", jsonItem[oValHigh]["value"].ToString() } //TODO:: CONFIRM THESE
+                            };
+                            break;
+                        case "Destination":
+                            currentTriple = new Dictionary<string, string>() {
+                                { "s", jsonItem[oValHigh]["value"].ToString() }, { "p", currentBox.Text.Split(delimPipe).Last().Trim() }, { "o", jsonItem[oValLow]["value"].ToString() } //TODO:: CONFIRM THESE
+                            };
+                            break;
+                        default:
+                            break;
+                    }
+
+                    tripleStore.Add(currentTriple);
+                }
+            }
+
+            return tripleStore;
+        }
+
+        private JToken EndPlaceInformationQuery(List<string> endPlaceIRIList)
+        {
+            JToken results = null;
+
+            string endPlaceQueryPrefix = "SELECT distinct ?place ?placeLabel ?placeFlatType ?wkt WHERE { " +
+                "?place geo:hasGeometry ?geometry . ?place rdfs:label ?placeLabel . ?geometry geo:asWKT ?wkt. " +
+                "VALUES ?place {";
+            string endPlaceQuerySuffix = "} }";
+
+            string endPlaceQueryIRI = "";
+            for (var i = 0; i < endPlaceIRIList.Count(); i++)
+            {
+                endPlaceQueryIRI += "<" + endPlaceIRIList[i] + "> \n";
+
+                if (i % 50 == 0)
+                {
+                    string endPlaceQuery = endPlaceQueryPrefix + endPlaceQueryIRI + endPlaceQuerySuffix;
+                    JToken subresults = KwgGeoModule.Current.GetQueryClass().SubmitQuery(endPlaceQuery);
+
+                    if (results == null)
+                    {
+                        results = subresults;
+                    }
+                    else
+                    {
+                        results.Append(subresults);
+                    }
+
+                    endPlaceQueryIRI = "";
+                }
+            }
+
+            return results;
+        }
     }
 }

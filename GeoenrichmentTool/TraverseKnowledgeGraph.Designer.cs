@@ -99,6 +99,7 @@ namespace KWG_Geoenrichment
             this.runTraverseBtn.TabIndex = 32;
             this.runTraverseBtn.Text = "RUN";
             this.runTraverseBtn.UseVisualStyleBackColor = false;
+            this.runTraverseBtn.Click += new System.EventHandler(this.RunTraverseGraph);
             // 
             // addPropertyBtn
             // 

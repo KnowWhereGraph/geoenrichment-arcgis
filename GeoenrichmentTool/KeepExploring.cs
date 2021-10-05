@@ -25,7 +25,6 @@ namespace KWG_Geoenrichment
     {
         protected override void OnClick()
         {
-            Form oldForm = new RelationshipFinder();
             Form traverseForm = new TraverseKnowledgeGraph();
             traverseForm.ShowDialog();
         }
