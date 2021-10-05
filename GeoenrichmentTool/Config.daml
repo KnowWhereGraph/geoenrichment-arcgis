@@ -1,14 +1,12 @@
-﻿<ArcGIS defaultAssembly="GeoenrichmentTool.dll" defaultNamespace="GeoenrichmentTool" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
+﻿<ArcGIS defaultAssembly="KWG_Geoenrichment.dll" defaultNamespace="KWG_Geoenrichment" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
   <AddInInfo id="{2c67f191-2703-4291-bce4-994cf0016027}" version="1.0" desktopVersion="2.8.29751">
-    <Name>GeoenrichmentTool</Name>
-    <Description>GeoenrichmentTool description</Description>
+    <Name>KnowWhereGraph Geoenrichment</Name>
+    <Description>Enrich your dataset with the vast information present in knowledge graphs to ask the question, "what happened here?"</Description>
     <Image>Images\logo-button.png</Image>
-    <Author>anthon70</Author>
-    <Company>Matrix</Company>
+    <Author>Anthony D'Onofrio - Matrix: Centre for Digital Humanities &amp; Social Sciences</Author>
+    <Company>KWG - University of Santa Barbra</Company>
     <Date>5/26/2021 7:01:03 AM</Date>
     <Subject>Geoprocessing</Subject>
-    <!-- Note subject can be one or more of these topics:
-                    Content, Framework, Editing, Geodatabase, Geometry, Geoprocessing, Layouts, Map Authoring, Map Exploration -->
   </AddInInfo>
   <conditions>
     <insertCondition id="kwg_geosparql_active">
@@ -16,47 +14,42 @@
     </insertCondition>
   </conditions>
   <modules>
-    <insertModule id="GeoenrichmentTool_Module" className="GeoModule" autoLoad="false" caption="GeoModule">
+    <insertModule id="KWG_Geoenrichment_Module" className="KwgGeoModule" autoLoad="false" caption="KwgGeoModule">
       <!-- uncomment to have the control hosted on a separate tab-->
       <tabs>
-        <!--<tab id="GeoenrichmentTool_Tab1" caption="New Tab">
-          <group refID="GeoenrichmentTool_Group1"/>
-        </tab>-->
+        <tab id="KWG_Geoenrichment_Main" caption="KWG Geoenrichment">
+          <group refID="KWG_Geoenrichment_Group_Main" />
+          <group refID="KWG_Geoenrichment_Group_Modify" />
+        </tab>
       </tabs>
       <groups>
         <!-- comment this out if you have no controls on the Addin tab to avoid
               an empty group-->
-        <group id="GeoenrichmentTool_Group" caption="KWG Geoenrichment Tool" appearsOnAddInTab="true">
-          <!-- host controls within groups -->
-          <tool refID="GeoenrichmentTool_PolygonSelect" size="large" />
-          <button refID="GeoenrichmentTool_CommonProperties" size="large" />
-          <button refID="GeoenrichmentTool_MergeTableDashboard" size="large" />
-          <button refID="GeoenrichmentTool_LinkedData" size="large" />
+        <!-- host controls within groups -->
+        <group id="KWG_Geoenrichment_Group_Main" caption="Explore an Area" appearsOnAddInTab="false">
+          <button refID="KWG_Geoenrichment_BeginGeoenrichment" size="large" />
+        </group>
+        <group id="KWG_Geoenrichment_Group_Modify" caption="Expand Area" appearsOnAddInTab="false">
+          <button refID="KWG_Geoenrichment_KeepExploring" size="large" />
         </group>
       </groups>
       <controls>
+        <button id="KWG_Geoenrichment_BeginGeoenrichment" caption="Explore" className="BeginGeoenrichment" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
+          <tooltip heading="Begin Geoenrichment">
+				  Begin exploring a knowledge graph<disabledText>Map pane required</disabledText></tooltip>
+        </button>
         <!-- add your controls here -->
-        <tool id="GeoenrichmentTool_PolygonSelect" caption="Graph Query" className="PolygonSelect" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
-          <tooltip heading="GeoSPARQL Query">
-			  Create the initial query to the SPARQL endpoint
-			  <disabledText>Map pane required</disabledText></tooltip>
-        </tool>
-        <button id="GeoenrichmentTool_CommonProperties" caption="Enrich Data" className="CommonProperties" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_geosparql_active">
-          <tooltip heading="Property Enrichment">
-			  Enrich query result using common properties
-			  <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
+        <button id="KWG_Geoenrichment_KeepExploring" caption="Keep Exploring" className="KeepExploring" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_geosparql_active">
+          <tooltip heading="Traverse Knowledge Graph">
+				Enrich your new area by exploring the knowledge graph for more information
+				<disabledText>Requires geoenrichment layer</disabledText></tooltip>
         </button>
-        <button id="GeoenrichmentTool_MergeTableDashboard" caption="Merge Data" className="MergeTableDashboard" loadOnClick="true" smallImage="Images\merge-data.png" largeImage="Images\merge-data.png" condition="kwg_geosparql_active">
-          <tooltip heading="Non Functional Property Merge">
-			    Enrich query result by merging non functional properties
-			    <disabledText>Requires GeoSPARQL query layer</disabledText></tooltip>
-        </button>
-		<button id="GeoenrichmentTool_LinkedData" caption="Linked Data" className="LinkedData" loadOnClick="true" smallImage="Images\linked-relationships.png" largeImage="Images\linked-relationships.png" condition="kwg_geosparql_active">
-			<tooltip heading="Linked Data Relationship Finder">
-				Enrich query result by searching for related linked data
-				<disabledText>Requires GeoSPARQL query layer</disabledText>
+		<tool id="KWG_Geoenrichment_DrawPolygon" caption="Select Area" className="DrawPolygon" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
+			<tooltip heading="Select Area">
+				Manually draw the polygonal area of interest for the initial query to a SPARQL endpoint
+				<disabledText>Map pane required</disabledText>
 			</tooltip>
-		</button>
+		</tool>
       </controls>
     </insertModule>
   </modules>

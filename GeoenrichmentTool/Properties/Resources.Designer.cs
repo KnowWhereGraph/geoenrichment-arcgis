@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace GeoenrichmentTool.Properties {
+namespace KWG_Geoenrichment.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace GeoenrichmentTool.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("GeoenrichmentTool.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("KWG_Geoenrichment.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -66,6 +66,26 @@ namespace GeoenrichmentTool.Properties {
         internal static System.Drawing.Bitmap background_landing__2_ {
             get {
                 object obj = ResourceManager.GetObject("background-landing (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap background_landing__2_1 {
+            get {
+                object obj = ResourceManager.GetObject("background-landing (2)1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap help_circle {
+            get {
+                object obj = ResourceManager.GetObject("help-circle", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

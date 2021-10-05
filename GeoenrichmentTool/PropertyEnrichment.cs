@@ -1,235 +1,87 @@
-﻿using ArcGIS.Core.Data;
-using ArcGIS.Desktop.Core;
-using ArcGIS.Desktop.Framework.Threading.Tasks;
-using ArcGIS.Desktop.Mapping;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
-    public partial class PropertyEnrichment : Form
+    class PropertyEnrichment
     {
-        private List<string> soList;
-        private List<string> uriList;
+        public List<string>[] CommonProperties { get; }
+        public List<string>[] SosaObsProperties { get; }
+        public List<string>[] InverseProperties { get; }
 
-        public PropertyEnrichment(List<string>[] commonProperties, List<string>[] sosaObsProperties, List<string>[] inverseProperties, List<string> uris)
+        public PropertyEnrichment(string selectedFeatureType)
         {
-            InitializeComponent();
-            soList = new List<string>() { };
-
-            for (var i=0; i < commonProperties[0].Count(); i++)
-            {
-                string url = commonProperties[0][i];
-                string name = commonProperties[1][i];
-
-                string value = name + " | " + url;
-
-                commonCheckBox.Items.Add(value);
-            }
-
-            for (var i = 0; i < sosaObsProperties[0].Count(); i++)
-            {
-                ///TODO::DEV CODE///
-                break;
-                ////////////////////
-                
-                string url = sosaObsProperties[0][i];
-                string name = sosaObsProperties[1][i];
-
-                string value = name + " | " + url;
-
-                //We want to add the value to main user selection list for common properties
-                commonCheckBox.Items.Add(value);
-                //But we also want to keep track of the fact its a sosa observation value
-                soList.Add(value);
-            }
-
-            for (var i = 0; i < inverseProperties[0].Count(); i++)
-            {
-                string url = inverseProperties[0][i];
-                string name = inverseProperties[1][i];
-
-                string value = name + " | " + url;
-
-                inverseCheckBox.Items.Add(value);
-            }
-
-            uriList = uris;
+            CommonProperties = GenerateCommonProperties(selectedFeatureType);
+            SosaObsProperties = GenerateSosaObsProperties(selectedFeatureType);
+            InverseProperties = GenerateCommonProperties(selectedFeatureType, true);
         }
 
-        private void SelectAllProperties(object sender, EventArgs e)
+        private List<string>[] GenerateCommonProperties(string feature, bool inverse = false)
         {
-            for (int i = 0; i < commonCheckBox.Items.Count; i++) // loop to set all items checked or unchecked
+            string cpQuery = "";
+
+            if (inverse)
             {
-                commonCheckBox.SetItemChecked(i, true);
+                cpQuery += "select distinct ?inverse_p ?plabel where { ?s ?p ?o . ?o ?inverse_p ?s. ?o rdf:type " + feature + ". OPTIONAL {?inverse_p rdfs:label ?plabel .} }";
             }
+            else
+            {
+                cpQuery += "select distinct ?p ?plabel where { ?s ?p ?o. ?s rdf:type " + feature + ". OPTIONAL {?p rdfs:label ?plabel .} }";
+            }
+
+            var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
+            return ProcessProperties(results, inverse);
         }
 
-        private void InverseSelectAllProperties(object sender, EventArgs e)
+        private List<string>[] GenerateSosaObsProperties(string feature)
         {
-            for (int i = 0; i < commonCheckBox.Items.Count; i++) // loop to set all items checked or unchecked
-            {
-                inverseCheckBox.SetItemChecked(i, true);
-            }
+            string cpQuery = "select distinct ?p ?plabel where " +
+                "{ ?s sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. ?obs sosa:observedProperty ?p . ?s rdf:type " + feature + ". " +
+                "OPTIONAL {?p rdfs:label ?plabel .} }";
+
+            var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
+            return ProcessProperties(results);
         }
 
-        private async void EnrichData(object sender, EventArgs e)
+        private List<string>[] ProcessProperties(JToken properties, bool inverse = false)
         {
-            Close();
+            List<string> urlList = new List<string>() { };
+            List<string> nameList = new List<string>() { };
 
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
-
-            if (commonCheckBox.CheckedItems.Count > 0)
+            foreach (var item in properties)
             {
-                List<string> commonURIs = new List<string>() { };
-                List<string> sosaObsURIs = new List<string>() { };
-                char[] delimiterChars = { '|' };
+                string propertyURL = (inverse) ? (string)item["inverse_p"]["value"] : (string)item["p"]["value"];
 
-                //Now that we have the selected common property values, separate the sosa observation values so that we can process them separately
-                //While were at it, get rid of the name and isolate to just the URIs
-                foreach (var checkedItem in commonCheckBox.CheckedItems)
+                if (!urlList.Contains(propertyURL))
                 {
-                    string checkedVal = checkedItem.ToString();
-                    string checkedURI = checkedVal.Split(delimiterChars)[1].Trim();
-                    if (soList.Contains(checkedVal))
+                    urlList.Add(propertyURL);
+
+                    string label = "";
+                    if (item["plabel"] != null)
                     {
-                        sosaObsURIs.Add(checkedURI);
+                        label = (string)item["plabel"]["value"];
                     }
-                    else
+                    if (label.Trim() == "")
                     {
-                        commonURIs.Add(checkedURI);
-                    }
-                }
-
-                //Determine which selected URIs are functional and create a function and non-functional list
-                JToken functionPropsResult = FunctionalPropertyQuery(commonURIs);
-                List<string> functionProps = new List<string> { };
-                foreach(var result in functionPropsResult)
-                {
-                    functionProps.Add((string)result["property"]["value"]);
-                }
-                var noFunctionProps = commonURIs.Except(functionProps);
-
-                foreach(var propURI in functionProps)
-                {
-                    JToken propertyVal = PropertyValueQuery(propURI, false);
-                    await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", false);
-                }
-
-                foreach (var propURI in noFunctionProps)
-                {
-                    JToken propertyVal = PropertyValueQuery(propURI, false);
-
-                    Table tableResult = null;
-                    string tableName = "";
-                    await QueuedTask.Run(() =>
-                    {
-                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
-                        Project.Current.SaveEditsAsync();
-                        tableName = tableResult.GetName();
-                        string relationshipClassName = tableName + "_RelClass";
-                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from Knowledge Graph").Wait();
-                    });
-                    //string currentValuePropertyName = tableResult[2];
-
-                    JToken geoCheckJSON = CheckGeoPropertyQuery(propURI, false);
-
-                    if((int)geoCheckJSON[0]["cnt"]["value"] > 0)
-                    {
-                        JToken geoQueryResult = TwoDegreePropertyValueWKTquery(propURI, false);
-
-                        string propName = FeatureClassHelper.GetPropertyName(propURI);
-
-                        string outFeatureClassName = mainLayer.Name + "_" + propName;
-                        await QueuedTask.Run(() =>
-                        {
-                            FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassName);
-                            var geoLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
-                            string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
-                            string currentValuePropertyName = tableResult.GetDefinition().GetFields().Last().Name;
-                            FeatureClassHelper.CreateRelationshipClass(geoLayer, tableResult, outRelationshipClassName, "is " + propURI + " Of", "features from Knowledge Graph", currentValuePropertyName).Wait();
-                        });
-                    }
-                }
-
-                foreach (var propURI in sosaObsURIs)
-                {
-                    JToken propertyVal = null;
-                    try
-                    {
-                        propertyVal = SosaObsPropertyValueQuery(propURI);
-                    } catch(Exception ex)
-                    {
-                        //MessageBox.Show("Sosa property query error for: " + propURI);
-                        continue;
+                        label = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(propertyURL);
                     }
 
-                    await QueuedTask.Run(() =>
-                    {
-                        Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
-                        Project.Current.SaveEditsAsync();
-                        string sosaRelationshipClassName = tableResult.GetName() + "_RelClass";
-                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, sosaRelationshipClassName, propURI, "features from Knowledge Graph").Wait();
-                    });
+                    nameList.Add(label);
                 }
             }
 
-            if (inverseCheckBox.CheckedItems.Count > 0)
-            {
-                List<string> inverseURIs = new List<string>() { };
-                char[] delimiterChars = { '|' };
-
-                //Get rid of the name and isolate to just the URIs
-                foreach (var checkedItem in commonCheckBox.CheckedItems)
-                {
-                    string checkedVal = checkedItem.ToString();
-                    string checkedURI = checkedVal.Split(delimiterChars)[1].Trim();
-                    inverseURIs.Add(checkedURI);
-                }
-
-                //Determine which selected URIs are functional and create a function and non-functional list
-                JToken functionPropsResult = FunctionalPropertyQuery(inverseURIs, true);
-                List<string> functionProps = new List<string> { };
-                foreach (var result in functionPropsResult)
-                {
-                    functionProps.Add((string)result["property"]["value"]);
-                }
-                List<string> noFunctionProps = (List<string>)inverseURIs.Except(functionProps);
-
-                foreach (var propURI in functionProps)
-                {
-                    JToken propertyVal = InversePropertyValueQuery(propURI, false);
-                    await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", true);
-                }
-
-                foreach (var propURI in noFunctionProps)
-                {
-                    JToken propertyVal = InversePropertyValueQuery(propURI, false);
-
-                    await QueuedTask.Run(() =>
-                    {
-                        Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
-                        Project.Current.SaveEditsAsync();
-                        string relationshipClassName = tableResult.GetName() + "_RelClass";
-                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from wikidata").Wait();
-                    });
-                }
-            }
+            return new List<string>[] { urlList, nameList };
         }
 
-        private JToken FunctionalPropertyQuery(List<string> properties, bool inverse=false)
+        public static JToken FunctionalPropertyQuery(List<string> properties, bool inverse = false)
         {
-            string owlProp = (inverse) ? "owl:InverseFunctionalProperty": "owl:FunctionalProperty";
+            string owlProp = (inverse) ? "owl:InverseFunctionalProperty" : "owl:FunctionalProperty";
 
-            string funcQuery = "select ?property where { ?property a "+ owlProp+". VALUES ?property {";
+            string funcQuery = "select ?property where { ?property a " + owlProp + ". VALUES ?property {";
 
             foreach (string propURI in properties)
             {
@@ -238,10 +90,10 @@ namespace GeoenrichmentTool
 
             funcQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
         }
 
-        private JToken PropertyValueQuery(string property, bool doSameAs = true)
+        public static JToken PropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
         {
             string propValQuery = "";
 
@@ -254,17 +106,17 @@ namespace GeoenrichmentTool
                 propValQuery = "select ?wikidataSub ?o where { ?wikidataSub <" + property + "> ?o. VALUES ?wikidataSub {";
             }
 
-            foreach(var uri in uriList)
+            foreach (var uri in uriList)
             {
                 propValQuery += "<" + uri + "> \n";
             }
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
-        private JToken SosaObsPropertyValueQuery(string property)
+        public static JToken SosaObsPropertyValueQuery(List<string> uriList, string property)
         {
             string propValQuery = "select ?wikidataSub ?o where { ?wikidataSub sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. " +
                 "?obs sosa:observedProperty <" + property + "> . ?obs sosa:hasSimpleResult ?o. VALUES ?wikidataSub {";
@@ -276,10 +128,10 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
-        private JToken InversePropertyValueQuery(string property, bool doSameAs = true)
+        public static JToken InversePropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
         {
             string propValQuery = "";
 
@@ -299,14 +151,14 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
-        private JToken CheckGeoPropertyQuery(string propertyURL, bool doSameAs = true)
+        public static JToken CheckGeoPropertyQuery(List<string> uriList, string propertyURL, bool doSameAs = true)
         {
             string propValQuery = "select (count(?geometry) as ?cnt) where {";
 
-            if(doSameAs)
+            if (doSameAs)
             {
                 propValQuery += " ?s owl:sameAs ?wikidataSub. ?s <" + propertyURL + "> ?place.";
             }
@@ -324,10 +176,10 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
 
-        private JToken TwoDegreePropertyValueWKTquery(string propertyURL, bool doSameAs = true)
+        public static JToken TwoDegreePropertyValueWKTquery(List<string> uriList, string propertyURL, bool doSameAs = true)
         {
             string propValQuery = "select distinct ?place ?placeLabel ?placeFlatType ?wkt where {";
 
@@ -350,7 +202,7 @@ namespace GeoenrichmentTool
 
             propValQuery += "}}";
 
-            return GeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
         }
     }
 }

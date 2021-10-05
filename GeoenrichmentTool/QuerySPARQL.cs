@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Net.Http;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     class QuerySPARQL
     {
         protected string activeEndpoint;
-        //protected string defaultNameSpace = "http://stko-kwg.geog.ucsb.edu/"; //Change URLs below if changed
         protected static string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire";
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
             {"bd", "http://www.bigdata.com/rdf#"},
@@ -17,8 +16,8 @@ namespace GeoenrichmentTool
             {"geo", "http://www.opengis.net/ont/geosparql#"},
             {"geof", "http://www.opengis.net/def/function/geosparql/"},
             {"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
-            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"}, //Change URL if defaultNameSpace changes
-            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"}, //Change URL if defaultNameSpace changes
+            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
+            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},
             {"om", "http://www.ontotext.com/owlim/"},
             {"omgeo", "http://www.ontotext.com/owlim/geo#"},
             {"owl", "http://www.w3.org/2002/07/owl#"},
@@ -47,9 +46,9 @@ namespace GeoenrichmentTool
             }
         }
 
-        public static string GetDefaultEndPoint()
+        public string GetActiveEndPoint()
         {
-            return defaultEndpoint;
+            return activeEndpoint;
         }
 
         public void UpdateActiveEndPoint(string endPoint)

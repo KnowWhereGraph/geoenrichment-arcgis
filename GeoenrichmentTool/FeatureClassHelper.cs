@@ -16,7 +16,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
     public enum EnumFeatureClassType
     {
@@ -177,17 +177,12 @@ namespace GeoenrichmentTool
         /**
          * Format GeoSPARQL query by given query_geo_wkt and type
          * 
-         * geoQueryResult: a sparql query result json obj serialized as a list of dict()
-         *           SPARQL query like this:
-         *           select distinct ?place ?placeLabel ?placeFlatType ?wkt
-         *           where
-         *           {...}
-         * className: Name of feature layer class
-         * inPlaceType: the label of user spercified type IRI
-         * selectedURL: the user spercified type IRI
-         * isDirectInstance: True: use placeFlatType as the type of geo-entity, False: use selectedURL as the type of geo-entity
+         * geoQueryResult: a sparql query result json obj
+         * layerName: Name of feature layer class
+         * featureTypeURI: the user spercified feature type IRI
+         * ignoreSubclasses: Do we ignore all subclasses of our feature type
          **/
-        public static async void CreateClassFromSPARQL(JToken geoQueryResult, string className, string inPlaceType = "", string selectedURL = "", bool isDirectInstance = false)
+        public static async Task CreateClassFromSPARQL(JToken geoQueryResult, string layerName, string featureTypeURI = "", bool ignoreSubclasses = false)
         {
             List<string> placeIRISet = new List<string>();
             List<string[]> placeList = new List<string[]>();
@@ -197,6 +192,8 @@ namespace GeoenrichmentTool
             foreach (var item in geoQueryResult)
             {
                 /*
+                 * Not sure if this block will be needed but will leave in case the error eventaully needs to be caught
+                 * Basically this makes sure that returned results are also polygon objects
                 string wktLiteral = item["wkt"]["value"].ToString();
                 if(index == 0)
                 {
@@ -211,9 +208,9 @@ namespace GeoenrichmentTool
                 }*/
 
                 string placeType = (item["placeFlatType"] != null) ? item["placeFlatType"]["value"].ToString() : "";
-                if (isDirectInstance)
+                if (ignoreSubclasses)
                 {
-                    placeType = selectedURL;
+                    placeType = featureTypeURI;
                 }
 
                 string place = item["place"]["value"].ToString();
@@ -228,13 +225,13 @@ namespace GeoenrichmentTool
 
             if (placeList.Count != 0)
             {
-                await FeatureClassHelper.CreatePolygonFeatureLayer(className);
+                await FeatureClassHelper.CreatePolygonFeatureLayer(layerName);
 
-                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == className).FirstOrDefault() as BasicFeatureLayer;
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
 
                 if (fcLayer == null)
                 {
-                    MessageBox.Show($@"Unable to find {className} in the active map");
+                    MessageBox.Show($@"Unable to find {layerName} in the active map");
                 }
                 else
                 {
@@ -269,10 +266,32 @@ namespace GeoenrichmentTool
                         MapView.Active.Redraw(false);
 
                         //Save layer name to main list of active layers so other tools can access them
-                        GeoModule.Current.AddLayer(fcLayer);
+                        KwgGeoModule.Current.AddLayer(fcLayer);
                     });
                 }
             }
+        }
+
+        private string GetShapeFromWKT(string WKT)
+        {
+            if (WKT.ToLower().Contains("point"))
+            {
+                return "POINT";
+            }
+            else if (WKT.ToLower().Contains("multipoint"))
+            {
+                return "MULTIPOINT";
+            }
+            else if (WKT.ToLower().Contains("linestring"))
+            {
+                return "POLYLINE";
+            }
+            else if (WKT.ToLower().Contains("polygon"))
+            {
+                return "polygon";
+            }
+
+            return "";
         }
 
         /*
@@ -286,7 +305,7 @@ namespace GeoenrichmentTool
          */
         public static async Task AddFieldInTableByMapping(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
@@ -370,7 +389,7 @@ namespace GeoenrichmentTool
          */
         public static async Task<Table> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
@@ -454,7 +473,7 @@ namespace GeoenrichmentTool
         public static async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
         {
             Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             await QueuedTask.Run(() =>
             {
@@ -499,7 +518,7 @@ namespace GeoenrichmentTool
         public static async Task AppendFieldInFeatureClassByMergeRule(Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
             string relatedTableName, string mergeRule)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             string appendFieldType = "";
             //int appendFieldLength = 0;
@@ -710,7 +729,7 @@ namespace GeoenrichmentTool
 
         public async static void CreateRelationshipFinderTable(List<Dictionary<string, string>> tripleStore, List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
         {
-            BasicFeatureLayer mainLayer = GeoModule.Current.GetLayers().First();
+            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
             Geodatabase geodatabase = await QueuedTask.Run(() =>
             {
                 var datastore = mainLayer.GetTable().GetDatastore();

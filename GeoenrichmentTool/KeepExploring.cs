@@ -19,14 +19,14 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Button = ArcGIS.Desktop.Framework.Contracts.Button;
 
-namespace GeoenrichmentTool
+namespace KWG_Geoenrichment
 {
-    internal class LinkedData : Button
+    internal class KeepExploring : Button
     {
         protected override void OnClick()
         {
-            Form linkedForm = new RelationshipFinder();
-            linkedForm.ShowDialog();
+            Form traverseForm = new TraverseKnowledgeGraph();
+            traverseForm.ShowDialog();
         }
     }
 }

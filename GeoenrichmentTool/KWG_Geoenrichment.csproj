@@ -8,8 +8,8 @@
     <ProjectGuid>{2C67F191-2703-4291-BCE4-994CF0016027}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GeoenrichmentTool</RootNamespace>
-    <AssemblyName>GeoenrichmentTool</AssemblyName>
+    <RootNamespace>KWG_Geoenrichment</RootNamespace>
+    <AssemblyName>KWG_Geoenrichment</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -133,37 +133,25 @@
     <AddInContent Include="DarkImages\AddInDesktop32.png" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RelationshipFinder.cs">
+    <Compile Include="BeginGeoenrichment.cs" />
+    <Compile Include="TraverseKnowledgeGraph.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RelationshipFinder.Designer.cs">
-      <DependentUpon>RelationshipFinder.cs</DependentUpon>
+    <Compile Include="TraverseKnowledgeGraph.Designer.cs">
+      <DependentUpon>TraverseKnowledgeGraph.cs</DependentUpon>
     </Compile>
-    <Compile Include="LinkedData.cs" />
-    <Compile Include="MergePropertyTable.cs">
+    <Compile Include="PropertyEnrichment.cs" />
+    <Compile Include="GeoenrichmentForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MergePropertyTable.Designer.cs">
-      <DependentUpon>MergePropertyTable.cs</DependentUpon>
+    <Compile Include="GeoenrichmentForm.Designer.cs">
+      <DependentUpon>GeoenrichmentForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="MergeTableDashboard.cs" />
-    <Compile Include="CommonProperties.cs" />
+    <Compile Include="DrawPolygon.cs" />
+    <Compile Include="KeepExploring.cs" />
     <Compile Include="FeatureClassHelper.cs" />
-    <Compile Include="PropertyEnrichment.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PropertyEnrichment.Designer.cs">
-      <DependentUpon>PropertyEnrichment.cs</DependentUpon>
-    </Compile>
     <Compile Include="QuerySPARQL.cs" />
-    <Compile Include="GeoSPARQL_Query.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="GeoSPARQL_Query.Designer.cs">
-      <DependentUpon>GeoSPARQL_Query.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PolygonSelect.cs" />
-    <Compile Include="GeoModule.cs" />
+    <Compile Include="KwgGeoModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -172,28 +160,23 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="RelationshipFinder.resx">
-      <DependentUpon>RelationshipFinder.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MergePropertyTable.resx">
-      <DependentUpon>MergePropertyTable.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PropertyEnrichment.resx">
-      <DependentUpon>PropertyEnrichment.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="GeoSPARQL_Query.resx">
-      <DependentUpon>GeoSPARQL_Query.cs</DependentUpon>
-      <SubType>Designer</SubType>
+    <EmbeddedResource Include="GeoenrichmentForm.resx">
+      <DependentUpon>GeoenrichmentForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TraverseKnowledgeGraph.resx">
+      <DependentUpon>TraverseKnowledgeGraph.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <AddInContent Include="Images\logo-button.png" />
     <AddInContent Include="Images\graph-query.png" />
     <AddInContent Include="Images\enrich-data.png" />
+    <None Include="Resources\help-circle.png" />
+    <None Include="Resources\background-landing %282%291.png" />
     <None Include="Resources\background-landing %282%29.png" />
     <Resource Include="Images\geographic-entity-match.png" />
     <AddInContent Include="Images\linked-relationships.png" />
