@@ -126,6 +126,7 @@ namespace KWG_Geoenrichment
             this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
             this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y + propertySpacing);
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
+            this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
 
             //Create new property elements based on old ones
             Label propRequired = (Label)this.Controls.Find("prop" + maxDegree.ToString() + "Req", true).First();
@@ -416,6 +417,11 @@ namespace KWG_Geoenrichment
             }
 
             return results;
+        }
+
+        private void ToggleHelpMenu(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -35,6 +35,7 @@ namespace KWG_Geoenrichment
             this.prop1Label = new System.Windows.Forms.Label();
             this.runTraverseBtn = new System.Windows.Forms.Button();
             this.addPropertyBtn = new System.Windows.Forms.Button();
+            this.helpButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // traverseGraph
@@ -117,6 +118,21 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.UseVisualStyleBackColor = false;
             this.addPropertyBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(this.AddNewProperty);
             // 
+            // helpButton
+            // 
+            this.helpButton.BackColor = System.Drawing.Color.Transparent;
+            this.helpButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.helpButton.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.helpButton.FlatAppearance.BorderSize = 0;
+            this.helpButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.helpButton.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
+            this.helpButton.Location = new System.Drawing.Point(12, 409);
+            this.helpButton.Name = "helpButton";
+            this.helpButton.Size = new System.Drawing.Size(74, 70);
+            this.helpButton.TabIndex = 37;
+            this.helpButton.UseVisualStyleBackColor = false;
+            this.helpButton.Click += new System.EventHandler(this.ToggleHelpMenu);
+            // 
             // TraverseKnowledgeGraph
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -124,6 +140,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(894, 491);
+            this.Controls.Add(this.helpButton);
             this.Controls.Add(this.addPropertyBtn);
             this.Controls.Add(this.runTraverseBtn);
             this.Controls.Add(this.prop1Req);
@@ -146,5 +163,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label prop1Label;
         private System.Windows.Forms.Button runTraverseBtn;
         private System.Windows.Forms.Button addPropertyBtn;
+        private System.Windows.Forms.Button helpButton;
     }
 }

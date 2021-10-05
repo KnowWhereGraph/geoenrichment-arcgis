@@ -415,5 +415,10 @@ namespace KWG_Geoenrichment
                 await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
             }
         }
+
+        private void ToggleHelpMenu(object sender, EventArgs e)
+        {
+
+        }
     }
 }

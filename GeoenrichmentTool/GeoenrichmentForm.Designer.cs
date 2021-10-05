@@ -51,6 +51,7 @@ namespace KWG_Geoenrichment
             this.Property = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.MergeRule = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.URI = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.helpButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -321,6 +322,21 @@ namespace KWG_Geoenrichment
             this.URI.ReadOnly = true;
             this.URI.Width = 293;
             // 
+            // helpButton
+            // 
+            this.helpButton.BackColor = System.Drawing.Color.Transparent;
+            this.helpButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.helpButton.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.helpButton.FlatAppearance.BorderSize = 0;
+            this.helpButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.helpButton.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
+            this.helpButton.Location = new System.Drawing.Point(12, 813);
+            this.helpButton.Name = "helpButton";
+            this.helpButton.Size = new System.Drawing.Size(74, 70);
+            this.helpButton.TabIndex = 36;
+            this.helpButton.UseVisualStyleBackColor = false;
+            this.helpButton.Click += new System.EventHandler(this.ToggleHelpMenu);
+            // 
             // GeoenrichmentForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -328,6 +344,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(894, 895);
+            this.Controls.Add(this.helpButton);
             this.Controls.Add(this.commonPropertiesBox);
             this.Controls.Add(this.inverseCheckBoxLabel);
             this.Controls.Add(this.commonPropertiesBoxLabel);
@@ -380,5 +397,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.DataGridViewTextBoxColumn Property;
         private System.Windows.Forms.DataGridViewComboBoxColumn MergeRule;
         private System.Windows.Forms.DataGridViewTextBoxColumn URI;
+        private System.Windows.Forms.Button helpButton;
     }
 }
