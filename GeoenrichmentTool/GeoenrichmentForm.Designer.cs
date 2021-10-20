@@ -54,9 +54,9 @@ namespace KWG_Geoenrichment
             this.URI = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.helpButton = new System.Windows.Forms.Button();
             this.helpPanel = new System.Windows.Forms.Panel();
-            this.helpPanelLogo = new System.Windows.Forms.PictureBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.helpPanelLogo = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.commonPropertiesBox)).BeginInit();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
@@ -127,9 +127,9 @@ namespace KWG_Geoenrichment
             this.featureTypeLabel.Location = new System.Drawing.Point(50, 266);
             this.featureTypeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.featureTypeLabel.Name = "featureTypeLabel";
-            this.featureTypeLabel.Size = new System.Drawing.Size(177, 29);
+            this.featureTypeLabel.Size = new System.Drawing.Size(181, 29);
             this.featureTypeLabel.TabIndex = 19;
-            this.featureTypeLabel.Text = "Select content";
+            this.featureTypeLabel.Text = "Select Content";
             // 
             // refreshPlaceTypeBtn
             // 
@@ -356,14 +356,17 @@ namespace KWG_Geoenrichment
             this.helpPanel.Size = new System.Drawing.Size(377, 815);
             this.helpPanel.TabIndex = 37;
             // 
-            // helpPanelLogo
+            // label2
             // 
-            this.helpPanelLogo.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
-            this.helpPanelLogo.Location = new System.Drawing.Point(17, 3);
-            this.helpPanelLogo.Name = "helpPanelLogo";
-            this.helpPanelLogo.Size = new System.Drawing.Size(66, 64);
-            this.helpPanelLogo.TabIndex = 0;
-            this.helpPanelLogo.TabStop = false;
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.label2.ForeColor = System.Drawing.Color.White;
+            this.label2.Location = new System.Drawing.Point(13, 149);
+            this.label2.MaximumSize = new System.Drawing.Size(325, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(319, 133);
+            this.label2.TabIndex = 2;
+            this.label2.Text = resources.GetString("label2.Text");
             // 
             // label1
             // 
@@ -376,17 +379,14 @@ namespace KWG_Geoenrichment
             this.label1.TabIndex = 1;
             this.label1.Text = "Choose Knowledge Graph";
             // 
-            // label2
+            // helpPanelLogo
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(13, 149);
-            this.label2.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(319, 133);
-            this.label2.TabIndex = 2;
-            this.label2.Text = resources.GetString("label2.Text");
+            this.helpPanelLogo.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
+            this.helpPanelLogo.Location = new System.Drawing.Point(17, 3);
+            this.helpPanelLogo.Name = "helpPanelLogo";
+            this.helpPanelLogo.Size = new System.Drawing.Size(66, 64);
+            this.helpPanelLogo.TabIndex = 0;
+            this.helpPanelLogo.TabStop = false;
             // 
             // GeoenrichmentForm
             // 
