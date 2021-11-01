@@ -25,8 +25,8 @@ namespace KWG_Geoenrichment
 
         protected int maxDegree = 1;
 
-        private int propertySpacing = 75;
-        private int helpSpacing = 400;
+        private int propertySpacing = 115;
+        private int helpSpacing = 440;
         private bool helpOpen = true;
 
         public TraverseKnowledgeGraph()
@@ -42,7 +42,40 @@ namespace KWG_Geoenrichment
             outTableName = featureClassName + "PathQueryTripleStore_" + identifier;
             outFeatureClassName = featureClassName + "PathQueryGeographicEntity_" + identifier;
 
-            PopulatePropertyBox(1);
+            PopulateClassBox(1);
+        }
+
+        private async void PopulateClassBox(int degree)
+        {
+            //Clear boxes that have a higher degree
+            for (int i = degree + 1; i <= maxDegree; i++)
+            {
+                ComboBox otherBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
+                otherBox.Enabled = false;
+                otherBox.Text = "";
+                otherBox.Items.Clear();
+            }
+
+            List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
+            /*
+            elif in_single_ent.value and in_do_single_ent_start.value:
+                inplaceIRIList = [in_single_ent.valueAsText]
+                featureClassName = "entity"
+            */
+
+            JToken finderJSON = RelationshipFinderClassQuery(inplaceIRIList, degree);
+
+            ComboBox propBox = (ComboBox)this.Controls.Find("class" + degree.ToString(), true).First();
+            propBox.Enabled = true;
+            propBox.Text = "";
+            propBox.Items.Clear();
+            foreach (var item in finderJSON)
+            {
+                string itemClass = item["classLabel"]["value"].ToString();
+                string itemVal = item["p" + degree.ToString()]["value"].ToString();
+                string itemLabel = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
+                propBox.Items.Add(itemClass + " (" + itemLabel + ")");
+            }
         }
 
         private async void PopulatePropertyBox(int degree)
@@ -75,6 +108,36 @@ namespace KWG_Geoenrichment
                 string itemLabel = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
                 propBox.Items.Add(itemLabel + " | " + itemVal);
             }
+        }
+
+        private JToken RelationshipFinderClassQuery(List<string> inplaceIRIList, int relationDegree)
+        {
+            string selectParam = "?p" + relationDegree.ToString();
+            char[] delimPipe = { '|' };
+
+            string relationFinderQuery = "SELECT distinct ?classLabel " + selectParam + " WHERE { ";
+
+            for (int index = 0; index < relationDegree; index++)
+            {
+                int currDegree = index + 1;
+                ComboBox currentBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
+                string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
+                string oValHigh = "?o" + currDegree.ToString();
+                string pVal = (currDegree == relationDegree) ? "?p" + currDegree.ToString() : "<" + currentBox.Text.Split(delimPipe).Last().Trim() + ">";
+
+                relationFinderQuery += "{" + oValLow + " " + pVal + " " + oValHigh + ". " + oValLow + " a ?class. ?class rdfs:label ?classLabel} " +
+                    "UNION {" + oValHigh + " " + pVal + " " + oValLow + ". " + oValHigh + " a ?oclass. ?oclass rdfs:label ?classLabel}";
+            }
+
+            relationFinderQuery += " VALUES ?place { ";
+
+            foreach (var iri in inplaceIRIList)
+            {
+                relationFinderQuery += "<" + iri + "> \n";
+            }
+            relationFinderQuery += "} }";
+
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
         }
 
         /*
@@ -111,6 +174,17 @@ namespace KWG_Geoenrichment
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
         }
 
+        private void ClassChanged(object sender, EventArgs e)
+        {
+            ComboBox propBox = (ComboBox)sender;
+            int degree = int.Parse(propBox.Name.Replace("prop", ""));
+
+            if (degree < maxDegree)
+            {
+                PopulatePropertyBox(degree);
+            }
+        }
+
         private void PropertyChanged(object sender, EventArgs e)
         {
             ComboBox propBox = (ComboBox)sender;
@@ -118,7 +192,7 @@ namespace KWG_Geoenrichment
 
             if (degree < maxDegree)
             {
-                PopulatePropertyBox(degree + 1);
+                PopulateClassBox(degree + 1);
             }
         }
 
@@ -170,6 +244,17 @@ namespace KWG_Geoenrichment
             propBox_copy.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
             this.Controls.Add(propBox_copy);
 
+            ComboBox classBox = (ComboBox)this.Controls.Find("class" + maxDegree.ToString(), true).First();
+            ComboBox classBox_copy = new ComboBox();
+            classBox_copy.Enabled = false;
+            classBox_copy.Font = classBox.Font;
+            classBox_copy.FormattingEnabled = classBox.FormattingEnabled;
+            classBox_copy.Location = new System.Drawing.Point(50, classBox.Location.Y + propertySpacing);
+            classBox_copy.Name = "class" + newDegree.ToString();
+            classBox_copy.Size = classBox.Size;
+            classBox_copy.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
+            this.Controls.Add(classBox_copy);
+
             //Populate list options and enable if previous property is selected
             if (propBox.Text != "")
             {
@@ -182,7 +267,7 @@ namespace KWG_Geoenrichment
 
         private async void RunTraverseGraph(object sender, EventArgs e)
         {
-            if (prop1.Text == "")
+            if (class1.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
             }
