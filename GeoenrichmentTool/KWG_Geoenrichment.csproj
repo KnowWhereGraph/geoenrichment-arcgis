@@ -175,7 +175,6 @@
     <AddInContent Include="Images\logo-button.png" />
     <AddInContent Include="Images\graph-query.png" />
     <AddInContent Include="Images\enrich-data.png" />
-    <Resource Include="TextFile1.txt" />
     <None Include="Resources\help-circle.png" />
     <None Include="Resources\background-landing %282%291.png" />
     <None Include="Resources\background-landing %282%29.png" />
