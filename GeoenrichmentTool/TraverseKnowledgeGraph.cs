@@ -14,7 +14,7 @@ namespace KWG_Geoenrichment
 {
     public partial class TraverseKnowledgeGraph : Form
     {
-        private Dictionary<int, Dictionary<string, List<string>>> classesAndProperties;
+        private Dictionary<int, Dictionary<string, Dictionary<string, string>>> classesAndProperties;
 
         private BasicFeatureLayer mainLayer;
 
@@ -29,7 +29,7 @@ namespace KWG_Geoenrichment
             InitializeComponent();
             ToggleHelpMenu();
 
-            classesAndProperties = new Dictionary<int, Dictionary<string, List<string>>>() { };
+            classesAndProperties = new Dictionary<int, Dictionary<string, Dictionary<string, string>>>() { };
             mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             PopulateClassBox(1);
@@ -64,7 +64,7 @@ namespace KWG_Geoenrichment
             classBox.Text = "";
             classBox.Items.Clear();
 
-            Dictionary<string, List<string>> classToProperties = new Dictionary<string, List<string>>() { };
+            Dictionary<string, Dictionary<string, string>> classToProperties = new Dictionary<string, Dictionary<string, string>>() { };
             foreach (var item in finderJSON)
             {
                 string itemClass = item["classLabel"]["value"].ToString();
@@ -76,16 +76,16 @@ namespace KWG_Geoenrichment
 
                 if(classToProperties.ContainsKey(itemClass))
                 {
-                    List<string> currProps = classToProperties[itemClass];
-                    if(!currProps.Contains(itemVal))
+                    Dictionary<string, string> currProps = classToProperties[itemClass];
+                    if(!currProps.ContainsKey(itemLabel))
                     {
-                        currProps.Add(itemVal);
+                        currProps[itemLabel] = itemVal;
                         classToProperties[itemClass] = currProps;
                     }
                 }
                 else
                 {
-                    classToProperties[itemClass] = new List<string>() { itemVal };
+                    classToProperties[itemClass] = new Dictionary<string, string>() { { itemLabel, itemVal } };
                 }
             }
 
@@ -117,7 +117,10 @@ namespace KWG_Geoenrichment
 
             ComboBox classBox = (ComboBox)this.Controls.Find("class" + degree.ToString(), true).First();
             string selectedClass = (string)classBox.SelectedItem;
-            propBox.Items.AddRange(classesAndProperties[degree][selectedClass].ToArray());
+            foreach(var prop in classesAndProperties[degree][selectedClass])
+            {
+                propBox.Items.Add(prop.Key);
+            }
         }
 
         private JToken RelationshipFinderClassQuery(List<string> inplaceIRIList, int relationDegree)
@@ -138,13 +141,15 @@ namespace KWG_Geoenrichment
                 for (int index = 0; index < relationDegree-1; index++)
                 {
                     int currDegree = index + 1;
-                    ComboBox currentBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
+                    ComboBox currentClassBox = (ComboBox)this.Controls.Find("class" + currDegree.ToString(), true).First();
+                    ComboBox currentPropBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
+                    string currentValue = classesAndProperties[currDegree][currentClassBox.Text][currentPropBox.Text];
                     string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
                     string oValHigh = "?o" + currDegree.ToString();
 
-                    relationFinderQuery += "{ " + oValLow + " <" + currentBox.Text.Split(delimPipe).Last().Trim() + "> " + oValHigh + ". }";
+                    relationFinderQuery += "{ " + oValLow + " <" + currentValue + "> " + oValHigh + ". }";
                     relationFinderQuery += " UNION ";
-                    relationFinderQuery += "{ " + oValHigh + " <" + currentBox.Text.Split(delimPipe).Last().Trim() + "> " + oValLow + ". }";
+                    relationFinderQuery += "{ " + oValHigh + " <" + currentValue + "> " + oValLow + ". }";
                 }
 
                 string oValLowCurr = "?o" + (relationDegree-1).ToString();
