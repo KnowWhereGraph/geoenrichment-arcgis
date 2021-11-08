@@ -41,6 +41,7 @@ namespace KWG_Geoenrichment
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.helpPanelLogo = new System.Windows.Forms.PictureBox();
+            this.prop1 = new System.Windows.Forms.ComboBox();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             this.SuspendLayout();
@@ -117,7 +118,7 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.addPropertyBtn.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold);
             this.addPropertyBtn.ForeColor = System.Drawing.Color.White;
-            this.addPropertyBtn.Location = new System.Drawing.Point(50, 268);
+            this.addPropertyBtn.Location = new System.Drawing.Point(50, 288);
             this.addPropertyBtn.Name = "addPropertyBtn";
             this.addPropertyBtn.Size = new System.Drawing.Size(195, 55);
             this.addPropertyBtn.TabIndex = 33;
@@ -184,6 +185,17 @@ namespace KWG_Geoenrichment
             this.helpPanelLogo.TabIndex = 0;
             this.helpPanelLogo.TabStop = false;
             // 
+            // prop1
+            // 
+            this.prop1.Enabled = false;
+            this.prop1.Font = new System.Drawing.Font("Arial", 12F);
+            this.prop1.FormattingEnabled = true;
+            this.prop1.Location = new System.Drawing.Point(50, 236);
+            this.prop1.Name = "prop1";
+            this.prop1.Size = new System.Drawing.Size(765, 26);
+            this.prop1.TabIndex = 39;
+            this.prop1.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
+            // 
             // TraverseKnowledgeGraph
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -191,6 +203,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 491);
+            this.Controls.Add(this.prop1);
             this.Controls.Add(this.helpPanel);
             this.Controls.Add(this.helpButton);
             this.Controls.Add(this.addPropertyBtn);
@@ -223,5 +236,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.PictureBox helpPanelLogo;
+        private System.Windows.Forms.ComboBox prop1;
     }
 }
