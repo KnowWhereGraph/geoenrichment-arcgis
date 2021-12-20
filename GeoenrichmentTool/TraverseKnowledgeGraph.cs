@@ -30,12 +30,12 @@ namespace KWG_Geoenrichment
             ToggleHelpMenu();
 
             classesAndProperties = new Dictionary<int, Dictionary<string, Dictionary<string, string>>>() { };
-            mainLayer = KwgGeoModule.Current.GetLayers().First();
+            //mainLayer = KwgGeoModule.Current.GetLayers().First();
 
-            PopulateClassBox(1);
+            //PopulateClassBox(1);
         }
 
-        private async void PopulateClassBox(int degree)
+        /*private async void PopulateClassBox(int degree)
         {
             //Clear boxes that have a higher degree
             ComboBox matchingPropBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
@@ -90,7 +90,7 @@ namespace KWG_Geoenrichment
             }
 
             classesAndProperties[degree] = classToProperties;
-        }
+        }*/
 
         private async void PopulatePropertyBox(int degree)
         {
@@ -123,7 +123,7 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private JToken RelationshipFinderClassQuery(List<string> inplaceIRIList, int relationDegree)
+        /*private JToken RelationshipFinderClassQuery(List<string> inplaceIRIList, int relationDegree)
         {
             string selectParam = "?p" + relationDegree.ToString();
 
@@ -167,7 +167,7 @@ namespace KWG_Geoenrichment
             relationFinderQuery += "} }";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
-        }
+        }*/
 
         private void ClassChanged(object sender, EventArgs e)
         {
@@ -184,7 +184,7 @@ namespace KWG_Geoenrichment
 
             if (degree < maxDegree)
             {
-                PopulateClassBox(degree + 1);
+                //PopulateClassBox(degree + 1);
             }
         }
 
@@ -251,7 +251,7 @@ namespace KWG_Geoenrichment
             if (propBox.Text != "")
             {
                 classBox_copy.Enabled = true;
-                PopulateClassBox(newDegree);
+                //PopulateClassBox(newDegree);
             }
 
             maxDegree++;

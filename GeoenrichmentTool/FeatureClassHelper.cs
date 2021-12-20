@@ -266,7 +266,7 @@ namespace KWG_Geoenrichment
                         MapView.Active.Redraw(false);
 
                         //Save layer name to main list of active layers so other tools can access them
-                        KwgGeoModule.Current.AddLayer(fcLayer);
+                        //KwgGeoModule.Current.AddLayer(fcLayer);
                     });
                 }
             }
@@ -305,7 +305,7 @@ namespace KWG_Geoenrichment
          */
         public static async Task AddFieldInTableByMapping(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse)
         {
-            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
+            /*BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
@@ -377,7 +377,7 @@ namespace KWG_Geoenrichment
             });
 
             if (!string.IsNullOrEmpty(message))
-                MessageBox.Show(message);
+                MessageBox.Show(message);*/
         }
 
         /*
@@ -387,9 +387,9 @@ namespace KWG_Geoenrichment
         # isInverse: Boolean variable indicates whether the value we get is the subject value or object value of valuePropertyURL
         # isSubDivisionTable: Boolean variable indicates whether the current table store the value of subdivision for the original location
          */
-        public static async Task<Table> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
-        {
-            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
+        //public static async Task<Table> CreateMappingTableFromJSON(string valuePropertyURL, JToken jsonBindingObject, string keyPropertyName, string valuePropertyName, string keyPropertyFieldName, bool isInverse, bool isSubDivisionTable)
+        //{
+            /*BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             Dictionary<string, string> keyValueDict = ProcessPropertyValueQueryResult(jsonBindingObject, keyPropertyName, valuePropertyName);
 
@@ -404,13 +404,13 @@ namespace KWG_Geoenrichment
 
             //if outputLocation.endswith(".gdb"):
             string tableName = featureClassName + "_" + keyPropertyFieldName + "_" + currentValuePropertyName;
-            /*
+            *//*
             else:
                 lastIndexOFshp = featureClassName.rfind(".")
                 featureClassName = featureClassName[:lastIndexOFshp]
 
                 tableName =  featureClassName + "_" + keyPropertyFieldName + "_" + currentValuePropertyName + ".dbf"
-            */
+            *//*
 
             var datastore = mainLayer.GetTable().GetDatastore();
             var geodatabase = datastore as Geodatabase;
@@ -467,12 +467,12 @@ namespace KWG_Geoenrichment
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message);
 
-            return propertyTable;
-        }
+            return propertyTable;*/
+        //}
 
-        public static async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
-        {
-            Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
+        //public static async Task<Dictionary<string, List<string>>> BuildMultiValueDictFromNoFunctionalProperty(string fieldName, string tableName, string urlFieldName)
+        //{
+            /*Dictionary<string, List<string>> valueDict = new Dictionary<string, List<string>>() { };
             BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             await QueuedTask.Run(() =>
@@ -505,8 +505,8 @@ namespace KWG_Geoenrichment
                 }
             });
 
-            return valueDict;
-        }
+            return valueDict;*/
+        //}
 
         /*
         # append a new field in inputFeatureClassName which will install the merged no-functional property value
@@ -518,7 +518,7 @@ namespace KWG_Geoenrichment
         public static async Task AppendFieldInFeatureClassByMergeRule(Dictionary<string, List<string>> noFunctionalPropertyDict, string appendFieldName, 
             string relatedTableName, string mergeRule)
         {
-            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
+            /*BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
 
             string appendFieldType = "";
             //int appendFieldLength = 0;
@@ -545,14 +545,14 @@ namespace KWG_Geoenrichment
                 mergeRule = mergeConvert[mergeRule];
             }
 
-            /*
+            *//*
             if appendFieldType != "String":
                 cursor = arcpy.SearchCursor(relatedTableName)
                 for row in cursor:
                     rowValue = row.getValue(appendFieldName)
                     if appendFieldLength < len(str(rowValue)):
                         appendFieldLength = len(str(rowValue))
-            */
+            *//*
 
             string featureClassAppendFieldName = appendFieldName + "_" + mergeRule;
             if (IsFieldNameInTable(featureClassAppendFieldName, mainLayer))
@@ -569,21 +569,21 @@ namespace KWG_Geoenrichment
             else if (mergeRule == "CONCAT")
             {
                 appendFieldType = "TEXT";
-                /*
+                *//*
                 # get the maximum number of values for current property: maxNumOfValue
                 maxNumOfValue = 1
                 for key in noFunctionalPropertyDict:
                     if maxNumOfValue < len(noFunctionalPropertyDict[key]):
                         maxNumOfValue = len(noFunctionalPropertyDict[key])
                 arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, 'TEXT', field_length=appendFieldLength * maxNumOfValue)
-                 */
+                 *//*
             }
 
-            /*   
+            *//*   
             else:
                 if appendFieldType == "String":
                     arcpy.AddField_management(inputFeatureClassName, newAppendFieldName, appendFieldType, field_length=appendFieldLength)
-            */
+            *//*
 
             await Project.Current.SaveEditsAsync();
             await AddField(mainLayer, featureClassAppendFieldName, appendFieldType);
@@ -711,7 +711,7 @@ namespace KWG_Geoenrichment
 
                 if (!string.IsNullOrEmpty(message))
                     MessageBox.Show(message);
-            }
+            }*/
         }
 
         public static string GetPropertyName(string valuePropertyURL) {
@@ -729,7 +729,7 @@ namespace KWG_Geoenrichment
 
         public async static void CreateRelationshipFinderTable(List<Dictionary<string, string>> tripleStore, List<string> triplePropertyURLList, List<string> triplePropertyLabelList, string tableName)
         {
-            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
+            /*BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
             Geodatabase geodatabase = await QueuedTask.Run(() =>
             {
                 var datastore = mainLayer.GetTable().GetDatastore();
@@ -793,7 +793,7 @@ namespace KWG_Geoenrichment
             });
 
             if (!string.IsNullOrEmpty(message))
-                MessageBox.Show(message);  
+                MessageBox.Show(message);  */
         }
 
         public async static void CreateRelationshipFinderFeatureClass(JToken placeJSON, string outTableName, string outFeatureClassName)

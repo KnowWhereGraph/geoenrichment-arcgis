@@ -15,12 +15,12 @@ namespace KWG_Geoenrichment
 
         public PropertyEnrichment(string selectedFeatureType)
         {
-            CommonProperties = GenerateCommonProperties(selectedFeatureType);
+            /*CommonProperties = GenerateCommonProperties(selectedFeatureType);
             SosaObsProperties = GenerateSosaObsProperties(selectedFeatureType);
-            InverseProperties = GenerateCommonProperties(selectedFeatureType, true);
+            InverseProperties = GenerateCommonProperties(selectedFeatureType, true);*/
         }
 
-        private List<string>[] GenerateCommonProperties(string feature, bool inverse = false)
+        /*private List<string>[] GenerateCommonProperties(string feature, bool inverse = false)
         {
             string cpQuery = "";
 
@@ -35,9 +35,9 @@ namespace KWG_Geoenrichment
 
             var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
             return ProcessProperties(results, inverse);
-        }
+        }*/
 
-        private List<string>[] GenerateSosaObsProperties(string feature)
+        /*private List<string>[] GenerateSosaObsProperties(string feature)
         {
             string cpQuery = "select distinct ?p ?plabel where " +
                 "{ ?s sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. ?obs sosa:observedProperty ?p . ?s rdf:type " + feature + ". " +
@@ -45,7 +45,7 @@ namespace KWG_Geoenrichment
 
             var results = KwgGeoModule.Current.GetQueryClass().SubmitQuery(cpQuery, false);
             return ProcessProperties(results);
-        }
+        }*/
 
         private List<string>[] ProcessProperties(JToken properties, bool inverse = false)
         {
@@ -77,7 +77,7 @@ namespace KWG_Geoenrichment
             return new List<string>[] { urlList, nameList };
         }
 
-        public static JToken FunctionalPropertyQuery(List<string> properties, bool inverse = false)
+        /*public static JToken FunctionalPropertyQuery(List<string> properties, bool inverse = false)
         {
             string owlProp = (inverse) ? "owl:InverseFunctionalProperty" : "owl:FunctionalProperty";
 
@@ -91,9 +91,9 @@ namespace KWG_Geoenrichment
             funcQuery += "}}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(funcQuery);
-        }
+        }*/
 
-        public static JToken PropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
+        /*public static JToken PropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
         {
             string propValQuery = "";
 
@@ -114,9 +114,9 @@ namespace KWG_Geoenrichment
             propValQuery += "}}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
-        }
+        }*/
 
-        public static JToken SosaObsPropertyValueQuery(List<string> uriList, string property)
+        /*public static JToken SosaObsPropertyValueQuery(List<string> uriList, string property)
         {
             string propValQuery = "select ?wikidataSub ?o where { ?wikidataSub sosa:isFeatureOfInterestOf ?obscol . ?obscol sosa:hasMember ?obs. " +
                 "?obs sosa:observedProperty <" + property + "> . ?obs sosa:hasSimpleResult ?o. VALUES ?wikidataSub {";
@@ -129,9 +129,9 @@ namespace KWG_Geoenrichment
             propValQuery += "}}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
-        }
+        }*/
 
-        public static JToken InversePropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
+        /*public static JToken InversePropertyValueQuery(List<string> uriList, string property, bool doSameAs = true)
         {
             string propValQuery = "";
 
@@ -152,9 +152,9 @@ namespace KWG_Geoenrichment
             propValQuery += "}}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
-        }
+        }*/
 
-        public static JToken CheckGeoPropertyQuery(List<string> uriList, string propertyURL, bool doSameAs = true)
+        /*public static JToken CheckGeoPropertyQuery(List<string> uriList, string propertyURL, bool doSameAs = true)
         {
             string propValQuery = "select (count(?geometry) as ?cnt) where {";
 
@@ -177,9 +177,9 @@ namespace KWG_Geoenrichment
             propValQuery += "}}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
-        }
+        }*/
 
-        public static JToken TwoDegreePropertyValueWKTquery(List<string> uriList, string propertyURL, bool doSameAs = true)
+        /*public static JToken TwoDegreePropertyValueWKTquery(List<string> uriList, string propertyURL, bool doSameAs = true)
         {
             string propValQuery = "select distinct ?place ?placeLabel ?placeFlatType ?wkt where {";
 
@@ -203,6 +203,6 @@ namespace KWG_Geoenrichment
             propValQuery += "}}";
 
             return KwgGeoModule.Current.GetQueryClass().SubmitQuery(propValQuery);
-        }
+        }*/
     }
 }

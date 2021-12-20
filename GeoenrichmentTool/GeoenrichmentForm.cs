@@ -19,12 +19,6 @@ namespace KWG_Geoenrichment
 {
     public partial class GeoenrichmentForm : Form
     {
-        //Array that maps the formatted feature type label to the respective URI
-        protected Dictionary<string, string> featureTypeArray;
-        protected List<string> commonPropertyUrls;
-        protected List<string> sosaObsPropertyUrls;
-        protected List<string> inversePropertyUrls;
-
         private int helpSpacing = 400;
         private bool helpOpen = true;
 
@@ -33,17 +27,19 @@ namespace KWG_Geoenrichment
             InitializeComponent();
             ToggleHelpMenu();
 
-            KwgGeoModule.Current.activeGeoenrichmentForm = this;
-            knowledgeGraph.Text = KwgGeoModule.Current.GetQueryClass().GetActiveEndPoint();
-            PopulateFeatureTypes();
+            QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
+            foreach(var endpoint in queryClass.defaultEndpoints)
+            {
+                knowledgeGraph.Items.Add(endpoint.Key);
+            }
         }
 
         private void PopulateFeatureTypes()
         {
-            var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
+            /*var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
 
-            JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
+            JToken entityTypeJson = queryClass.SubmitQuery(knowledgeGraph.Text, entityTypeQuery);
 
             featureTypeArray = new Dictionary<string, string>();
             List<object> termsList = new List<object>();
@@ -57,12 +53,12 @@ namespace KWG_Geoenrichment
                 termsList.Add(featureTypeFormatted);
             }
 
-            featureType.Items.AddRange(termsList.ToArray());
+            featureType.Items.AddRange(termsList.ToArray());*/
         }
 
         private void RefreshFeatureTypes(object sender, EventArgs e)
         {
-            featureType.Items.Clear();
+            /*featureType.Items.Clear();
             featureType.ResetText();
             KwgGeoModule.Current.GetQueryClass().UpdateActiveEndPoint(knowledgeGraph.Text);
 
@@ -74,12 +70,12 @@ namespace KWG_Geoenrichment
             catch (Exception ex)
             {
                 MessageBox.Show($@"Failed to connect to endpoint!");
-            }
+            }*/
         }
 
         private void getPropertiesForFeature(object sender, EventArgs e)
         {
-            commonPropertyUrls = new List<string>() { };
+            /*commonPropertyUrls = new List<string>() { };
             sosaObsPropertyUrls = new List<string>() { };
             inversePropertyUrls = new List<string>() { };
 
@@ -120,32 +116,32 @@ namespace KWG_Geoenrichment
                 commonPropertiesBox.Rows.Add(false, name, null, url);
                 //But we also want to keep track of the fact its an inverse value
                 inversePropertyUrls.Add(url);
-            }
+            }*/
         }
 
         private bool HasFormError()
         {
-            if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
+            /*if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
             {
                 MessageBox.Show("Required fields missing!");
                 return true;
-            }
+            }*/
 
             return false;
         }
 
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
-            if(!HasFormError())
+            /*if(!HasFormError())
             {
                 Close();
                 FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
-            }
+            }*/
         }
 
         public async void SubmitGeoenrichmentForm(string polygonString)
         {
-            //We need to update our global query module to point at the specified knowledge graph endpoint
+            /*//We need to update our global query module to point at the specified knowledge graph endpoint
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             queryClass.UpdateActiveEndPoint(knowledgeGraph.Text);
 
@@ -197,7 +193,7 @@ namespace KWG_Geoenrichment
             EnrichData(propertiesToMerge);
 
             //TODO::Enable the property enrichment tool since we have a layer for it to use
-            FrameworkApplication.State.Activate("kwg_query_layer_added");
+            FrameworkApplication.State.Activate("kwg_query_layer_added");*/
         }
 
         /**
@@ -208,9 +204,9 @@ namespace KWG_Geoenrichment
          * ignoreSubclasses: ignore use of subclasses for feature type
          * geoFunctions: a list of geosparql functions
          **/
-        private JToken TypeAndGeoSPARQLQuery(string polygonWKT, string featureTypeURI, bool ignoreSubclasses, string[] geoFunctions)
-        {
-            string query = "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
+        //private JToken TypeAndGeoSPARQLQuery(string polygonWKT, string featureTypeURI, bool ignoreSubclasses, string[] geoFunctions)
+        //{
+            /*string query = "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
                 "where" +
                 "{" +
                 "?place geo:hasGeometry ?geometry . " +
@@ -243,12 +239,12 @@ namespace KWG_Geoenrichment
 
             query += "}";
 
-            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(query);
-        }
+            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(query);*/
+        //}
 
         private async void EnrichData(Dictionary<string, List<string>> properties)
         {
-            Close();
+            /*Close();
 
             BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
             List<string> uriList = await FeatureClassHelper.GetURIs(mainLayer);
@@ -387,17 +383,17 @@ namespace KWG_Geoenrichment
                         MergePropertyToTable(properties[propURI], tableName);
                     });
                 }
-            }
+            }*/
         }
 
         private async void MergePropertyToTable(List<string> property, string tableName)
         {
-            Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
+            /*Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
 
             if (noFunctionalPropertyDict.Count() > 0 && property[1] != "")
             {
                 await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
-            }
+            }*/
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)

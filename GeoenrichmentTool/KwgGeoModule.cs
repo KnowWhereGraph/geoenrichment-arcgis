@@ -24,8 +24,6 @@ namespace KWG_Geoenrichment
     {
         private static KwgGeoModule _this = null;
         private readonly QuerySPARQL queryClass;
-        public GeoenrichmentForm activeGeoenrichmentForm { get; set; }
-        protected List<BasicFeatureLayer> activeLayers;
 
         /// <summary>
         /// Retrieve the singleton instance to this module here
@@ -41,38 +39,11 @@ namespace KWG_Geoenrichment
         KwgGeoModule()
         {
             queryClass = new QuerySPARQL();
-            activeLayers = PopulateLayers();
         }
 
         public QuerySPARQL GetQueryClass()
         {
             return queryClass;
-        }
-
-        public List<BasicFeatureLayer> PopulateLayers()
-        {
-            List<BasicFeatureLayer> foundLayers = new List<BasicFeatureLayer>() { };
-
-            var projectLayers = MapView.Active.Map.GetLayersAsFlattenedList();
-            foreach(var layer in projectLayers)
-            {
-                if(layer is BasicFeatureLayer && !layer.Name.Contains("KWG_"))
-                {
-                    foundLayers.Add((BasicFeatureLayer)layer);
-                }
-            }
-
-            return foundLayers;
-        }
-
-        public void AddLayer(BasicFeatureLayer layerName)
-        {
-            activeLayers.Add(layerName);
-        }
-
-        public List<BasicFeatureLayer> GetLayers()
-        {
-            return activeLayers;
         }
 
         #region Overrides
