@@ -126,7 +126,6 @@ namespace KWG_Geoenrichment
         private JToken RelationshipFinderClassQuery(List<string> inplaceIRIList, int relationDegree)
         {
             string selectParam = "?p" + relationDegree.ToString();
-            char[] delimPipe = { '|' };
 
             string relationFinderQuery = "SELECT distinct ?classLabel " + selectParam + " WHERE { ";
 
