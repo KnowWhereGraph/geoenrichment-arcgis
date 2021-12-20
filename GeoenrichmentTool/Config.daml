@@ -39,7 +39,7 @@
 				  Begin exploring a knowledge graph<disabledText>Map pane required</disabledText></tooltip>
         </button>
         <!-- add your controls here -->
-        <button id="KWG_Geoenrichment_KeepExploring" caption="Keep Exploring" className="KeepExploring" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="kwg_geosparql_active">
+        <button id="KWG_Geoenrichment_KeepExploring" caption="Keep Exploring" className="KeepExploring" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="esri_mapping_mapPane">
           <tooltip heading="Traverse Knowledge Graph">
 				Enrich your new area by exploring the knowledge graph for more information
 				<disabledText>Requires geoenrichment layer</disabledText></tooltip>
