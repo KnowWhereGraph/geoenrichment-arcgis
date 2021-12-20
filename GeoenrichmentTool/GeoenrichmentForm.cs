@@ -130,25 +130,6 @@ namespace KWG_Geoenrichment
                 MessageBox.Show("Required fields missing!");
                 return true;
             }
-            else
-            {
-                //validation for property rows
-                DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
-                foreach (DataGridViewRow row in propertyRows)
-                {
-                    DataGridViewCellCollection rowCells = row.Cells;
-                    var useProperty = rowCells[0].Value.ToString();
-
-                    if (useProperty == "True")
-                    {
-                        if (rowCells[2].Value == null)
-                        {
-                            MessageBox.Show(rowCells[1].Value.ToString() + " is missing a merge rule!");
-                            return true;
-                        }
-                    }
-                }
-            }
 
             return false;
         }
@@ -205,16 +186,15 @@ namespace KWG_Geoenrichment
 
                 if (useProperty == "True")
                 {
+                    string mergeRule = (rowCells[2].Value!=null) ? rowCells[2].Value.ToString() : "" ;
                     propertiesToMerge[rowCells[3].Value.ToString()] = new List<string>() { 
                         FeatureClassHelper.GetPropertyName(rowCells[3].Value.ToString()), //We need the property name apart from the URI for merging logic
-                        rowCells[2].Value.ToString() 
+                        mergeRule
                     };
                 }
             }
 
             EnrichData(propertiesToMerge);
-
-            //TODO:: Integrate merge code
 
             //TODO::Enable the property enrichment tool since we have a layer for it to use
             FrameworkApplication.State.Activate("kwg_query_layer_added");
@@ -414,7 +394,7 @@ namespace KWG_Geoenrichment
         {
             Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
 
-            if (noFunctionalPropertyDict.Count() > 0)
+            if (noFunctionalPropertyDict.Count() > 0 && property[1] != "")
             {
                 await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
             }

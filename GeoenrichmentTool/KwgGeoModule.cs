@@ -41,12 +41,28 @@ namespace KWG_Geoenrichment
         KwgGeoModule()
         {
             queryClass = new QuerySPARQL();
-            activeLayers = new List<BasicFeatureLayer> { };
+            activeLayers = PopulateLayers();
         }
 
         public QuerySPARQL GetQueryClass()
         {
             return queryClass;
+        }
+
+        public List<BasicFeatureLayer> PopulateLayers()
+        {
+            List<BasicFeatureLayer> foundLayers = new List<BasicFeatureLayer>() { };
+
+            var projectLayers = MapView.Active.Map.GetLayersAsFlattenedList();
+            foreach(var layer in projectLayers)
+            {
+                if(layer is BasicFeatureLayer && !layer.Name.Contains("KWG_"))
+                {
+                    foundLayers.Add((BasicFeatureLayer)layer);
+                }
+            }
+
+            return foundLayers;
         }
 
         public void AddLayer(BasicFeatureLayer layerName)
