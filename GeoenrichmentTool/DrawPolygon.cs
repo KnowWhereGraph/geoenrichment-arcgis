@@ -100,7 +100,7 @@ namespace KWG_Geoenrichment
                     MapView.Active.Redraw(false);
                 });
 
-                //KwgGeoModule.Current.activeGeoenrichmentForm.SubmitGeoenrichmentForm(polygonString);
+                KwgGeoModule.Current.GetActiveForm().SetDrawnPolygon(polygonString);
             }
         }
     }

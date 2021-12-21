@@ -28,6 +28,9 @@ namespace KWG_Geoenrichment
         bool gdbFileUploaded = false;
         GDBProjectItem selectedGDB;
 
+        bool areaOfInterestDrawn = false;
+        string areaOfInterestPolygon;
+
         public GeoenrichmentForm()
         {
             InitializeComponent();
@@ -42,8 +45,21 @@ namespace KWG_Geoenrichment
             knowledgeGraph.SelectedIndex = 0;
         }
 
+        private void OnChangeGraph(object sender, EventArgs e)
+        {
+            CheckCanSelectContent();
+        }
+
+        private void OnChangeSpatialFilter(object sender, EventArgs e)
+        {
+            CheckCanSelectContent();
+        }
+
         private void UploadGDBFile(object sender, EventArgs e)
         {
+            if (areaOfInterestDrawn)
+                return;
+
             var bpf = new BrowseProjectFilter("esri_browseDialogFilters_geodatabases_file");
             bpf.Name = "File Geodatabases";
             var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
@@ -54,17 +70,51 @@ namespace KWG_Geoenrichment
                 gdbFileUploaded = true;
 
                 this.openGDBBtn.Text = selectedGDB.Name;
+                this.openGDBBtn.Enabled = false;
                 this.selectAreaBtn.Enabled = false;
+
+                CheckCanSelectContent();
             }
         }
 
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
-            /*if(!HasFormError())
+            if (gdbFileUploaded)
+                return;
+
+            FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
+
+            KwgGeoModule.Current.SetActiveForm(this);
+
+            Hide();
+        }
+
+        public void SetDrawnPolygon(string polygonString)
+        {
+            areaOfInterestPolygon = polygonString;
+            areaOfInterestDrawn = true;
+
+            this.selectAreaBtn.Text = "Area Drawn";
+            this.openGDBBtn.Enabled = false;
+            this.selectAreaBtn.Enabled = false;
+
+            CheckCanSelectContent();
+            Show();
+        }
+
+        public void CheckCanSelectContent()
+        {
+            if(
+                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
+                spatialRelation.SelectedItem != null && spatialRelation.SelectedItem.ToString() != "" &&
+                (gdbFileUploaded || areaOfInterestDrawn)
+              )
             {
-                Close();
-                FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
-            }*/
+                selectContentBtn.Enabled = true;
+            } else
+            {
+                selectContentBtn.Enabled = false;
+            }
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)

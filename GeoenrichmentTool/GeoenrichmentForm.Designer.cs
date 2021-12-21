@@ -95,6 +95,7 @@ namespace KWG_Geoenrichment
             // 
             this.selectContentBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.selectContentBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.selectContentBtn.Enabled = false;
             this.selectContentBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.selectContentBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.selectContentBtn.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold);
@@ -144,6 +145,7 @@ namespace KWG_Geoenrichment
             this.spatialRelation.Name = "spatialRelation";
             this.spatialRelation.Size = new System.Drawing.Size(224, 26);
             this.spatialRelation.TabIndex = 24;
+            this.spatialRelation.SelectedIndexChanged += new System.EventHandler(this.OnChangeSpatialFilter);
             // 
             // requiredSaveLayerAs
             // 
@@ -278,6 +280,7 @@ namespace KWG_Geoenrichment
             this.knowledgeGraph.Name = "knowledgeGraph";
             this.knowledgeGraph.Size = new System.Drawing.Size(224, 26);
             this.knowledgeGraph.TabIndex = 38;
+            this.knowledgeGraph.SelectedIndexChanged += new System.EventHandler(this.OnChangeGraph);
             // 
             // runBtn
             // 

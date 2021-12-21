@@ -24,6 +24,7 @@ namespace KWG_Geoenrichment
     {
         private static KwgGeoModule _this = null;
         private readonly QuerySPARQL queryClass;
+        private GeoenrichmentForm activeForm;
 
         /// <summary>
         /// Retrieve the singleton instance to this module here
@@ -44,6 +45,15 @@ namespace KWG_Geoenrichment
         public QuerySPARQL GetQueryClass()
         {
             return queryClass;
+        }
+
+        public GeoenrichmentForm GetActiveForm()
+        {
+            return activeForm;
+        }
+        public void SetActiveForm(GeoenrichmentForm form)
+        {
+            activeForm = form;
         }
 
         #region Overrides
