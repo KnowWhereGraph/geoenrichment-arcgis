@@ -19,7 +19,6 @@
       <tabs>
         <tab id="KWG_Geoenrichment_Main" caption="KWG Geoenrichment">
           <group refID="KWG_Geoenrichment_Group_Main" />
-          <group refID="KWG_Geoenrichment_Group_Modify" />
         </tab>
       </tabs>
       <groups>
@@ -29,20 +28,11 @@
         <group id="KWG_Geoenrichment_Group_Main" caption="Explore an Area" appearsOnAddInTab="false">
           <button refID="KWG_Geoenrichment_BeginGeoenrichment" size="large" />
         </group>
-        <group id="KWG_Geoenrichment_Group_Modify" caption="Expand Area" appearsOnAddInTab="false">
-          <button refID="KWG_Geoenrichment_KeepExploring" size="large" />
-        </group>
       </groups>
       <controls>
         <button id="KWG_Geoenrichment_BeginGeoenrichment" caption="Explore" className="BeginGeoenrichment" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
           <tooltip heading="Begin Geoenrichment">
 				  Begin exploring a knowledge graph<disabledText>Map pane required</disabledText></tooltip>
-        </button>
-        <!-- add your controls here -->
-        <button id="KWG_Geoenrichment_KeepExploring" caption="Keep Exploring" className="KeepExploring" loadOnClick="true" smallImage="Images\enrich-data.png" largeImage="Images\enrich-data.png" condition="esri_mapping_mapPane">
-          <tooltip heading="Traverse Knowledge Graph">
-				Enrich your new area by exploring the knowledge graph for more information
-				<disabledText>Requires geoenrichment layer</disabledText></tooltip>
         </button>
 		<tool id="KWG_Geoenrichment_DrawPolygon" caption="Select Area" className="DrawPolygon" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
 			<tooltip heading="Select Area">

@@ -148,7 +148,6 @@
       <DependentUpon>GeoenrichmentForm.cs</DependentUpon>
     </Compile>
     <Compile Include="DrawPolygon.cs" />
-    <Compile Include="KeepExploring.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="KwgGeoModule.cs" />

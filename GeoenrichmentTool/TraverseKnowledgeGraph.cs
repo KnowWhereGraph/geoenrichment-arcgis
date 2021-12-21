@@ -259,7 +259,7 @@ namespace KWG_Geoenrichment
 
         private void RunTraverseGraph(object sender, EventArgs e)
         {
-            if (class1.Text == "")
+            if (object1.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
             }
@@ -288,6 +288,16 @@ namespace KWG_Geoenrichment
                 this.Size = new System.Drawing.Size(this.Size.Width + helpSpacing, this.Size.Height);
                 helpOpen = true;
             }
+        }
+
+        private void traverseGraph_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void prop1Label_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
