@@ -58,7 +58,6 @@ namespace KWG_Geoenrichment
             this.traverseGraph.Size = new System.Drawing.Size(598, 54);
             this.traverseGraph.TabIndex = 5;
             this.traverseGraph.Text = "Explore Knowledge Graph";
-            this.traverseGraph.Click += new System.EventHandler(this.traverseGraph_Click);
             // 
             // prop1Req
             // 
@@ -81,7 +80,6 @@ namespace KWG_Geoenrichment
             this.object1.Name = "object1";
             this.object1.Size = new System.Drawing.Size(256, 26);
             this.object1.TabIndex = 30;
-            this.object1.SelectedValueChanged += new System.EventHandler(this.ClassChanged);
             // 
             // prop1Label
             // 
@@ -95,7 +93,6 @@ namespace KWG_Geoenrichment
             this.prop1Label.Size = new System.Drawing.Size(121, 19);
             this.prop1Label.TabIndex = 29;
             this.prop1Label.Text = "Select Content";
-            this.prop1Label.Click += new System.EventHandler(this.prop1Label_Click);
             // 
             // runTraverseBtn
             // 
@@ -127,7 +124,6 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.TabIndex = 33;
             this.addPropertyBtn.Text = "LEARN MORE";
             this.addPropertyBtn.UseVisualStyleBackColor = false;
-            this.addPropertyBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(this.AddNewProperty);
             // 
             // helpButton
             // 
@@ -197,7 +193,6 @@ namespace KWG_Geoenrichment
             this.subject1.Name = "subject1";
             this.subject1.Size = new System.Drawing.Size(256, 26);
             this.subject1.TabIndex = 39;
-            this.subject1.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
             // 
             // predicate1
             // 

@@ -67,7 +67,7 @@ namespace KWG_Geoenrichment
                     }
                     if (label.Trim() == "")
                     {
-                        label = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(propertyURL);
+                        label = KwgGeoModule.Current.GetQueryClass().IRIToPrefix(propertyURL);
                     }
 
                     nameList.Add(label);

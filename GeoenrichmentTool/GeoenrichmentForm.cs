@@ -31,7 +31,7 @@ namespace KWG_Geoenrichment
         private bool areaOfInterestDrawn = false;
         private string areaOfInterestPolygon;
 
-        private List<String> s2CellList;
+        private List<String> entities;
 
         public GeoenrichmentForm()
         {
@@ -70,7 +70,7 @@ namespace KWG_Geoenrichment
             {
                 selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
                 gdbFileUploaded = true;
-                SearchForS2Cells();
+                SearchForEntities();
 
                 this.openGDBBtn.Text = selectedGDB.Name;
                 this.openGDBBtn.Enabled = false;
@@ -96,7 +96,7 @@ namespace KWG_Geoenrichment
         {
             areaOfInterestPolygon = polygonString;
             areaOfInterestDrawn = true;
-            SearchForS2Cells();
+            SearchForEntities();
 
             this.selectAreaBtn.Text = "Area Drawn";
             this.openGDBBtn.Enabled = false;
@@ -106,17 +106,21 @@ namespace KWG_Geoenrichment
             Show();
         }
 
-        public void SearchForS2Cells()
+        public void SearchForEntities()
         {
-            s2CellList = new List<string>() { };
+            var s2CellList = new List<string>() { };
+            entities = new List<string>() { };
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
 
+            //Get s2Cells related to the polygon
+            //TODO:: Change function base on spatial relation
             if (gdbFileUploaded)
             {
 
             }
             else if (areaOfInterestDrawn)
             {
-                var queryString = "select ?s2Cell where { " +
+                var s2Query = "select ?s2Cell where { " +
                     "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
                     "?adminRegion2 geo:hasGeometry ?arGeo. " +
                     "?arGeo geo:asWKT ?arWKT. " +
@@ -129,13 +133,28 @@ namespace KWG_Geoenrichment
                     "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
                 "}";
 
-                var queryClass = KwgGeoModule.Current.GetQueryClass();
-                JToken s2Results = queryClass.SubmitQuery(this.knowledgeGraph.Text, queryString);
+                JToken s2Results = queryClass.SubmitQuery(this.knowledgeGraph.Text, s2Query);
 
                 foreach (var item in s2Results)
                 {
-                    s2CellList.Add(item["s2Cell"]["value"].ToString());
+                    s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
                 }
+            }
+
+            var s2CellVals = "values ?s2Cell {" + String.Join(" ", s2CellList) + "}";
+
+            //Lets get our list of entities
+            var entityQuery = "select distinct ?entity where { " +
+                "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
+                "?entity geo:hasGeometry ?geometry. " +
+                s2CellVals +
+            "}";
+
+            JToken entityResults = queryClass.SubmitQuery(this.knowledgeGraph.Text, entityQuery);
+
+            foreach (var item in entityResults)
+            {
+                entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
             }
         }
 
@@ -156,9 +175,8 @@ namespace KWG_Geoenrichment
 
         private void SelectContent(object sender, EventArgs e)
         {
-            //Instantiate new traverse window
-            //Pass array of s2 cells to it
-            //Open window
+            var exploreWindow = new TraverseKnowledgeGraph(this.knowledgeGraph.Text, entities);
+            exploreWindow.Show();
 
             //On close...
         }

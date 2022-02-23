@@ -11,8 +11,10 @@ namespace KWG_Geoenrichment
         };
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
             {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},
+            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
             {"geo", "http://www.opengis.net/ont/geosparql#"},
             {"geof", "http://www.opengis.net/def/function/geosparql/"},
+            {"gnisf", "http://gnis-ld.org/lod/gnis/feature/"},
             //{"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
             //{"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
             //{"xvd", "http://www.w3.org/2001/XMLSchema#"},
@@ -20,7 +22,6 @@ namespace KWG_Geoenrichment
             //{"dc", "http://purl.org/dc/elements/1.1/"},
             //{"dcterms", "http://purl.org/dc/terms/"},
             //{"foaf", "http://xmlns.com/foaf/0.1/"},
-            //{"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
             //{"time", "http://www.w3.org/2006/time#"},
             //{"ago", "http://awesemantic-geo.link/ontology/"},
             //{"sosa", "http://www.w3.org/ns/sosa/"},
@@ -44,9 +45,7 @@ namespace KWG_Geoenrichment
 
             var values = new Dictionary<string, string>
             {
-                { "query", query },
-                { "format", "json" },
-                { "doInference", "false" }
+                { "query", query }
             };
 
             var content = new FormUrlEncodedContent(values);
@@ -60,20 +59,6 @@ namespace KWG_Geoenrichment
             return json["results"]["bindings"];
         }
 
-        public string MakeIRIPrefix(string iri)
-        {
-            string result = "";
-            foreach (var prefix in _PREFIX)
-            {
-                if(iri.Contains(prefix.Value))
-                {
-                    result = iri.Replace(prefix.Value, prefix.Key + ":");
-                }
-            }
-
-            return (result!="") ? result : iri;
-        }
-
         private string MakeSPARQLPrefix()
         {
             string queryPrefix = "";
@@ -83,6 +68,20 @@ namespace KWG_Geoenrichment
             }
 
             return queryPrefix;
+        }
+
+        public string IRIToPrefix(string iri)
+        {
+            string result = "";
+            foreach (var prefix in _PREFIX)
+            {
+                if (iri.Contains(prefix.Value))
+                {
+                    result = iri.Replace(prefix.Value, prefix.Key + ":");
+                }
+            }
+
+            return (result != "") ? result : iri;
         }
     }
 }
