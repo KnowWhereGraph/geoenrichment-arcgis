@@ -7,33 +7,26 @@ namespace KWG_Geoenrichment
     class QuerySPARQL
     {
         public Dictionary<string, string> defaultEndpoints = new Dictionary<string, string>() { 
-            { "Knowledge Graph V2", "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire" }
+            { "KnowWhere Graph", "https://stko-kwg.geog.ucsb.edu/sparql" }
         };
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
-            //{"bd", "http://www.bigdata.com/rdf#"},
-            //{"dbo", "http://dbpedia.org/ontology/"},
-            //{"dbr", "http://dbpedia.org/resource/"},
-            //{"ff", "http://factforge.net/"},
-            {"geo", "http://www.opengis.net/ont/geosparql#"},
-            //{"geof", "http://www.opengis.net/def/function/geosparql/"},
-            //{"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
-            //{"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
             {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},
-            //{"om", "http://www.ontotext.com/owlim/"},
-            //{"omgeo", "http://www.ontotext.com/owlim/geo#"},
+            {"geo", "http://www.opengis.net/ont/geosparql#"},
+            {"geof", "http://www.opengis.net/def/function/geosparql/"},
+            //{"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
+            //{"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
+            //{"xvd", "http://www.w3.org/2001/XMLSchema#"},
             //{"owl", "http://www.w3.org/2002/07/owl#"},
-            //{"p", "http://www.wikidata.org/prop/"},
-            {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
-            {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
-            //{"schema", "http://schema.org/"},
-            //{"sosa", "http://www.w3.org/ns/sosa/"},
-            //{"ssn", "http://www.w3.org/ns/ssn/"},
+            //{"dc", "http://purl.org/dc/elements/1.1/"},
+            //{"dcterms", "http://purl.org/dc/terms/"},
+            //{"foaf", "http://xmlns.com/foaf/0.1/"},
+            //{"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
             //{"time", "http://www.w3.org/2006/time#"},
-            //{"xsd", "http://www.w3.org/2001/XMLSchema#"},
-            //{"wd", "http://www.wikidata.org/entity/"},
-            //{"wdt", "http://www.wikidata.org/prop/direct/"},
-            //{"wdtn", "http://www.wikidata.org/prop/direct-normalized/"},
-            //{"wikibase", "http://wikiba.se/ontology#"}
+            //{"ago", "http://awesemantic-geo.link/ontology/"},
+            //{"sosa", "http://www.w3.org/ns/sosa/"},
+            //{"elastic", "http://www.ontotext.com/connectors/elasticsearch#"},
+            //{"elastic-index", "http://www.ontotext.com/connectors/elasticsearch/instance#"},
+            //{"iospress", "http://ld.iospress.nl/rdf/ontology/"}
         };
 
         public QuerySPARQL()
@@ -41,7 +34,7 @@ namespace KWG_Geoenrichment
 
         }
 
-        public JToken SubmitQuery(string activeEndpoint, string query, bool doInference = false, string requestMethod = "post")
+        public JToken SubmitQuery(string endpointKey, string query)
         {
             query = MakeSPARQLPrefix() + query;
 
@@ -53,12 +46,12 @@ namespace KWG_Geoenrichment
             {
                 { "query", query },
                 { "format", "json" },
-                { "doInference", (doInference) ? "true" : "false" }
+                { "doInference", "false" }
             };
 
             var content = new FormUrlEncodedContent(values);
 
-            var response = client.PostAsync(activeEndpoint, content);
+            var response = client.PostAsync(defaultEndpoints[endpointKey], content);
 
             var responseString = response.Result.Content.ReadAsStringAsync().Result;
 

@@ -25,11 +25,13 @@ namespace KWG_Geoenrichment
         private int helpSpacing = 400;
         private bool helpOpen = true;
 
-        bool gdbFileUploaded = false;
-        GDBProjectItem selectedGDB;
+        private bool gdbFileUploaded = false;
+        private GDBProjectItem selectedGDB;
 
-        bool areaOfInterestDrawn = false;
-        string areaOfInterestPolygon;
+        private bool areaOfInterestDrawn = false;
+        private string areaOfInterestPolygon;
+
+        private List<String> s2CellList;
 
         public GeoenrichmentForm()
         {
@@ -68,6 +70,7 @@ namespace KWG_Geoenrichment
             {
                 selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
                 gdbFileUploaded = true;
+                SearchForS2Cells();
 
                 this.openGDBBtn.Text = selectedGDB.Name;
                 this.openGDBBtn.Enabled = false;
@@ -93,6 +96,7 @@ namespace KWG_Geoenrichment
         {
             areaOfInterestPolygon = polygonString;
             areaOfInterestDrawn = true;
+            SearchForS2Cells();
 
             this.selectAreaBtn.Text = "Area Drawn";
             this.openGDBBtn.Enabled = false;
@@ -100,6 +104,39 @@ namespace KWG_Geoenrichment
 
             CheckCanSelectContent();
             Show();
+        }
+
+        public void SearchForS2Cells()
+        {
+            s2CellList = new List<string>() { };
+
+            if (gdbFileUploaded)
+            {
+
+            }
+            else if (areaOfInterestDrawn)
+            {
+                var queryString = "select ?s2Cell where { " +
+                    "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
+                    "?adminRegion2 geo:hasGeometry ?arGeo. " +
+                    "?arGeo geo:asWKT ?arWKT. " +
+                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
+
+                    "?adminRegion2 geo:sfContains ?s2Cell. " +
+                    "?s2Cell a kwg-ont:KWGCellLevel13. " +
+                    "?s2Cell geo:hasGeometry ?s2Geo. " +
+                    "?s2Geo geo:asWKT ?s2WKT. " +
+                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
+                "}";
+
+                var queryClass = KwgGeoModule.Current.GetQueryClass();
+                JToken s2Results = queryClass.SubmitQuery(this.knowledgeGraph.Text, queryString);
+
+                foreach (var item in s2Results)
+                {
+                    s2CellList.Add(item["s2Cell"]["value"].ToString());
+                }
+            }
         }
 
         public void CheckCanSelectContent()
@@ -115,6 +152,15 @@ namespace KWG_Geoenrichment
             {
                 selectContentBtn.Enabled = false;
             }
+        }
+
+        private void SelectContent(object sender, EventArgs e)
+        {
+            //Instantiate new traverse window
+            //Pass array of s2 cells to it
+            //Open window
+
+            //On close...
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)

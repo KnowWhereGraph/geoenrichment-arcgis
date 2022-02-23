@@ -106,6 +106,7 @@ namespace KWG_Geoenrichment
             this.selectContentBtn.TabIndex = 20;
             this.selectContentBtn.Text = "SELECT CONTENT";
             this.selectContentBtn.UseVisualStyleBackColor = false;
+            this.selectContentBtn.Click += new System.EventHandler(this.SelectContent);
             // 
             // spatialRelationLabel
             // 
