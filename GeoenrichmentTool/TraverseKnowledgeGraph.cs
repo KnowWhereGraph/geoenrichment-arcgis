@@ -29,14 +29,39 @@ namespace KWG_Geoenrichment
             ToggleHelpMenu();
 
             currentEndpoint = endpoint;
-            entityVals = "value ?entity {" + String.Join(" ", entities) + "}";
+            entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
 
-            PopulateBoxes(1);
+            PopulateClassBox(1);
         }
 
-        private void PopulateBoxes(int lvl)
+        private void PopulateClassBox(int degree)
         {
-            
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+
+            //Lets get our list of entities
+            var typeQuery = "select distinct ?entity ?type ?label where { " +
+                "?entity rdf:type ?type. " +
+                "?type rdfs:label ?label. " +
+                entityVals +
+            "}";
+
+            JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
+
+            Dictionary<string, string> classes = new Dictionary<string, string>() { };
+            foreach (var item in typeResults)
+            {
+                string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                if (!classes.ContainsKey(cType))
+                {
+                    classes[cType] = cLabel;
+                }
+            }
+
+            classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
+            classBox.Enabled = true;
         }
 
         private void RunTraverseGraph(object sender, EventArgs e)

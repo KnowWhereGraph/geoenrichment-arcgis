@@ -186,6 +186,7 @@ namespace KWG_Geoenrichment
             // 
             // subject1
             // 
+            this.subject1.DisplayMember = "Value";
             this.subject1.Enabled = false;
             this.subject1.Font = new System.Drawing.Font("Arial", 12F);
             this.subject1.FormattingEnabled = true;
@@ -193,6 +194,7 @@ namespace KWG_Geoenrichment
             this.subject1.Name = "subject1";
             this.subject1.Size = new System.Drawing.Size(256, 26);
             this.subject1.TabIndex = 39;
+            this.subject1.ValueMember = "Key";
             // 
             // predicate1
             // 
