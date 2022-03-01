@@ -73,6 +73,7 @@ namespace KWG_Geoenrichment
             // 
             // object1
             // 
+            this.object1.DisplayMember = "Value";
             this.object1.Enabled = false;
             this.object1.Font = new System.Drawing.Font("Arial", 12F);
             this.object1.FormattingEnabled = true;
@@ -80,6 +81,7 @@ namespace KWG_Geoenrichment
             this.object1.Name = "object1";
             this.object1.Size = new System.Drawing.Size(256, 26);
             this.object1.TabIndex = 30;
+            this.object1.ValueMember = "Key";
             // 
             // prop1Label
             // 
@@ -208,6 +210,7 @@ namespace KWG_Geoenrichment
             this.predicate1.Size = new System.Drawing.Size(256, 26);
             this.predicate1.TabIndex = 40;
             this.predicate1.ValueMember = "Key";
+            this.predicate1.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
             // 
             // TraverseKnowledgeGraph
             // 

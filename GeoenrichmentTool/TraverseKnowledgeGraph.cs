@@ -97,6 +97,42 @@ namespace KWG_Geoenrichment
             propBox.Enabled = true;
         }
 
+        private void PopulateValueBox(int degree)
+        {
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+            var classVal = classBox.SelectedValue.ToString();
+            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+            var propVal = propBox.SelectedValue.ToString();
+            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+
+            //Lets get our list of entities
+            var valueQuery = "select distinct ?type ?label where { " +
+                "?entity a " + classVal + "; " +
+                    propVal + " ?o. " +
+                    "?o a ?type. " +
+                    "?type rdfs:label ?label. " +
+                entityVals +
+            "}";
+
+            JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
+
+            Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } };
+            foreach (var item in valueResults)
+            {
+                string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                if (!values.ContainsKey(oType))
+                {
+                    values[oType] = oLabel;
+                }
+            }
+
+            valueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
+            valueBox.Enabled = true;
+        }
+
         private void OnClassBoxChange(object sender, EventArgs e)
         {
             ComboBox classBox = (ComboBox)sender;
@@ -105,6 +141,17 @@ namespace KWG_Geoenrichment
                 int degree = int.Parse(classBox.Name.Replace("subject", ""));
 
                 PopulatePropertyBox(degree);
+            }
+        }
+
+        private void OnPropBoxChange(object sender, EventArgs e)
+        {
+            ComboBox propBox = (ComboBox)sender;
+            if (propBox.SelectedValue.ToString() != "")
+            {
+                int degree = int.Parse(propBox.Name.Replace("predicate", ""));
+
+                PopulateValueBox(degree);
             }
         }
 
