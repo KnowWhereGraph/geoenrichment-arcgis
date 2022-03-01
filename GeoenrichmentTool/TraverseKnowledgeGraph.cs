@@ -40,8 +40,8 @@ namespace KWG_Geoenrichment
             ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
 
             //Lets get our list of entities
-            var typeQuery = "select distinct ?entity ?type ?label where { " +
-                "?entity rdf:type ?type. " +
+            var typeQuery = "select distinct ?type ?label where { " +
+                "?entity a ?type. " +
                 "?type rdfs:label ?label. " +
                 entityVals +
             "}";
@@ -73,7 +73,7 @@ namespace KWG_Geoenrichment
 
             //Lets get our list of entities
             var propQuery = "select distinct ?p ?label where { " +
-                "?entity rdf:type "+ classVal + "; " +
+                "?entity a "+ classVal + "; " +
                     "?p ?o. " +
                     "optional {?p rdfs:label ?label}" +
                 entityVals +

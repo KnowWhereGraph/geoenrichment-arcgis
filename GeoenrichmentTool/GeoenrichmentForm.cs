@@ -146,7 +146,7 @@ namespace KWG_Geoenrichment
             //Lets get our list of entities
             var entityQuery = "select distinct ?entity where { " +
                 "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
-                "?entity rdf:type geo:Feature. " +
+                "?entity a geo:Feature. " +
                 s2CellVals +
             "}";
 
