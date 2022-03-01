@@ -17,6 +17,7 @@ namespace KWG_Geoenrichment
             {"gnisf", "http://gnis-ld.org/lod/gnis/feature/"},
             {"cegis", "http://gnis-ld.org/lod/cegis/ontology/"},
             {"sosa", "http://www.w3.org/ns/sosa/"},
+            {"ago", "http://awesemantic-geo.link/ontology/"},
             {"owl", "http://www.w3.org/2002/07/owl#"},
             {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
             {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
@@ -25,7 +26,6 @@ namespace KWG_Geoenrichment
             //{"dcterms", "http://purl.org/dc/terms/"},
             //{"foaf", "http://xmlns.com/foaf/0.1/"},
             //{"time", "http://www.w3.org/2006/time#"},
-            //{"ago", "http://awesemantic-geo.link/ontology/"},
             //{"elastic", "http://www.ontotext.com/connectors/elasticsearch#"},
             //{"elastic-index", "http://www.ontotext.com/connectors/elasticsearch/instance#"},
             //{"iospress", "http://ld.iospress.nl/rdf/ontology/"}

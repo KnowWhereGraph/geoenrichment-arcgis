@@ -48,7 +48,7 @@ namespace KWG_Geoenrichment
 
             JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
 
-            Dictionary<string, string> classes = new Dictionary<string, string>() { };
+            Dictionary<string, string> classes = new Dictionary<string, string>() { {"", ""} };
             foreach (var item in typeResults)
             {
                 string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
@@ -62,6 +62,50 @@ namespace KWG_Geoenrichment
 
             classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
             classBox.Enabled = true;
+        }
+
+        private void PopulatePropertyBox(int degree)
+        {
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+            var classVal = classBox.SelectedValue.ToString();
+            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+
+            //Lets get our list of entities
+            var propQuery = "select distinct ?p ?label where { " +
+                "?entity rdf:type "+ classVal + "; " +
+                    "?p ?o. " +
+                    "optional {?p rdfs:label ?label}" +
+                entityVals +
+            "}";
+
+            JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
+
+            Dictionary<string, string> properties = new Dictionary<string, string>() { { "", "" } };
+            foreach (var item in propResults)
+            {
+                string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
+                string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+
+                if (!properties.ContainsKey(predicate))
+                {
+                    properties[predicate] = pLabel;
+                }
+            }
+
+            propBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
+            propBox.Enabled = true;
+        }
+
+        private void OnClassBoxChange(object sender, EventArgs e)
+        {
+            ComboBox classBox = (ComboBox)sender;
+            if (classBox.SelectedValue.ToString() != "")
+            {
+                int degree = int.Parse(classBox.Name.Replace("subject", ""));
+
+                PopulatePropertyBox(degree);
+            }
         }
 
         private void RunTraverseGraph(object sender, EventArgs e)
