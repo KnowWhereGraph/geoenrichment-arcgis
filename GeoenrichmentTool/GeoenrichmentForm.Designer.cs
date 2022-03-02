@@ -34,9 +34,6 @@ namespace KWG_Geoenrichment
             this.requiredKnowledgeGraph = new System.Windows.Forms.Label();
             this.knowledgeGraphLabel = new System.Windows.Forms.Label();
             this.selectContentBtn = new System.Windows.Forms.Button();
-            this.spatialRelationLabel = new System.Windows.Forms.Label();
-            this.requiredSpatialRelation = new System.Windows.Forms.Label();
-            this.spatialRelation = new System.Windows.Forms.ComboBox();
             this.requiredSaveLayerAs = new System.Windows.Forms.Label();
             this.saveLayerAsLabel = new System.Windows.Forms.Label();
             this.saveLayerAs = new System.Windows.Forms.TextBox();
@@ -108,46 +105,6 @@ namespace KWG_Geoenrichment
             this.selectContentBtn.UseVisualStyleBackColor = false;
             this.selectContentBtn.Click += new System.EventHandler(this.SelectContent);
             // 
-            // spatialRelationLabel
-            // 
-            this.spatialRelationLabel.AutoSize = true;
-            this.spatialRelationLabel.BackColor = System.Drawing.Color.Transparent;
-            this.spatialRelationLabel.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.spatialRelationLabel.ForeColor = System.Drawing.Color.White;
-            this.spatialRelationLabel.Location = new System.Drawing.Point(293, 166);
-            this.spatialRelationLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.spatialRelationLabel.Name = "spatialRelationLabel";
-            this.spatialRelationLabel.Size = new System.Drawing.Size(170, 19);
-            this.spatialRelationLabel.TabIndex = 22;
-            this.spatialRelationLabel.Text = "Spatial Relation Filter";
-            // 
-            // requiredSpatialRelation
-            // 
-            this.requiredSpatialRelation.AutoSize = true;
-            this.requiredSpatialRelation.BackColor = System.Drawing.Color.Transparent;
-            this.requiredSpatialRelation.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
-            this.requiredSpatialRelation.ForeColor = System.Drawing.Color.Red;
-            this.requiredSpatialRelation.Location = new System.Drawing.Point(279, 166);
-            this.requiredSpatialRelation.Name = "requiredSpatialRelation";
-            this.requiredSpatialRelation.Size = new System.Drawing.Size(22, 29);
-            this.requiredSpatialRelation.TabIndex = 23;
-            this.requiredSpatialRelation.Text = "*";
-            // 
-            // spatialRelation
-            // 
-            this.spatialRelation.Font = new System.Drawing.Font("Arial", 12F);
-            this.spatialRelation.FormattingEnabled = true;
-            this.spatialRelation.Items.AddRange(new object[] {
-            "Contain or Intersect",
-            "Contain",
-            "Within",
-            "Intersect"});
-            this.spatialRelation.Location = new System.Drawing.Point(278, 188);
-            this.spatialRelation.Name = "spatialRelation";
-            this.spatialRelation.Size = new System.Drawing.Size(224, 26);
-            this.spatialRelation.TabIndex = 24;
-            this.spatialRelation.SelectedIndexChanged += new System.EventHandler(this.OnChangeSpatialFilter);
-            // 
             // requiredSaveLayerAs
             // 
             this.requiredSaveLayerAs.AutoSize = true;
@@ -190,9 +147,9 @@ namespace KWG_Geoenrichment
             this.selectAreaBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.selectAreaBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.selectAreaBtn.ForeColor = System.Drawing.Color.Black;
-            this.selectAreaBtn.Location = new System.Drawing.Point(671, 188);
+            this.selectAreaBtn.Location = new System.Drawing.Point(648, 188);
             this.selectAreaBtn.Name = "selectAreaBtn";
-            this.selectAreaBtn.Size = new System.Drawing.Size(157, 26);
+            this.selectAreaBtn.Size = new System.Drawing.Size(180, 26);
             this.selectAreaBtn.TabIndex = 28;
             this.selectAreaBtn.Text = "SELECT AREA";
             this.selectAreaBtn.UseVisualStyleBackColor = false;
@@ -206,9 +163,9 @@ namespace KWG_Geoenrichment
             this.openGDBBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.openGDBBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.openGDBBtn.ForeColor = System.Drawing.Color.Black;
-            this.openGDBBtn.Location = new System.Drawing.Point(508, 188);
+            this.openGDBBtn.Location = new System.Drawing.Point(462, 188);
             this.openGDBBtn.Name = "openGDBBtn";
-            this.openGDBBtn.Size = new System.Drawing.Size(157, 26);
+            this.openGDBBtn.Size = new System.Drawing.Size(180, 26);
             this.openGDBBtn.TabIndex = 29;
             this.openGDBBtn.Text = "OPEN GDB FILE";
             this.openGDBBtn.UseVisualStyleBackColor = false;
@@ -279,7 +236,7 @@ namespace KWG_Geoenrichment
             this.knowledgeGraph.FormattingEnabled = true;
             this.knowledgeGraph.Location = new System.Drawing.Point(48, 188);
             this.knowledgeGraph.Name = "knowledgeGraph";
-            this.knowledgeGraph.Size = new System.Drawing.Size(224, 26);
+            this.knowledgeGraph.Size = new System.Drawing.Size(408, 26);
             this.knowledgeGraph.TabIndex = 38;
             this.knowledgeGraph.SelectedIndexChanged += new System.EventHandler(this.OnChangeGraph);
             // 
@@ -305,7 +262,6 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 588);
-            this.Controls.Add(this.spatialRelationLabel);
             this.Controls.Add(this.runBtn);
             this.Controls.Add(this.knowledgeGraph);
             this.Controls.Add(this.helpPanel);
@@ -316,11 +272,9 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.saveLayerAs);
             this.Controls.Add(this.saveLayerAsLabel);
             this.Controls.Add(this.requiredSaveLayerAs);
-            this.Controls.Add(this.spatialRelation);
             this.Controls.Add(this.knowledgeGraphLabel);
             this.Controls.Add(this.requiredKnowledgeGraph);
             this.Controls.Add(this.geoFormName);
-            this.Controls.Add(this.requiredSpatialRelation);
             this.DoubleBuffered = true;
             this.HelpButton = true;
             this.Name = "GeoenrichmentForm";
@@ -339,9 +293,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label requiredKnowledgeGraph;
         private System.Windows.Forms.Label knowledgeGraphLabel;
         private System.Windows.Forms.Button selectContentBtn;
-        private System.Windows.Forms.Label spatialRelationLabel;
-        private System.Windows.Forms.Label requiredSpatialRelation;
-        private System.Windows.Forms.ComboBox spatialRelation;
         private System.Windows.Forms.Label requiredSaveLayerAs;
         private System.Windows.Forms.Label saveLayerAsLabel;
         private System.Windows.Forms.TextBox saveLayerAs;

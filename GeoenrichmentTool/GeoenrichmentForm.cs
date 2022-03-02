@@ -162,7 +162,6 @@ namespace KWG_Geoenrichment
         {
             if(
                 knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
-                spatialRelation.SelectedItem != null && spatialRelation.SelectedItem.ToString() != "" &&
                 (gdbFileUploaded || areaOfInterestDrawn)
               )
             {
