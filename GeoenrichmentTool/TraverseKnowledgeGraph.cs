@@ -42,7 +42,6 @@ namespace KWG_Geoenrichment
 
             if (degree == 1)
             {
-                //Lets get our list of entities
                 var typeQuery = "select distinct ?type ?label where { " +
                     "?entity a ?type. " +
                     "?type rdfs:label ?label. " +
@@ -80,17 +79,21 @@ namespace KWG_Geoenrichment
         private void PopulatePropertyBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
-            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
-            var classVal = classBox.SelectedValue.ToString();
-            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
 
-            //Lets get our list of entities
-            var propQuery = "select distinct ?p ?label where { " +
-                "?entity a "+ classVal + "; " +
-                    "?p ?o. " +
-                    "optional {?p rdfs:label ?label}" +
-                entityVals +
-            "}";
+            var propQuery = "select distinct ?p ?label where {  ";
+
+            for(int i=1; i < degree + 1; i++)
+            {
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
+                string classStr = classBox.SelectedValue.ToString();
+                string predicateStr = (i == degree) ? "?p" : propBox.SelectedValue.ToString();
+                string objectStr = "?o" + i.ToString();
+
+                propQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+            }        
+            propQuery += "optional {?p rdfs:label ?label} " + entityVals + "}";
 
             JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
 
@@ -106,44 +109,56 @@ namespace KWG_Geoenrichment
                 }
             }
 
-            propBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
-            propBox.Enabled = true;
+            ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+            currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
+            currPropBox.Enabled = true;
         }
 
         private void PopulateValueBox(int degree)
         {
-            var queryClass = KwgGeoModule.Current.GetQueryClass();
-            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
-            var classVal = classBox.SelectedValue.ToString();
-            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
-            var propVal = propBox.SelectedValue.ToString();
-            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            //    "?entity a " + classVal + "; " + propVal + " ?o. " + "?o a ?type. " +
 
-            //Lets get our list of entities
-            var valueQuery = "select distinct ?type ?label where { " +
-                "?entity a " + classVal + "; " +
-                    propVal + " ?o. " +
-                    "?o a ?type. " +
-                    "?type rdfs:label ?label. " +
-                entityVals +
-            "}";
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+
+            var valueQuery = "select distinct ?type ?label where {  ";
+
+            for (int i = 1; i < degree + 1; i++)
+            {
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
+                string classStr = classBox.SelectedValue.ToString();
+                string predicateStr = propBox.SelectedValue.ToString();
+                string objectStr = (i == degree) ? "?o. ?o a ?type" : "?o" + i.ToString();
+
+                valueQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+            }
+            valueQuery += "?type rdfs:label ?label. " + entityVals + "}";
 
             JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
+            ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
 
-            Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } };
-            foreach (var item in valueResults)
-            {
-                string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
-
-                if (!values.ContainsKey(oType))
+            Dictionary<string, string> values;
+            if (valueResults.HasValues) {
+                values = new Dictionary<string, string>() { { "", "" } };
+                foreach (var item in valueResults)
                 {
-                    values[oType] = oLabel;
+                    string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                    string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                    if (!values.ContainsKey(oType))
+                    {
+                        values[oType] = oLabel;
+                    }
                 }
+                currValueBox.Enabled = true;
+            }
+            else
+            {
+                values = new Dictionary<string, string>() { { "", "Literal Data Found" } };
             }
 
-            valueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
-            valueBox.Enabled = true;
+            currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
         }
 
         private void OnClassBoxChange(object sender, EventArgs e)
@@ -211,6 +226,7 @@ namespace KWG_Geoenrichment
             propBox_copy.Size = propBox.Size;
             propBox_copy.DisplayMember = "Value";
             propBox_copy.ValueMember = "Key";
+            propBox_copy.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
             this.Controls.Add(propBox_copy);
 
             ComboBox valueBox = (ComboBox)this.Controls.Find("object" + maxDegree.ToString(), true).First();
@@ -223,11 +239,12 @@ namespace KWG_Geoenrichment
             valueBox_copy.Size = valueBox.Size;
             valueBox_copy.DisplayMember = "Value";
             valueBox_copy.ValueMember = "Key";
+            valueBox_copy.SelectedIndexChanged += new System.EventHandler(this.OnValueBoxChange);
             this.Controls.Add(valueBox_copy);
 
             //Populate list options and enable
             PopulateClassBox(newDegree);
-            //PopulatePropertyBox(newDegree);
+            PopulatePropertyBox(newDegree);
 
             maxDegree++;
         }
