@@ -19,7 +19,7 @@ namespace KWG_Geoenrichment
 
         protected int maxDegree = 1;
 
-        private int propertySpacing = 115;
+        private int propertySpacing = 30;
         private int helpSpacing = 440;
         private bool helpOpen = true;
 
@@ -38,30 +38,43 @@ namespace KWG_Geoenrichment
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+            Dictionary<string, string> classes;
 
-            //Lets get our list of entities
-            var typeQuery = "select distinct ?type ?label where { " +
-                "?entity a ?type. " +
-                "?type rdfs:label ?label. " +
-                entityVals +
-            "}";
-
-            JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
-
-            Dictionary<string, string> classes = new Dictionary<string, string>() { {"", ""} };
-            foreach (var item in typeResults)
+            if (degree == 1)
             {
-                string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+                //Lets get our list of entities
+                var typeQuery = "select distinct ?type ?label where { " +
+                    "?entity a ?type. " +
+                    "?type rdfs:label ?label. " +
+                    entityVals +
+                "}";
 
-                if (!classes.ContainsKey(cType))
+                JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
+
+                classes = new Dictionary<string, string>() { { "", "" } };
+                foreach (var item in typeResults)
                 {
-                    classes[cType] = cLabel;
+                    string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                    string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                    if (!classes.ContainsKey(cType))
+                    {
+                        classes[cType] = cLabel;
+                    }
                 }
+
+                classBox.Enabled = true;
+            }
+            else
+            {
+                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + (degree-1).ToString(), true).First();
+                string objectVal = valueBox.SelectedValue.ToString();
+                string objectLabel = valueBox.Text;
+
+                classes = new Dictionary<string, string>() { { objectVal, objectLabel } };
             }
 
             classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
-            classBox.Enabled = true;
         }
 
         private void PopulatePropertyBox(int degree)
@@ -153,6 +166,70 @@ namespace KWG_Geoenrichment
 
                 PopulateValueBox(degree);
             }
+        }
+
+        private void OnValueBoxChange(object sender, EventArgs e)
+        {
+            ComboBox valueBox = (ComboBox)sender;
+            if (valueBox.SelectedValue.ToString() != "")
+            {
+                addPropertyBtn.Enabled = true;
+            }
+        }
+
+        private void LearnMore(object sender, EventArgs e)
+        {
+            addPropertyBtn.Enabled = false;
+            int newDegree = maxDegree + 1;
+
+            //Expand the form and move down the button elements
+            this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
+            this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y + propertySpacing);
+            this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
+            this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
+            this.helpPanel.Size = new System.Drawing.Size(this.helpPanel.Size.Width, this.helpPanel.Size.Height + propertySpacing);
+
+            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + maxDegree.ToString(), true).First();
+            ComboBox classBox_copy = new ComboBox();
+            classBox_copy.Enabled = false;
+            classBox_copy.Font = classBox.Font;
+            classBox_copy.FormattingEnabled = classBox.FormattingEnabled;
+            classBox_copy.Location = new System.Drawing.Point(classBox.Location.X, classBox.Location.Y + propertySpacing);
+            classBox_copy.Name = "subject" + newDegree.ToString();
+            classBox_copy.Size = classBox.Size;
+            classBox_copy.DisplayMember = "Value";
+            classBox_copy.ValueMember = "Key";
+            this.Controls.Add(classBox_copy);
+
+            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + maxDegree.ToString(), true).First();
+            ComboBox propBox_copy = new ComboBox();
+            propBox_copy.Enabled = false;
+            propBox_copy.Font = propBox.Font;
+            propBox_copy.FormattingEnabled = propBox.FormattingEnabled;
+            propBox_copy.Location = new System.Drawing.Point(propBox.Location.X, propBox.Location.Y + propertySpacing);
+            propBox_copy.Name = "predicate" + newDegree.ToString();
+            propBox_copy.Size = propBox.Size;
+            propBox_copy.DisplayMember = "Value";
+            propBox_copy.ValueMember = "Key";
+            this.Controls.Add(propBox_copy);
+
+            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + maxDegree.ToString(), true).First();
+            ComboBox valueBox_copy = new ComboBox();
+            valueBox_copy.Enabled = false;
+            valueBox_copy.Font = valueBox.Font;
+            valueBox_copy.FormattingEnabled = valueBox.FormattingEnabled;
+            valueBox_copy.Location = new System.Drawing.Point(valueBox.Location.X, valueBox.Location.Y + propertySpacing);
+            valueBox_copy.Name = "object" + newDegree.ToString();
+            valueBox_copy.Size = valueBox.Size;
+            valueBox_copy.DisplayMember = "Value";
+            valueBox_copy.ValueMember = "Key";
+            this.Controls.Add(valueBox_copy);
+
+            //Populate list options and enable
+            PopulateClassBox(newDegree);
+            //PopulatePropertyBox(newDegree);
+
+            maxDegree++;
         }
 
         private void RunTraverseGraph(object sender, EventArgs e)

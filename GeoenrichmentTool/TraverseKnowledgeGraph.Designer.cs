@@ -82,6 +82,7 @@ namespace KWG_Geoenrichment
             this.object1.Size = new System.Drawing.Size(256, 26);
             this.object1.TabIndex = 30;
             this.object1.ValueMember = "Key";
+            this.object1.SelectedIndexChanged += new System.EventHandler(this.OnValueBoxChange);
             // 
             // prop1Label
             // 
@@ -116,6 +117,7 @@ namespace KWG_Geoenrichment
             // 
             this.addPropertyBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.addPropertyBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.addPropertyBtn.Enabled = false;
             this.addPropertyBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.addPropertyBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.addPropertyBtn.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold);
@@ -126,6 +128,7 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.TabIndex = 33;
             this.addPropertyBtn.Text = "LEARN MORE";
             this.addPropertyBtn.UseVisualStyleBackColor = false;
+            this.addPropertyBtn.Click += new System.EventHandler(this.LearnMore);
             // 
             // helpButton
             // 
