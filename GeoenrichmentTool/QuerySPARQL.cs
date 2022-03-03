@@ -21,14 +21,12 @@ namespace KWG_Geoenrichment
             {"owl", "http://www.w3.org/2002/07/owl#"},
             {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
             {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
-            //{"xvd", "http://www.w3.org/2001/XMLSchema#"},
-            //{"dc", "http://purl.org/dc/elements/1.1/"},
-            //{"dcterms", "http://purl.org/dc/terms/"},
-            //{"foaf", "http://xmlns.com/foaf/0.1/"},
-            //{"time", "http://www.w3.org/2006/time#"},
-            //{"elastic", "http://www.ontotext.com/connectors/elasticsearch#"},
-            //{"elastic-index", "http://www.ontotext.com/connectors/elasticsearch/instance#"},
-            //{"iospress", "http://ld.iospress.nl/rdf/ontology/"}
+            {"time", "http://www.w3.org/2006/time#"},
+            {"xvd", "http://www.w3.org/2001/XMLSchema#"},
+            {"dc", "http://purl.org/dc/elements/1.1/"},
+            {"dcterms", "http://purl.org/dc/terms/"},
+            {"foaf", "http://xmlns.com/foaf/0.1/"},
+            {"iospress", "http://ld.iospress.nl/rdf/ontology/"}
         };
 
         public QuerySPARQL()

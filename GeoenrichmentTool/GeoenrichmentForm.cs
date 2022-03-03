@@ -212,6 +212,7 @@ namespace KWG_Geoenrichment
             saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + contentSpacing);
             helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + contentSpacing);
             runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + contentSpacing);
+            this.Height += contentSpacing;
 
             //Capture the data
             content.Add(uris);
