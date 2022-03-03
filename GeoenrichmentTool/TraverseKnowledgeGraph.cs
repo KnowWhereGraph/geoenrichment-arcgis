@@ -14,6 +14,8 @@ namespace KWG_Geoenrichment
 {
     public partial class TraverseKnowledgeGraph : Form
     {
+        private GeoenrichmentForm originalWindow;
+        
         private string currentEndpoint;
         private string entityVals;
 
@@ -23,11 +25,12 @@ namespace KWG_Geoenrichment
         private int helpSpacing = 440;
         private bool helpOpen = true;
 
-        public TraverseKnowledgeGraph(string endpoint, List<string> entities)
+        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities)
         {
             InitializeComponent();
             ToggleHelpMenu();
 
+            originalWindow = gf;
             currentEndpoint = endpoint;
             entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
 
@@ -155,7 +158,7 @@ namespace KWG_Geoenrichment
             }
             else
             {
-                values = new Dictionary<string, string>() { { "", "Literal Data Found" } };
+                values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
             }
 
             currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
@@ -251,15 +254,40 @@ namespace KWG_Geoenrichment
 
         private void RunTraverseGraph(object sender, EventArgs e)
         {
-            if (object1.Text == "")
+            if (subject1.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
             }
             else
             {
-                Close();
+                List<string> uriList = new List<string>();
+                List<string> labelList = new List<string>();
+                for (int i = 1; i < maxDegree + 1; i++)
+                {
+                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                    if (classBox.Text != null && classBox.Text != "")
+                    {
+                        uriList.Add(classBox.SelectedValue.ToString());
+                        labelList.Add(classBox.Text);
+                    }
 
-                //Do stuff
+                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                    if (propBox.Text != null && propBox.Text != "")
+                    {
+                        uriList.Add(propBox.SelectedValue.ToString());
+                        labelList.Add(propBox.Text);
+                    }
+
+                    ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
+                    if (valueBox.Text != null && valueBox.Text != "")
+                    {
+                        uriList.Add(valueBox.SelectedValue.ToString());
+                        labelList.Add(valueBox.Text);
+                    } 
+                }
+
+                originalWindow.AddSelectedContent(uriList, labelList);
+                Close();
             }
         }
 

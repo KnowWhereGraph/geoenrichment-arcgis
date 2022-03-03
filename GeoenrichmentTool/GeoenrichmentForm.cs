@@ -22,9 +22,6 @@ namespace KWG_Geoenrichment
 {
     public partial class GeoenrichmentForm : Form
     {
-        private int helpSpacing = 400;
-        private bool helpOpen = true;
-
         private bool gdbFileUploaded = false;
         private GDBProjectItem selectedGDB;
 
@@ -32,6 +29,11 @@ namespace KWG_Geoenrichment
         private string areaOfInterestPolygon;
 
         private List<String> entities;
+
+        private int selectedContentCnt = 0;
+        private int contentSpacing = 30;
+        private int helpSpacing = 400;
+        private bool helpOpen = true;
 
         public GeoenrichmentForm()
         {
@@ -174,10 +176,38 @@ namespace KWG_Geoenrichment
 
         private void SelectContent(object sender, EventArgs e)
         {
-            var exploreWindow = new TraverseKnowledgeGraph(this.knowledgeGraph.Text, entities);
+            var exploreWindow = new TraverseKnowledgeGraph(this, this.knowledgeGraph.Text, entities);
+            this.Hide();
             exploreWindow.Show();
+        }
 
-            //On close...
+        public void AddSelectedContent(List<string> uris, List<string> labels)
+        {
+            this.Show();
+
+            selectedContentCnt++;
+            var uniqueLabels = labels.Distinct().ToList();
+            string labelString = String.Join(" -> ", uniqueLabels);
+
+            Label labelObj = new Label();
+            labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
+            labelObj.BackColor = knowledgeGraphLabel.BackColor;
+            labelObj.Font = knowledgeGraphLabel.Font;
+            labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
+            labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentSpacing * selectedContentCnt);
+            labelObj.Margin = knowledgeGraphLabel.Margin;
+            labelObj.Name = "contentLabel" + selectedContentCnt.ToString();
+            labelObj.Size = knowledgeGraphLabel.Size;
+            labelObj.Text = labelString;
+            this.Controls.Add(labelObj);
+
+            //Move other things down
+            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + contentSpacing);
+            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + contentSpacing);
+            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + contentSpacing);
+            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + contentSpacing);
+            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + contentSpacing);
+            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + contentSpacing);
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)
