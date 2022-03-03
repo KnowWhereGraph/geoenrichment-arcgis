@@ -194,13 +194,14 @@ namespace KWG_Geoenrichment
 
             Label labelObj = new Label();
             labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
-            labelObj.BackColor = knowledgeGraphLabel.BackColor;
+            labelObj.BackColor = Color.FromName("ActiveCaption");
             labelObj.Font = knowledgeGraphLabel.Font;
             labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
             labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentSpacing * selectedContentCnt);
             labelObj.Margin = knowledgeGraphLabel.Margin;
             labelObj.Name = "contentLabel" + selectedContentCnt.ToString();
             labelObj.Size = knowledgeGraphLabel.Size;
+            labelObj.MaximumSize = new Size(780, 0);
             labelObj.Text = labelString;
             this.Controls.Add(labelObj);
 
