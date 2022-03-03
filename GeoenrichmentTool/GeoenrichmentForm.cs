@@ -31,8 +31,8 @@ namespace KWG_Geoenrichment
         private List<String> entities;
         private List<List<String>> content;
 
-        private int selectedContentCnt = 0;
-        private int contentSpacing = 30;
+        private int contentTotalSpacing = 50;
+        private int contentPadding = 11;
         private int helpSpacing = 400;
         private bool helpOpen = true;
 
@@ -186,7 +186,6 @@ namespace KWG_Geoenrichment
         public void AddSelectedContent(List<string> uris, List<string> labels)
         {
             this.Show();
-            selectedContentCnt++;
 
             //Add the label
             var uniqueLabels = labels.Distinct().ToList();
@@ -197,22 +196,26 @@ namespace KWG_Geoenrichment
             labelObj.BackColor = Color.FromName("ActiveCaption");
             labelObj.Font = knowledgeGraphLabel.Font;
             labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
-            labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentSpacing * selectedContentCnt);
             labelObj.Margin = knowledgeGraphLabel.Margin;
-            labelObj.Name = "contentLabel" + selectedContentCnt.ToString();
+            labelObj.Name = "contentLabel";
             labelObj.Size = knowledgeGraphLabel.Size;
             labelObj.MaximumSize = new Size(780, 0);
             labelObj.Text = labelString;
             this.Controls.Add(labelObj);
 
-            //Move other things down
-            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + contentSpacing);
-            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + contentSpacing);
-            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + contentSpacing);
-            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + contentSpacing);
-            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + contentSpacing);
-            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + contentSpacing);
-            this.Height += contentSpacing;
+            //Move the label
+            labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
+            int addedHeight = labelObj.Height + contentPadding;
+            contentTotalSpacing += addedHeight;
+
+            //Move things down
+            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + addedHeight);
+            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + addedHeight);
+            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + addedHeight);
+            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + addedHeight);
+            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
+            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
+            this.Height += addedHeight;
 
             //Capture the data
             content.Add(uris);
