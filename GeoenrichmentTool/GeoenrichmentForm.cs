@@ -29,6 +29,7 @@ namespace KWG_Geoenrichment
         private string areaOfInterestPolygon;
 
         private List<String> entities;
+        private List<List<String>> content;
 
         private int selectedContentCnt = 0;
         private int contentSpacing = 30;
@@ -47,6 +48,7 @@ namespace KWG_Geoenrichment
             }
 
             knowledgeGraph.SelectedIndex = 0;
+            content = new List<List<String>>() { };
         }
 
         private void OnChangeGraph(object sender, EventArgs e)
@@ -184,8 +186,9 @@ namespace KWG_Geoenrichment
         public void AddSelectedContent(List<string> uris, List<string> labels)
         {
             this.Show();
-
             selectedContentCnt++;
+
+            //Add the label
             var uniqueLabels = labels.Distinct().ToList();
             string labelString = String.Join(" -> ", uniqueLabels);
 
@@ -208,6 +211,9 @@ namespace KWG_Geoenrichment
             saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + contentSpacing);
             helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + contentSpacing);
             runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + contentSpacing);
+
+            //Capture the data
+            content.Add(uris);
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)
