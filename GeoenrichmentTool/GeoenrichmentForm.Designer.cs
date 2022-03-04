@@ -138,6 +138,7 @@ namespace KWG_Geoenrichment
             this.saveLayerAs.Name = "saveLayerAs";
             this.saveLayerAs.Size = new System.Drawing.Size(780, 26);
             this.saveLayerAs.TabIndex = 27;
+            this.saveLayerAs.Validated += new System.EventHandler(this.OnFeatureNameChage);
             // 
             // selectAreaBtn
             // 
@@ -244,6 +245,7 @@ namespace KWG_Geoenrichment
             // 
             this.runBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(214)))), ((int)(((byte)(237)))));
             this.runBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.runBtn.Enabled = false;
             this.runBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.runBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.runBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
@@ -254,6 +256,7 @@ namespace KWG_Geoenrichment
             this.runBtn.TabIndex = 39;
             this.runBtn.Text = "RUN";
             this.runBtn.UseVisualStyleBackColor = false;
+            this.runBtn.Click += new System.EventHandler(this.RunGeoenrichment);
             // 
             // GeoenrichmentForm
             // 

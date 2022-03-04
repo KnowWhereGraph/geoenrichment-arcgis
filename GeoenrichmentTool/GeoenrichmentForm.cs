@@ -54,11 +54,7 @@ namespace KWG_Geoenrichment
         private void OnChangeGraph(object sender, EventArgs e)
         {
             CheckCanSelectContent();
-        }
-
-        private void OnChangeSpatialFilter(object sender, EventArgs e)
-        {
-            CheckCanSelectContent();
+            CheckCanRunGeoenrichment();
         }
 
         private void UploadGDBFile(object sender, EventArgs e)
@@ -76,11 +72,12 @@ namespace KWG_Geoenrichment
                 gdbFileUploaded = true;
                 SearchForEntities();
 
-                this.openGDBBtn.Text = selectedGDB.Name;
-                this.openGDBBtn.Enabled = false;
-                this.selectAreaBtn.Enabled = false;
+                openGDBBtn.Text = selectedGDB.Name;
+                openGDBBtn.Enabled = false;
+                selectAreaBtn.Enabled = false;
 
                 CheckCanSelectContent();
+                CheckCanRunGeoenrichment();
             }
         }
 
@@ -102,11 +99,12 @@ namespace KWG_Geoenrichment
             areaOfInterestDrawn = true;
             SearchForEntities();
 
-            this.selectAreaBtn.Text = "Area Drawn";
-            this.openGDBBtn.Enabled = false;
-            this.selectAreaBtn.Enabled = false;
+            selectAreaBtn.Text = "Area Drawn";
+            openGDBBtn.Enabled = false;
+            selectAreaBtn.Enabled = false;
 
             CheckCanSelectContent();
+            CheckCanRunGeoenrichment();
             Show();
         }
 
@@ -137,7 +135,7 @@ namespace KWG_Geoenrichment
                     "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
                 "}";
 
-                JToken s2Results = queryClass.SubmitQuery(this.knowledgeGraph.Text, s2Query);
+                JToken s2Results = queryClass.SubmitQuery(knowledgeGraph.Text, s2Query);
 
                 foreach (var item in s2Results)
                 {
@@ -154,7 +152,7 @@ namespace KWG_Geoenrichment
                 s2CellVals +
             "}";
 
-            JToken entityResults = queryClass.SubmitQuery(this.knowledgeGraph.Text, entityQuery);
+            JToken entityResults = queryClass.SubmitQuery(knowledgeGraph.Text, entityQuery);
 
             foreach (var item in entityResults)
             {
@@ -178,17 +176,32 @@ namespace KWG_Geoenrichment
 
         private void SelectContent(object sender, EventArgs e)
         {
-            var exploreWindow = new TraverseKnowledgeGraph(this, this.knowledgeGraph.Text, entities);
-            this.Hide();
+            var exploreWindow = new TraverseKnowledgeGraph(this, knowledgeGraph.Text, entities);
+            Hide();
             exploreWindow.Show();
         }
 
         public void AddSelectedContent(List<string> uris, List<string> labels)
         {
-            this.Show();
+            Show();
+
+            //We need to eliminate doubles since the value box in one line is the same as the class box in the next line
+            var uniqueUris = new List<string>() { };
+            var uniqueLabels = new List<string>() { };
+
+            for(int i=0; i<uris.Count; i++)
+            {
+                if(
+                    i == 0 || 
+                    (uris[i] != uris[i-1] && uris[i] != "LiteralDataFound")
+                )
+                {
+                    uniqueUris.Add(uris[i]);
+                    uniqueLabels.Add(labels[i]);
+                }
+            }
 
             //Add the label
-            var uniqueLabels = labels.Distinct().ToList();
             string labelString = String.Join(" -> ", uniqueLabels);
 
             Label labelObj = new Label();
@@ -201,7 +214,7 @@ namespace KWG_Geoenrichment
             labelObj.Size = knowledgeGraphLabel.Size;
             labelObj.MaximumSize = new Size(780, 0);
             labelObj.Text = labelString;
-            this.Controls.Add(labelObj);
+            Controls.Add(labelObj);
 
             //Move the label
             labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
@@ -215,10 +228,112 @@ namespace KWG_Geoenrichment
             saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + addedHeight);
             helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
             runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
-            this.Height += addedHeight;
+            Height += addedHeight;
 
             //Capture the data
-            content.Add(uris);
+            content.Add(uniqueUris);
+
+            CheckCanRunGeoenrichment();
+        }
+
+        private void OnFeatureNameChage(object sender, EventArgs e)
+        {
+            CheckCanRunGeoenrichment();
+        }
+
+        public void CheckCanRunGeoenrichment()
+        {
+            if (
+                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
+                (gdbFileUploaded || areaOfInterestDrawn) &&
+                content.Count > 0 &&
+                saveLayerAs.Text != ""
+              )
+            {
+                runBtn.Enabled = true;
+            }
+            else
+            {
+                runBtn.Enabled = false;
+            }
+        }
+
+        private void RunGeoenrichment(object sender, EventArgs e)
+        {
+            //Get variables
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            Control[] columnLabels = this.Controls.Find("contentLabel", true);
+
+            //Build and run query for base classes
+            var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> list of data
+            var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
+            string entityName; string nextEntityName;
+            string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
+            for (int j = 0; j < content.Count; j++)
+            {
+                string currentLabel = columnLabels[j].Text;
+                var contentResultsQuery = "select distinct ?entity ?entityLabel ?o where { ?entity rdfs:label ?entityLabel. ";
+
+                for (int i = 0; i < content[j].Count; i++)
+                {
+                    //Even indices are classes, odd are predicates
+                    if(i%2==0)
+                    {
+                        if(i == 0)
+                            entityName = "?entity";
+                        else
+                            entityName = (i+1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
+                        var className = content[j][i];
+                        contentResultsQuery += entityName + " a " + className + ". ";
+                    }
+                    else
+                    {
+                        if (i == 1)
+                        {
+                            entityName = "?entity";
+                            nextEntityName = "?o1";
+                        }
+                        else
+                        {
+                            entityName = "?o" + (i / 2).ToString();
+                            nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
+                        }
+                        var propName = content[j][i];
+                        contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
+                    }
+                }
+
+                contentResultsQuery += entityVals + "}";
+
+                JToken contentResults = queryClass.SubmitQuery(knowledgeGraph.Text, contentResultsQuery);
+
+                foreach (var item in contentResults)
+                {
+                    var entityVal = item["entity"]["value"].ToString();
+
+                    //Check to see if we this entity exists, if not, set it up
+                    if(!finalContent.ContainsKey(entityVal))
+                        finalContent[entityVal] = new Dictionary<string, List<string>>() { };
+                    if(!finalContentLabels.ContainsKey(entityVal))
+                        finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
+
+                    //Let's prep and store the result content
+                    if(!finalContent[entityVal].ContainsKey(currentLabel))
+                        finalContent[entityVal][currentLabel] = new List<string>() { };
+
+                    if (item["o"] != null && item["o"]["value"].ToString() != "")
+                        finalContent[entityVal][currentLabel].Add(item["o"]["value"].ToString());
+                }
+            }
+
+            //Use data to build initial table
+            var test = "";
+
+            //Build and run query for selected content
+
+            //Add columns to the table based on merge rules
+
+            Close();
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)
@@ -230,11 +345,11 @@ namespace KWG_Geoenrichment
         {
             if(helpOpen)
             {
-                this.Size = new System.Drawing.Size(this.Size.Width - helpSpacing, this.Size.Height);
+                Size = new System.Drawing.Size(Size.Width - helpSpacing, Size.Height);
                 helpOpen = false;
             } else
             {
-                this.Size = new System.Drawing.Size(this.Size.Width + helpSpacing, this.Size.Height);
+                Size = new System.Drawing.Size(Size.Width + helpSpacing, Size.Height);
                 helpOpen = true;
             }
         }
