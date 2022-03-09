@@ -17,6 +17,7 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace KWG_Geoenrichment
 {
@@ -30,6 +31,16 @@ namespace KWG_Geoenrichment
 
         private List<String> entities;
         private List<List<String>> content;
+        private Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
+            { "concat", "Concate values together with a \"|\"" },
+            { "first", "Get the first value found" },
+            { "count", "Get the number of values found" },
+            { "total", "Get the total of all values (numeric)" },
+            { "high", "Get the highest value (numeric)" },
+            { "low", " Get the lowest value (numeric)" },
+            { "avg", "Get the average of all values (numeric)" },
+            { "stdev", "Get the standard deviation of all values (numeric)" },
+        };
 
         private int contentTotalSpacing = 50;
         private int contentPadding = 11;
@@ -201,6 +212,9 @@ namespace KWG_Geoenrichment
                 }
             }
 
+            //Capture the data
+            content.Add(uniqueUris);
+
             //Add the label
             string labelString = String.Join(" -> ", uniqueLabels);
 
@@ -216,9 +230,26 @@ namespace KWG_Geoenrichment
             labelObj.Text = labelString;
             Controls.Add(labelObj);
 
+            //Add the merge dropdown
+            ComboBox mergeBox = new ComboBox();
+            mergeBox.Font = knowledgeGraph.Font;
+            mergeBox.FormattingEnabled = knowledgeGraph.FormattingEnabled;
+            mergeBox.Name = "mergeRule"+content.Count.ToString();
+            mergeBox.Size = new System.Drawing.Size(400, 26);
+            mergeBox.DisplayMember = "Value";
+            mergeBox.ValueMember = "Key";
+            mergeBox.DataSource = new BindingSource(mergeRules, null);
+            Controls.Add(mergeBox);
+
             //Move the label
             labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
             int addedHeight = labelObj.Height + contentPadding;
+
+            //Move the merge dropdown
+            mergeBox.Location = new System.Drawing.Point(labelObj.Location.X, labelObj.Location.Y + labelObj.Height + contentPadding);
+            addedHeight += mergeBox.Height + contentPadding;
+
+            //Adjust the total amount of spacing we've moved
             contentTotalSpacing += addedHeight;
 
             //Move things down
@@ -229,9 +260,6 @@ namespace KWG_Geoenrichment
             helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
             runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
             Height += addedHeight;
-
-            //Capture the data
-            content.Add(uniqueUris);
 
             CheckCanRunGeoenrichment();
         }
@@ -332,6 +360,12 @@ namespace KWG_Geoenrichment
             //Build and run query for selected content
 
             //Add columns to the table based on merge rules
+            List<string> mergeRules = new List<string>() { };
+            for (int k = 0; k < content.Count; k++)
+            {
+                ComboBox mergeBox = (ComboBox)Controls.Find("mergeRule" + (k+1).ToString(), true).First();
+                mergeRules.Add(mergeBox.SelectedValue.ToString());
+            }
 
             Close();
         }
