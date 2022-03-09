@@ -298,85 +298,102 @@ namespace KWG_Geoenrichment
 
         private async void RunGeoenrichment(object sender, EventArgs e)
         {
-            //Get variables
             var queryClass = KwgGeoModule.Current.GetQueryClass();
-            Control[] columnLabels = this.Controls.Find("contentLabel", true);
 
-            //Build and run query for base classes
-            var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> list of data
-            var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
-            string entityName; string nextEntityName;
-            string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
-            for (int j = 0; j < content.Count; j++)
+            //build the table and its columns
+            await FeatureClassHelper.CreatePolygonFeatureLayer(saveLayerAs.Text);
+            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == saveLayerAs.Text).FirstOrDefault() as BasicFeatureLayer;
+
+            if (fcLayer == null)
             {
-                string currentLabel = columnLabels[j].Text;
-                var contentResultsQuery = "select distinct ?entity ?entityLabel ?o where { ?entity rdfs:label ?entityLabel. ";
-
-                for (int i = 0; i < content[j].Count; i++)
-                {
-                    //Even indices are classes, odd are predicates
-                    if(i%2==0)
-                    {
-                        if(i == 0)
-                            entityName = "?entity";
-                        else
-                            entityName = (i+1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
-                        var className = content[j][i];
-                        contentResultsQuery += entityName + " a " + className + ". ";
-                    }
-                    else
-                    {
-                        if (i == 1)
-                        {
-                            entityName = "?entity";
-                            nextEntityName = "?o1";
-                        }
-                        else
-                        {
-                            entityName = "?o" + (i / 2).ToString();
-                            nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
-                        }
-                        var propName = content[j][i];
-                        contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
-                    }
-                }
-
-                contentResultsQuery += entityVals + "}";
-
-                JToken contentResults = queryClass.SubmitQuery(knowledgeGraph.Text, contentResultsQuery);
-
-                foreach (var item in contentResults)
-                {
-                    var entityVal = item["entity"]["value"].ToString();
-
-                    //Check to see if we this entity exists, if not, set it up
-                    if(!finalContent.ContainsKey(entityVal))
-                        finalContent[entityVal] = new Dictionary<string, List<string>>() { };
-                    if(!finalContentLabels.ContainsKey(entityVal))
-                        finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
-
-                    //Let's prep and store the result content
-                    if(!finalContent[entityVal].ContainsKey(currentLabel))
-                        finalContent[entityVal][currentLabel] = new List<string>() { };
-
-                    if (item["o"] != null && item["o"]["value"].ToString() != "")
-                        finalContent[entityVal][currentLabel].Add(item["o"]["value"].ToString());
-                }
+                MessageBox.Show($@"Failed to create {saveLayerAs.Text} in the active map");
             }
-
-            //Use data to populate table
-            await FeatureClassHelper.CreateTable(saveLayerAs.Text);
-
-            var test = "";
-
-            //Build and run query for selected content
-
-            //Add columns to the table based on merge rules
-            List<string> mergeRules = new List<string>() { };
-            for (int k = 0; k < content.Count; k++)
+            else
             {
-                ComboBox mergeBox = (ComboBox)Controls.Find("mergeRule" + (k+1).ToString(), true).First();
-                mergeRules.Add(mergeBox.SelectedValue.ToString());
+                await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
+                await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
+                //await FeatureClassHelper.AddField(fcLayer, label.Text, "TEXT");
+
+                //Build and run query for base classes
+                var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> merged data
+                var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
+                string entityName; string nextEntityName;
+                string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
+                for (int j = 0; j < content.Count; j++)
+                {
+                    //Add the column to our feature
+                    ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j+1).ToString(), true).First();
+                    string mergeRule = mergeBox.SelectedValue.ToString();
+                    string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text + '_' + mergeRule;
+                    await FeatureClassHelper.AddField(fcLayer, columnLabel, "TEXT");
+
+                    var contentResultsQuery = "select distinct ?entity ?entityLabel ?o where { ?entity rdfs:label ?entityLabel. ";
+
+                    for (int i = 0; i < content[j].Count; i++)
+                    {
+                        //Even indices are classes, odd are predicates
+                        if (i % 2 == 0)
+                        {
+                            if (i == 0)
+                                entityName = "?entity";
+                            else
+                                entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
+                            var className = content[j][i];
+                            contentResultsQuery += entityName + " a " + className + ". ";
+                        }
+                        else
+                        {
+                            if (i == 1)
+                            {
+                                entityName = "?entity";
+                                nextEntityName = "?o1";
+                            }
+                            else
+                            {
+                                entityName = "?o" + (i / 2).ToString();
+                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
+                            }
+                            var propName = content[j][i];
+                            contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
+                        }
+                    }
+
+                    contentResultsQuery += entityVals + "}";
+
+                    JToken contentResults = queryClass.SubmitQuery(knowledgeGraph.Text, contentResultsQuery);
+
+                    foreach (var item in contentResults)
+                    {
+                        var entityVal = item["entity"]["value"].ToString();
+
+                        //Check to see if we this entity exists, if not, set it up
+                        if (!finalContent.ContainsKey(entityVal))
+                            finalContent[entityVal] = new Dictionary<string, List<string>>() { };
+                        if (!finalContentLabels.ContainsKey(entityVal))
+                            finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
+
+                        //Let's prep and store the result content
+                        if (!finalContent[entityVal].ContainsKey(columnLabel))
+                            finalContent[entityVal][columnLabel] = new List<string>() { };
+
+                        if (item["o"] != null && item["o"]["value"].ToString() != "")
+                            finalContent[entityVal][columnLabel].Add(item["o"]["value"].ToString());
+                    }
+                }
+
+                //Use data to populate table
+
+                var test = "";
+
+                //Build and run query for selected content
+
+                //Add columns to the table based on merge rules
+                List<string> mergeRules = new List<string>() { };
+                for (int k = 0; k < content.Count; k++)
+                {
+                    ComboBox mergeBox = (ComboBox)Controls.Find("mergeRule" + (k + 1).ToString(), true).First();
+                    mergeRules.Add(mergeBox.SelectedValue.ToString());
+                }
             }
 
             Close();
