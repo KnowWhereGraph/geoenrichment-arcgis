@@ -230,6 +230,15 @@ namespace KWG_Geoenrichment
             labelObj.Text = labelString;
             Controls.Add(labelObj);
 
+            //Add column name textbox
+            TextBox columnText = new TextBox();
+            columnText.BorderStyle = saveLayerAs.BorderStyle;
+            columnText.Font = saveLayerAs.Font;
+            columnText.Name = "columnName" + content.Count.ToString();
+            columnText.Text = "column" + content.Count.ToString();
+            columnText.Size = new System.Drawing.Size(200, 26);
+            Controls.Add(columnText);
+
             //Add the merge dropdown
             ComboBox mergeBox = new ComboBox();
             mergeBox.Font = knowledgeGraph.Font;
@@ -245,8 +254,9 @@ namespace KWG_Geoenrichment
             labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
             int addedHeight = labelObj.Height + contentPadding;
 
-            //Move the merge dropdown
-            mergeBox.Location = new System.Drawing.Point(labelObj.Location.X, labelObj.Location.Y + labelObj.Height + contentPadding);
+            //Move the merge dropdown and the column text
+            columnText.Location = new System.Drawing.Point(labelObj.Location.X, labelObj.Location.Y + labelObj.Height + contentPadding);
+            mergeBox.Location = new System.Drawing.Point(labelObj.Location.X + 206, labelObj.Location.Y + labelObj.Height + contentPadding);
             addedHeight += mergeBox.Height + contentPadding;
 
             //Adjust the total amount of spacing we've moved
@@ -286,7 +296,7 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private void RunGeoenrichment(object sender, EventArgs e)
+        private async void RunGeoenrichment(object sender, EventArgs e)
         {
             //Get variables
             var queryClass = KwgGeoModule.Current.GetQueryClass();
@@ -354,7 +364,9 @@ namespace KWG_Geoenrichment
                 }
             }
 
-            //Use data to build initial table
+            //Use data to populate table
+            await FeatureClassHelper.CreateTable(saveLayerAs.Text);
+
             var test = "";
 
             //Build and run query for selected content
