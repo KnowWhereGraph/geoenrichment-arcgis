@@ -180,7 +180,6 @@
     <Resource Include="Images\geographic-entity-match.png" />
     <AddInContent Include="Images\linked-relationships.png" />
     <AddInContent Include="Images\merge-data.png" />
-    <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

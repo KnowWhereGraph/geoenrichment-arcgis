@@ -302,7 +302,7 @@ namespace KWG_Geoenrichment
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
             //build the table and its columns
-            string tableName = saveLayerAs.Text.Replace(' ', '_');
+            string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text);
             await FeatureClassHelper.CreatePolygonFeatureLayer(tableName);
             var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
 
