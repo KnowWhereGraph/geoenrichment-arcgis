@@ -138,7 +138,7 @@ namespace KWG_Geoenrichment
             this.saveLayerAs.Name = "saveLayerAs";
             this.saveLayerAs.Size = new System.Drawing.Size(780, 26);
             this.saveLayerAs.TabIndex = 27;
-            this.saveLayerAs.Validated += new System.EventHandler(this.OnFeatureNameChage);
+            this.saveLayerAs.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFeatureNameChage);
             // 
             // selectAreaBtn
             // 

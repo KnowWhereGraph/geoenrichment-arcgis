@@ -1,4 +1,5 @@
 ﻿using ArcGIS.Core.Data;
+using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
@@ -301,12 +302,13 @@ namespace KWG_Geoenrichment
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
             //build the table and its columns
-            await FeatureClassHelper.CreatePolygonFeatureLayer(saveLayerAs.Text);
-            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == saveLayerAs.Text).FirstOrDefault() as BasicFeatureLayer;
+            string tableName = saveLayerAs.Text.Replace(' ', '_');
+            await FeatureClassHelper.CreatePolygonFeatureLayer(tableName);
+            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
 
             if (fcLayer == null)
             {
-                MessageBox.Show($@"Failed to create {saveLayerAs.Text} in the active map");
+                MessageBox.Show($@"Failed to create {tableName} in the active map");
             }
             else
             {
@@ -315,19 +317,22 @@ namespace KWG_Geoenrichment
                 //await FeatureClassHelper.AddField(fcLayer, label.Text, "TEXT");
 
                 //Build and run query for base classes
-                var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> merged data
+                var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> data
                 var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
+                var finalContentGeometry = new Dictionary<string, string>() { }; //entity -> wkt
+                var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
                 string entityName; string nextEntityName;
                 string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
                 for (int j = 0; j < content.Count; j++)
                 {
-                    //Add the column to our feature
+                    //Add the column to our feature and track its merge rule
                     ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j+1).ToString(), true).First();
                     string mergeRule = mergeBox.SelectedValue.ToString();
-                    string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text + '_' + mergeRule;
+                    string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
+                    labelToMergeRule[columnLabel] = mergeRule;
                     await FeatureClassHelper.AddField(fcLayer, columnLabel, "TEXT");
 
-                    var contentResultsQuery = "select distinct ?entity ?entityLabel ?o where { ?entity rdfs:label ?entityLabel. ";
+                    var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
 
                     for (int i = 0; i < content[j].Count; i++)
                     {
@@ -358,7 +363,7 @@ namespace KWG_Geoenrichment
                         }
                     }
 
-                    contentResultsQuery += entityVals + "}";
+                    contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entityVals + "}";
 
                     JToken contentResults = queryClass.SubmitQuery(knowledgeGraph.Text, contentResultsQuery);
 
@@ -371,6 +376,8 @@ namespace KWG_Geoenrichment
                             finalContent[entityVal] = new Dictionary<string, List<string>>() { };
                         if (!finalContentLabels.ContainsKey(entityVal))
                             finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
+                        if (!finalContentGeometry.ContainsKey(entityVal))
+                            finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
 
                         //Let's prep and store the result content
                         if (!finalContent[entityVal].ContainsKey(columnLabel))
@@ -382,18 +389,93 @@ namespace KWG_Geoenrichment
                 }
 
                 //Use data to populate table
-
-                var test = "";
-
-                //Build and run query for selected content
-
-                //Add columns to the table based on merge rules
-                List<string> mergeRules = new List<string>() { };
-                for (int k = 0; k < content.Count; k++)
+                await QueuedTask.Run(() =>
                 {
-                    ComboBox mergeBox = (ComboBox)Controls.Find("mergeRule" + (k + 1).ToString(), true).First();
-                    mergeRules.Add(mergeBox.SelectedValue.ToString());
-                }
+                    InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor();
+
+                    foreach(var entityPair in finalContent)
+                    {
+                        string currEntity = entityPair.Key;
+
+                        RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
+                        IGeometryEngine geoEngine = GeometryEngine.Instance;
+                        SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+                        string wkt = finalContentGeometry[currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                        Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
+
+                        buff["Label"] = finalContentLabels[currEntity];
+                        buff["URL"] = currEntity;
+                        if (!(geo is MapPoint) && !(geo is Polyline)) //ArcGIS Pro seems to only support 
+                            buff["Shape"] = geo;
+
+                        //Add column data based on merge rule
+                        foreach(var dataPair in entityPair.Value)
+                        {
+                            string currLabel = dataPair.Key;
+                            switch (labelToMergeRule[currLabel])
+                            {
+                                case "first":
+                                    buff[currLabel] = dataPair.Value[0];
+                                    break;
+                                case "count":
+                                    buff[currLabel] = dataPair.Value.Count;
+                                    break;
+                                case "total":
+                                    float total = 0;
+                                    foreach(string val in dataPair.Value)
+                                    {
+                                        total += float.Parse(val);
+                                    }
+                                    buff[currLabel] = total;
+                                    break;
+                                case "high":
+                                    float high = float.Parse(dataPair.Value[0]);
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        if (float.Parse(val) > high)
+                                            high = float.Parse(val);
+                                    }
+                                    buff[currLabel] = high;
+                                    break;
+                                case "low":
+                                    float low = float.Parse(dataPair.Value[0]);
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        if (float.Parse(val) < low)
+                                            low = float.Parse(val);
+                                    }
+                                    buff[currLabel] = low;
+                                    break;
+                                case "avg":
+                                    List<float> avgValues = new List<float>() { };
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        avgValues.Add(float.Parse(val));
+                                    }
+                                    buff[currLabel] = avgValues.Average();
+                                    break;
+                                case "stdev":
+                                    List<float> stdDevValues = new List<float>() { };
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        stdDevValues.Add(float.Parse(val));
+                                    }
+                                    buff[currLabel] = Math.Sqrt(stdDevValues.Average(v => Math.Pow(v - stdDevValues.Average(), 2)));
+                                    break;
+                                case "concat":
+                                default:
+                                    buff[currLabel] = String.Join(" | ", dataPair.Value);
+                                    break;
+                            }
+                        }
+
+                        cursor.Insert(buff);
+                    }
+
+                    cursor.Dispose();
+
+                    MapView.Active.Redraw(false);
+                });
             }
 
             Close();
