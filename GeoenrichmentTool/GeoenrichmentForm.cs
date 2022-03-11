@@ -32,6 +32,7 @@ namespace KWG_Geoenrichment
 
         private List<String> entities;
         private List<List<String>> content;
+        private List<String> contentTypes;
         private Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
             { "concat", "Concate values together with a \"|\"" },
             { "first", "Get the first value found" },
@@ -61,6 +62,7 @@ namespace KWG_Geoenrichment
 
             knowledgeGraph.SelectedIndex = 0;
             content = new List<List<String>>() { };
+            contentTypes = new List<String>() { };
         }
 
         private void OnChangeGraph(object sender, EventArgs e)
@@ -215,6 +217,9 @@ namespace KWG_Geoenrichment
 
             //Capture the data
             content.Add(uniqueUris);
+            //Keep track of tables we need to make based on type
+            if (!contentTypes.Contains(uris[0]))
+                contentTypes.Add(uris[0]);
 
             //Add the label
             string labelString = String.Join(" -> ", uniqueLabels);
@@ -300,26 +305,35 @@ namespace KWG_Geoenrichment
         private async void RunGeoenrichment(object sender, EventArgs e)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
+            bool layerFailed = false;
+            Dictionary<string, BasicFeatureLayer> tables = new Dictionary<string, BasicFeatureLayer>() { }; //entityType -> layer
 
             //build the table and its columns
-            string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text);
-            await FeatureClassHelper.CreatePolygonFeatureLayer(tableName);
-            var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
-
-            if (fcLayer == null)
+            foreach (var tableToCreate in contentTypes)
             {
-                MessageBox.Show($@"Failed to create {tableName} in the active map");
+                string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text + "_" + tableToCreate);
+                await FeatureClassHelper.CreateFeatureClassLayer(tableName);
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
+
+                if (fcLayer == null)
+                {
+                    MessageBox.Show($@"Failed to create {tableName} in the active map");
+                    layerFailed = true;
+                } else
+                {
+                    await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
+                    await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
+                    tables[tableToCreate] = fcLayer;
+                }
             }
-            else
-            {
-                await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
-                await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
-                //await FeatureClassHelper.AddField(fcLayer, label.Text, "TEXT");
 
+            if(!layerFailed)
+            {
                 //Build and run query for base classes
                 var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> data
                 var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, string>() { }; //entity -> wkt
+                var finalContentTable = new Dictionary<string, BasicFeatureLayer>() { }; //entity -> layer
                 var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
                 string entityName; string nextEntityName;
                 string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
@@ -330,7 +344,7 @@ namespace KWG_Geoenrichment
                     string mergeRule = mergeBox.SelectedValue.ToString();
                     string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
                     labelToMergeRule[columnLabel] = mergeRule;
-                    await FeatureClassHelper.AddField(fcLayer, columnLabel, "TEXT");
+                    await FeatureClassHelper.AddField(tables[content[j][0]], columnLabel, "TEXT");
 
                     var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
 
@@ -378,6 +392,8 @@ namespace KWG_Geoenrichment
                             finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
                         if (!finalContentGeometry.ContainsKey(entityVal))
                             finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
+                        if (!finalContentTable.ContainsKey(entityVal))
+                            finalContentTable[entityVal] = tables[content[j][0]];
 
                         //Let's prep and store the result content
                         if (!finalContent[entityVal].ContainsKey(columnLabel))
@@ -391,13 +407,13 @@ namespace KWG_Geoenrichment
                 //Use data to populate table
                 await QueuedTask.Run(() =>
                 {
-                    InsertCursor cursor = fcLayer.GetTable().CreateInsertCursor();
 
                     foreach(var entityPair in finalContent)
                     {
                         string currEntity = entityPair.Key;
 
-                        RowBuffer buff = fcLayer.GetTable().CreateRowBuffer();
+                        InsertCursor cursor = finalContentTable[currEntity].GetTable().CreateInsertCursor();
+                        RowBuffer buff = finalContentTable[currEntity].GetTable().CreateRowBuffer();
                         IGeometryEngine geoEngine = GeometryEngine.Instance;
                         SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
                         string wkt = finalContentGeometry[currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
@@ -470,9 +486,8 @@ namespace KWG_Geoenrichment
                         }
 
                         cursor.Insert(buff);
+                        cursor.Dispose();
                     }
-
-                    cursor.Dispose();
 
                     MapView.Active.Redraw(false);
                 });

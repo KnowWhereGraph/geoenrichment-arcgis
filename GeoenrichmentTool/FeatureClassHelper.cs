@@ -28,7 +28,7 @@ namespace KWG_Geoenrichment
 
     class FeatureClassHelper
     {
-        public static async Task CreatePolygonFeatureLayer(string layerName)
+        public static async Task CreateFeatureClassLayer(string layerName)
         {
             List<object> arguments = new List<object>
             {
