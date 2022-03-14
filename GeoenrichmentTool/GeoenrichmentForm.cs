@@ -32,7 +32,6 @@ namespace KWG_Geoenrichment
 
         private List<String> entities;
         private List<List<String>> content;
-        private List<String> contentTypes;
         private Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
             { "concat", "Concate values together with a \"|\"" },
             { "first", "Get the first value found" },
@@ -42,6 +41,12 @@ namespace KWG_Geoenrichment
             { "low", " Get the lowest value (numeric)" },
             { "avg", "Get the average of all values (numeric)" },
             { "stdev", "Get the standard deviation of all values (numeric)" },
+        };
+
+        private List<String> shapeTables = new List<String>() {
+            "MapPoint",
+            "Polyline",
+            "Polygon"
         };
 
         private int contentTotalSpacing = 50;
@@ -62,7 +67,6 @@ namespace KWG_Geoenrichment
 
             knowledgeGraph.SelectedIndex = 0;
             content = new List<List<String>>() { };
-            contentTypes = new List<String>() { };
         }
 
         private void OnChangeGraph(object sender, EventArgs e)
@@ -217,9 +221,6 @@ namespace KWG_Geoenrichment
 
             //Capture the data
             content.Add(uniqueUris);
-            //Keep track of tables we need to make based on type
-            if (!contentTypes.Contains(uris[0]))
-                contentTypes.Add(uris[0]);
 
             //Add the label
             string labelString = String.Join(" -> ", uniqueLabels);
@@ -309,10 +310,10 @@ namespace KWG_Geoenrichment
             Dictionary<string, BasicFeatureLayer> tables = new Dictionary<string, BasicFeatureLayer>() { }; //entityType -> layer
 
             //build the table and its columns
-            foreach (var tableToCreate in contentTypes)
+            foreach (var shape in shapeTables)
             {
-                string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text + "_" + tableToCreate);
-                await FeatureClassHelper.CreateFeatureClassLayer(tableName);
+                string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text + "_" + shape);
+                await FeatureClassHelper.CreateFeatureClassLayer(tableName, shape);
                 var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
 
                 if (fcLayer == null)
@@ -323,7 +324,8 @@ namespace KWG_Geoenrichment
                 {
                     await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
                     await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
-                    tables[tableToCreate] = fcLayer;
+                    tables[shape] = fcLayer;
+
                 }
             }
 
@@ -333,18 +335,20 @@ namespace KWG_Geoenrichment
                 var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> data
                 var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, string>() { }; //entity -> wkt
-                var finalContentTable = new Dictionary<string, BasicFeatureLayer>() { }; //entity -> layer
                 var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
                 string entityName; string nextEntityName;
                 string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
                 for (int j = 0; j < content.Count; j++)
                 {
-                    //Add the column to our feature and track its merge rule
+                    //Add the column to our feature tables and track its merge rule
                     ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j+1).ToString(), true).First();
                     string mergeRule = mergeBox.SelectedValue.ToString();
                     string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
                     labelToMergeRule[columnLabel] = mergeRule;
-                    await FeatureClassHelper.AddField(tables[content[j][0]], columnLabel, "TEXT");
+                    foreach (var shape in shapeTables)
+                    {
+                        await FeatureClassHelper.AddField(tables[shape], columnLabel, "TEXT");
+                    }
 
                     var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
 
@@ -392,8 +396,6 @@ namespace KWG_Geoenrichment
                             finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
                         if (!finalContentGeometry.ContainsKey(entityVal))
                             finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
-                        if (!finalContentTable.ContainsKey(entityVal))
-                            finalContentTable[entityVal] = tables[content[j][0]];
 
                         //Let's prep and store the result content
                         if (!finalContent[entityVal].ContainsKey(columnLabel))
@@ -412,17 +414,17 @@ namespace KWG_Geoenrichment
                     {
                         string currEntity = entityPair.Key;
 
-                        InsertCursor cursor = finalContentTable[currEntity].GetTable().CreateInsertCursor();
-                        RowBuffer buff = finalContentTable[currEntity].GetTable().CreateRowBuffer();
                         IGeometryEngine geoEngine = GeometryEngine.Instance;
                         SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
                         string wkt = finalContentGeometry[currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
                         Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
 
+                        InsertCursor cursor = tables[geo.GetType().Name].GetTable().CreateInsertCursor();
+                        RowBuffer buff = tables[geo.GetType().Name].GetTable().CreateRowBuffer();
+
                         buff["Label"] = finalContentLabels[currEntity];
                         buff["URL"] = currEntity;
-                        if (!(geo is MapPoint) && !(geo is Polyline)) //ArcGIS Pro seems to only support 
-                            buff["Shape"] = geo;
+                        buff["Shape"] = geo;
 
                         //Add column data based on merge rule
                         foreach(var dataPair in entityPair.Value)

@@ -28,8 +28,11 @@ namespace KWG_Geoenrichment
 
     class FeatureClassHelper
     {
-        public static async Task CreateFeatureClassLayer(string layerName)
+        public static async Task CreateFeatureClassLayer(string layerName, string shape = "Polygon")
         {
+            //This is the only geo type where the class names don't match between libraries
+            shape = (shape == "MapPoint") ? "Point" : shape;
+
             List<object> arguments = new List<object>
             {
                 // store the results in the default geodatabase
@@ -37,7 +40,7 @@ namespace KWG_Geoenrichment
                 // name of the feature class
                 layerName,
                 // type of geometry
-                null,//EnumFeatureClassType.POLYGON.ToString(),
+                shape,
                 // no template
                 "",
                 // no z values
