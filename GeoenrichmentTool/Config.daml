@@ -4,7 +4,7 @@
     <Description>Enrich your dataset with the vast information present in knowledge graphs to ask the question, "what happened here?"</Description>
     <Image>Images\logo-button.png</Image>
     <Author>Anthony D'Onofrio - Matrix: Centre for Digital Humanities &amp; Social Sciences</Author>
-    <Company>KWG - University of Santa Barbra</Company>
+    <Company>KWG - University of Santa Barbara</Company>
     <Date>5/26/2021 7:01:03 AM</Date>
     <Subject>Geoprocessing</Subject>
   </AddInInfo>
@@ -15,16 +15,12 @@
   </conditions>
   <modules>
     <insertModule id="KWG_Geoenrichment_Module" className="KwgGeoModule" autoLoad="false" caption="KwgGeoModule">
-      <!-- uncomment to have the control hosted on a separate tab-->
       <tabs>
         <tab id="KWG_Geoenrichment_Main" caption="KWG Geoenrichment">
           <group refID="KWG_Geoenrichment_Group_Main" />
         </tab>
       </tabs>
       <groups>
-        <!-- comment this out if you have no controls on the Addin tab to avoid
-              an empty group-->
-        <!-- host controls within groups -->
         <group id="KWG_Geoenrichment_Group_Main" caption="Explore an Area" appearsOnAddInTab="false">
           <button refID="KWG_Geoenrichment_BeginGeoenrichment" size="large" />
         </group>
@@ -32,7 +28,7 @@
       <controls>
         <button id="KWG_Geoenrichment_BeginGeoenrichment" caption="Explore" className="BeginGeoenrichment" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
           <tooltip heading="Begin Geoenrichment">
-				  Begin exploring a knowledge graph<disabledText>Map pane required</disabledText></tooltip>
+				  Begin exploring the KnowWhereGraph<disabledText>Map pane required</disabledText></tooltip>
         </button>
 		<tool id="KWG_Geoenrichment_DrawPolygon" caption="Select Area" className="DrawPolygon" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
 			<tooltip heading="Select Area">
