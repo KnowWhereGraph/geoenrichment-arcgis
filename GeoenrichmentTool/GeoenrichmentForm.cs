@@ -222,9 +222,14 @@ namespace KWG_Geoenrichment
             //Capture the data
             content.Add(uniqueUris);
 
-            //Add the label
+            
             string labelString = String.Join(" -> ", uniqueLabels);
+            string columnString = "NoAdditionalData";
+            int labelCnt = uniqueLabels.Count;
+            if (labelCnt > 1)
+                columnString = (labelCnt % 2 == 0) ? uniqueLabels[labelCnt - 1] : uniqueLabels[labelCnt - 2];
 
+            //Add the label
             Label labelObj = new Label();
             labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
             labelObj.BackColor = Color.FromName("ActiveCaption");
@@ -242,7 +247,7 @@ namespace KWG_Geoenrichment
             columnText.BorderStyle = saveLayerAs.BorderStyle;
             columnText.Font = saveLayerAs.Font;
             columnText.Name = "columnName" + content.Count.ToString();
-            columnText.Text = "column" + content.Count.ToString();
+            columnText.Text = columnString;
             columnText.Size = new System.Drawing.Size(200, 26);
             Controls.Add(columnText);
 
@@ -277,6 +282,14 @@ namespace KWG_Geoenrichment
             helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
             runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
             Height += addedHeight;
+
+            //Disable boxes if needed
+            if(columnString == "NoAdditionalData")
+            {
+                columnText.Enabled = false;
+                mergeBox.Enabled = false;
+            }
+
 
             CheckCanRunGeoenrichment();
         }
@@ -347,7 +360,8 @@ namespace KWG_Geoenrichment
                     labelToMergeRule[columnLabel] = mergeRule;
                     foreach (var shape in shapeTables)
                     {
-                        await FeatureClassHelper.AddField(tables[shape], columnLabel, "TEXT");
+                        if(!columnLabel.StartsWith("NoAdditionalData"))
+                            await FeatureClassHelper.AddField(tables[shape], columnLabel, "TEXT");
                     }
 
                     var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
@@ -430,6 +444,9 @@ namespace KWG_Geoenrichment
                         foreach(var dataPair in entityPair.Value)
                         {
                             string currLabel = dataPair.Key;
+                            if (currLabel.StartsWith("NoAdditionalData"))
+                                continue;
+
                             switch (labelToMergeRule[currLabel])
                             {
                                 case "first":
