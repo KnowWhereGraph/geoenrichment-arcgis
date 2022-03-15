@@ -32,7 +32,7 @@ namespace KWG_Geoenrichment
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TraverseKnowledgeGraph));
             this.traverseGraph = new System.Windows.Forms.Label();
             this.prop1Req = new System.Windows.Forms.Label();
-            this.class1 = new System.Windows.Forms.ComboBox();
+            this.object1 = new System.Windows.Forms.ComboBox();
             this.prop1Label = new System.Windows.Forms.Label();
             this.runTraverseBtn = new System.Windows.Forms.Button();
             this.addPropertyBtn = new System.Windows.Forms.Button();
@@ -41,7 +41,8 @@ namespace KWG_Geoenrichment
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.helpPanelLogo = new System.Windows.Forms.PictureBox();
-            this.prop1 = new System.Windows.Forms.ComboBox();
+            this.subject1 = new System.Windows.Forms.ComboBox();
+            this.predicate1 = new System.Windows.Forms.ComboBox();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             this.SuspendLayout();
@@ -54,9 +55,9 @@ namespace KWG_Geoenrichment
             this.traverseGraph.ForeColor = System.Drawing.Color.White;
             this.traverseGraph.Location = new System.Drawing.Point(41, 51);
             this.traverseGraph.Name = "traverseGraph";
-            this.traverseGraph.Size = new System.Drawing.Size(619, 54);
+            this.traverseGraph.Size = new System.Drawing.Size(598, 54);
             this.traverseGraph.TabIndex = 5;
-            this.traverseGraph.Text = "Traverse Knowledge Graph";
+            this.traverseGraph.Text = "Explore Knowledge Graph";
             // 
             // prop1Req
             // 
@@ -70,29 +71,31 @@ namespace KWG_Geoenrichment
             this.prop1Req.TabIndex = 31;
             this.prop1Req.Text = "*";
             // 
-            // class1
+            // object1
             // 
-            this.class1.Enabled = false;
-            this.class1.Font = new System.Drawing.Font("Arial", 12F);
-            this.class1.FormattingEnabled = true;
-            this.class1.Location = new System.Drawing.Point(50, 198);
-            this.class1.Name = "class1";
-            this.class1.Size = new System.Drawing.Size(765, 26);
-            this.class1.TabIndex = 30;
-            this.class1.SelectedValueChanged += new System.EventHandler(this.ClassChanged);
+            this.object1.DisplayMember = "Value";
+            this.object1.Enabled = false;
+            this.object1.Font = new System.Drawing.Font("Arial", 12F);
+            this.object1.FormattingEnabled = true;
+            this.object1.Location = new System.Drawing.Point(574, 197);
+            this.object1.Name = "object1";
+            this.object1.Size = new System.Drawing.Size(256, 26);
+            this.object1.TabIndex = 30;
+            this.object1.ValueMember = "Key";
+            this.object1.SelectedIndexChanged += new System.EventHandler(this.OnValueBoxChange);
             // 
             // prop1Label
             // 
             this.prop1Label.AutoSize = true;
             this.prop1Label.BackColor = System.Drawing.Color.Transparent;
-            this.prop1Label.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
+            this.prop1Label.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.prop1Label.ForeColor = System.Drawing.Color.White;
             this.prop1Label.Location = new System.Drawing.Point(60, 166);
             this.prop1Label.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.prop1Label.Name = "prop1Label";
-            this.prop1Label.Size = new System.Drawing.Size(288, 29);
+            this.prop1Label.Size = new System.Drawing.Size(121, 19);
             this.prop1Label.TabIndex = 29;
-            this.prop1Label.Text = "Keep Exploring Content";
+            this.prop1Label.Text = "Select Content";
             // 
             // runTraverseBtn
             // 
@@ -102,11 +105,11 @@ namespace KWG_Geoenrichment
             this.runTraverseBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.runTraverseBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.runTraverseBtn.ForeColor = System.Drawing.Color.Black;
-            this.runTraverseBtn.Location = new System.Drawing.Point(654, 396);
+            this.runTraverseBtn.Location = new System.Drawing.Point(669, 396);
             this.runTraverseBtn.Name = "runTraverseBtn";
             this.runTraverseBtn.Size = new System.Drawing.Size(161, 63);
             this.runTraverseBtn.TabIndex = 32;
-            this.runTraverseBtn.Text = "RUN";
+            this.runTraverseBtn.Text = "ADD CONTENT";
             this.runTraverseBtn.UseVisualStyleBackColor = false;
             this.runTraverseBtn.Click += new System.EventHandler(this.RunTraverseGraph);
             // 
@@ -114,17 +117,18 @@ namespace KWG_Geoenrichment
             // 
             this.addPropertyBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.addPropertyBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.addPropertyBtn.Enabled = false;
             this.addPropertyBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
             this.addPropertyBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.addPropertyBtn.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold);
             this.addPropertyBtn.ForeColor = System.Drawing.Color.White;
-            this.addPropertyBtn.Location = new System.Drawing.Point(50, 288);
+            this.addPropertyBtn.Location = new System.Drawing.Point(50, 229);
             this.addPropertyBtn.Name = "addPropertyBtn";
-            this.addPropertyBtn.Size = new System.Drawing.Size(195, 55);
+            this.addPropertyBtn.Size = new System.Drawing.Size(195, 26);
             this.addPropertyBtn.TabIndex = 33;
             this.addPropertyBtn.Text = "LEARN MORE";
             this.addPropertyBtn.UseVisualStyleBackColor = false;
-            this.addPropertyBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(this.AddNewProperty);
+            this.addPropertyBtn.Click += new System.EventHandler(this.LearnMore);
             // 
             // helpButton
             // 
@@ -185,16 +189,31 @@ namespace KWG_Geoenrichment
             this.helpPanelLogo.TabIndex = 0;
             this.helpPanelLogo.TabStop = false;
             // 
-            // prop1
+            // subject1
             // 
-            this.prop1.Enabled = false;
-            this.prop1.Font = new System.Drawing.Font("Arial", 12F);
-            this.prop1.FormattingEnabled = true;
-            this.prop1.Location = new System.Drawing.Point(50, 236);
-            this.prop1.Name = "prop1";
-            this.prop1.Size = new System.Drawing.Size(765, 26);
-            this.prop1.TabIndex = 39;
-            this.prop1.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
+            this.subject1.DisplayMember = "Value";
+            this.subject1.Enabled = false;
+            this.subject1.Font = new System.Drawing.Font("Arial", 12F);
+            this.subject1.FormattingEnabled = true;
+            this.subject1.Location = new System.Drawing.Point(50, 197);
+            this.subject1.Name = "subject1";
+            this.subject1.Size = new System.Drawing.Size(256, 26);
+            this.subject1.TabIndex = 39;
+            this.subject1.ValueMember = "Key";
+            this.subject1.SelectedIndexChanged += new System.EventHandler(this.OnClassBoxChange);
+            // 
+            // predicate1
+            // 
+            this.predicate1.DisplayMember = "Value";
+            this.predicate1.Enabled = false;
+            this.predicate1.Font = new System.Drawing.Font("Arial", 12F);
+            this.predicate1.FormattingEnabled = true;
+            this.predicate1.Location = new System.Drawing.Point(312, 197);
+            this.predicate1.Name = "predicate1";
+            this.predicate1.Size = new System.Drawing.Size(256, 26);
+            this.predicate1.TabIndex = 40;
+            this.predicate1.ValueMember = "Key";
+            this.predicate1.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
             // 
             // TraverseKnowledgeGraph
             // 
@@ -203,13 +222,14 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 491);
-            this.Controls.Add(this.prop1);
+            this.Controls.Add(this.predicate1);
+            this.Controls.Add(this.subject1);
             this.Controls.Add(this.helpPanel);
             this.Controls.Add(this.helpButton);
             this.Controls.Add(this.addPropertyBtn);
             this.Controls.Add(this.runTraverseBtn);
             this.Controls.Add(this.prop1Req);
-            this.Controls.Add(this.class1);
+            this.Controls.Add(this.object1);
             this.Controls.Add(this.prop1Label);
             this.Controls.Add(this.traverseGraph);
             this.DoubleBuffered = true;
@@ -227,7 +247,7 @@ namespace KWG_Geoenrichment
 
         private System.Windows.Forms.Label traverseGraph;
         private System.Windows.Forms.Label prop1Req;
-        private System.Windows.Forms.ComboBox class1;
+        private System.Windows.Forms.ComboBox object1;
         private System.Windows.Forms.Label prop1Label;
         private System.Windows.Forms.Button runTraverseBtn;
         private System.Windows.Forms.Button addPropertyBtn;
@@ -236,6 +256,7 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.PictureBox helpPanelLogo;
-        private System.Windows.Forms.ComboBox prop1;
+        private System.Windows.Forms.ComboBox subject1;
+        private System.Windows.Forms.ComboBox predicate1;
     }
 }

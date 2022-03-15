@@ -140,7 +140,6 @@
     <Compile Include="TraverseKnowledgeGraph.Designer.cs">
       <DependentUpon>TraverseKnowledgeGraph.cs</DependentUpon>
     </Compile>
-    <Compile Include="PropertyEnrichment.cs" />
     <Compile Include="GeoenrichmentForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -148,7 +147,6 @@
       <DependentUpon>GeoenrichmentForm.cs</DependentUpon>
     </Compile>
     <Compile Include="DrawPolygon.cs" />
-    <Compile Include="KeepExploring.cs" />
     <Compile Include="FeatureClassHelper.cs" />
     <Compile Include="QuerySPARQL.cs" />
     <Compile Include="KwgGeoModule.cs" />
@@ -181,7 +179,6 @@
     <Resource Include="Images\geographic-entity-match.png" />
     <AddInContent Include="Images\linked-relationships.png" />
     <AddInContent Include="Images\merge-data.png" />
-    <Content Include="KWGGeoEnrichment.py" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

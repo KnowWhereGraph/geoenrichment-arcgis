@@ -1,4 +1,6 @@
 ﻿using ArcGIS.Core.Data;
+using ArcGIS.Core.Geometry;
+using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
@@ -10,21 +12,45 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace KWG_Geoenrichment
 {
     public partial class GeoenrichmentForm : Form
     {
-        //Array that maps the formatted feature type label to the respective URI
-        protected Dictionary<string, string> featureTypeArray;
-        protected List<string> commonPropertyUrls;
-        protected List<string> sosaObsPropertyUrls;
-        protected List<string> inversePropertyUrls;
+        private bool gdbFileUploaded = false;
+        private GDBProjectItem selectedGDB;
 
+        private bool areaOfInterestDrawn = false;
+        private string areaOfInterestPolygon;
+
+        private List<String> entities;
+        private List<List<String>> content;
+        private Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
+            { "concat", "Concate values together with a \"|\"" },
+            { "first", "Get the first value found" },
+            { "count", "Get the number of values found" },
+            { "total", "Get the total of all values (numeric)" },
+            { "high", "Get the highest value (numeric)" },
+            { "low", " Get the lowest value (numeric)" },
+            { "avg", "Get the average of all values (numeric)" },
+            { "stdev", "Get the standard deviation of all values (numeric)" },
+        };
+
+        private List<String> shapeTables = new List<String>() {
+            "MapPoint",
+            "Polyline",
+            "Polygon"
+        };
+
+        private int contentTotalSpacing = 50;
+        private int contentPadding = 11;
         private int helpSpacing = 400;
         private bool helpOpen = true;
 
@@ -33,371 +59,460 @@ namespace KWG_Geoenrichment
             InitializeComponent();
             ToggleHelpMenu();
 
-            KwgGeoModule.Current.activeGeoenrichmentForm = this;
-            knowledgeGraph.Text = KwgGeoModule.Current.GetQueryClass().GetActiveEndPoint();
-            PopulateFeatureTypes();
-        }
-
-        private void PopulateFeatureTypes()
-        {
-            var entityTypeQuery = "select distinct ?entityType ?entityTypeLabel where { ?entity rdf:type ?entityType . ?entity geo:hasGeometry ?aGeom . ?entityType rdfs:label ?entityTypeLabel }";
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
-
-            JToken entityTypeJson = queryClass.SubmitQuery(entityTypeQuery);
-
-            featureTypeArray = new Dictionary<string, string>();
-            List<object> termsList = new List<object>();
-
-            foreach (var jsonResult in entityTypeJson)
+            foreach(var endpoint in queryClass.defaultEndpoints)
             {
-                string fURI = jsonResult["entityType"]["value"].ToString();
-                string fType = jsonResult["entityTypeLabel"]["value"].ToString();
-                string featureTypeFormatted = fType + " (" + queryClass.MakeIRIPrefix(fURI) + ")";
-                featureTypeArray[featureTypeFormatted] = fURI;
-                termsList.Add(featureTypeFormatted);
+                knowledgeGraph.Items.Add(endpoint.Key);
             }
 
-            featureType.Items.AddRange(termsList.ToArray());
+            knowledgeGraph.SelectedIndex = 0;
+            content = new List<List<String>>() { };
         }
 
-        private void RefreshFeatureTypes(object sender, EventArgs e)
+        private void OnChangeGraph(object sender, EventArgs e)
         {
-            featureType.Items.Clear();
-            featureType.ResetText();
-            KwgGeoModule.Current.GetQueryClass().UpdateActiveEndPoint(knowledgeGraph.Text);
-
-            try
-            {
-                PopulateFeatureTypes();
-                MessageBox.Show($@"Feature types updated!");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($@"Failed to connect to endpoint!");
-            }
+            CheckCanSelectContent();
+            CheckCanRunGeoenrichment();
         }
 
-        private void getPropertiesForFeature(object sender, EventArgs e)
+        private void UploadGDBFile(object sender, EventArgs e)
         {
-            commonPropertyUrls = new List<string>() { };
-            sosaObsPropertyUrls = new List<string>() { };
-            inversePropertyUrls = new List<string>() { };
+            if (areaOfInterestDrawn)
+                return;
 
-            string selectedType = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(featureTypeArray[featureType.Text]);
-            PropertyEnrichment propEnrichClass = new PropertyEnrichment(selectedType);
+            var bpf = new BrowseProjectFilter("esri_browseDialogFilters_geodatabases_file");
+            bpf.Name = "File Geodatabases";
+            var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
 
-            List<string>[] commonProperties = propEnrichClass.CommonProperties;
-            List<string>[] sosaObsProperties = propEnrichClass.SosaObsProperties;
-            List<string>[] inverseProperties = propEnrichClass.InverseProperties;
-
-            for (var i = 0; i < commonProperties[0].Count(); i++)
+            if ((bool)openItemDialog.ShowDialog())
             {
-                string url = commonProperties[0][i];
-                string name = commonProperties[1][i];
+                selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
+                gdbFileUploaded = true;
+                SearchForEntities();
 
-                commonPropertiesBox.Rows.Add(false, name, null, url);
-                //We want to keep track of the fact its a common value
-                commonPropertyUrls.Add(url);
+                openGDBBtn.Text = selectedGDB.Name;
+                openGDBBtn.Enabled = false;
+                selectAreaBtn.Enabled = false;
+
+                CheckCanSelectContent();
+                CheckCanRunGeoenrichment();
             }
-
-            for (var i = 0; i < sosaObsProperties[0].Count(); i++)
-            {
-                string url = sosaObsProperties[0][i];
-                string name = sosaObsProperties[1][i];
-
-                //We want to add the value to main user selection list for common properties
-                commonPropertiesBox.Rows.Add(false, name, null, url);
-                //But we also want to keep track of the fact its a sosa observation value
-                sosaObsPropertyUrls.Add(url);
-            }
-
-            for (var i = 0; i < inverseProperties[0].Count(); i++)
-            {
-                string url = inverseProperties[0][i];
-                string name = inverseProperties[1][i];
-
-                //We want to add the value to main user selection list for common properties
-                commonPropertiesBox.Rows.Add(false, name, null, url);
-                //But we also want to keep track of the fact its an inverse value
-                inversePropertyUrls.Add(url);
-            }
-        }
-
-        private bool HasFormError()
-        {
-            if (knowledgeGraph.Text == "" | spatialRelation.Text == "" | saveLayerAs.Text == "")
-            {
-                MessageBox.Show("Required fields missing!");
-                return true;
-            }
-
-            return false;
         }
 
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
-            if(!HasFormError())
+            if (gdbFileUploaded)
+                return;
+
+            FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
+
+            KwgGeoModule.Current.SetActiveForm(this);
+
+            Hide();
+        }
+
+        public void SetDrawnPolygon(string polygonString)
+        {
+            areaOfInterestPolygon = polygonString;
+            areaOfInterestDrawn = true;
+            SearchForEntities();
+
+            selectAreaBtn.Text = "Area Drawn";
+            openGDBBtn.Enabled = false;
+            selectAreaBtn.Enabled = false;
+
+            CheckCanSelectContent();
+            CheckCanRunGeoenrichment();
+            Show();
+        }
+
+        public void SearchForEntities()
+        {
+            var s2CellList = new List<string>() { };
+            entities = new List<string>() { };
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+
+            //Get s2Cells related to the polygon
+            //TODO:: Change function base on spatial relation
+            if (gdbFileUploaded)
             {
-                Close();
-                FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
+
+            }
+            else if (areaOfInterestDrawn)
+            {
+                var s2Query = "select ?s2Cell where { " +
+                    "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
+                    "?adminRegion2 geo:hasGeometry ?arGeo. " +
+                    "?arGeo geo:asWKT ?arWKT. " +
+                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
+
+                    "?adminRegion2 geo:sfContains ?s2Cell. " +
+                    "?s2Cell a kwg-ont:KWGCellLevel13. " +
+                    "?s2Cell geo:hasGeometry ?s2Geo. " +
+                    "?s2Geo geo:asWKT ?s2WKT. " +
+                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
+                "}";
+
+                JToken s2Results = queryClass.SubmitQuery(knowledgeGraph.Text, s2Query);
+
+                foreach (var item in s2Results)
+                {
+                    s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
+                }
+            }
+
+            var s2CellVals = "values ?s2Cell {" + String.Join(" ", s2CellList) + "}";
+
+            //Lets get our list of entities
+            var entityQuery = "select distinct ?entity where { " +
+                "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
+                "?entity a geo:Feature. " +
+                s2CellVals +
+            "}";
+
+            JToken entityResults = queryClass.SubmitQuery(knowledgeGraph.Text, entityQuery);
+
+            foreach (var item in entityResults)
+            {
+                entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
             }
         }
 
-        public async void SubmitGeoenrichmentForm(string polygonString)
+        public void CheckCanSelectContent()
         {
-            //We need to update our global query module to point at the specified knowledge graph endpoint
-            QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
-            queryClass.UpdateActiveEndPoint(knowledgeGraph.Text);
-
-            string featureTypeURI = (featureType.Text != "") ? featureTypeArray[featureType.Text] : "";
-
-            string[] geoFunctions = new string[] { };
-            switch (spatialRelation.Text)
+            if(
+                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
+                (gdbFileUploaded || areaOfInterestDrawn)
+              )
             {
-                case "Contain or Intersect":
-                    geoFunctions = new string[] { "geo:sfContains", "geo:sfIntersects" };
-                    break;
-                case "Contain":
-                    geoFunctions = new string[] { "geo:sfContains" };
-                    break;
-                case "Within":
-                    geoFunctions = new string[] { "geo:sfWithin" };
-                    break;
-                case "Intersect":
-                default:
-                    geoFunctions = new string[] { "geo:sfIntersects" };
-                    break;
-            }
-
-            //Build proper WKT value
-            string polygonWKT = "'''<http://www.opengis.net/def/crs/OGC/1.3/CRS84> " + polygonString + " '''";
-
-            var geoQueryResult = TypeAndGeoSPARQLQuery(polygonWKT, featureTypeURI, false, geoFunctions); //Hardcoded false value for ignoreSubclasses.Checked since we are removing the checkbox for now
-
-            string layerName = saveLayerAs.Text.Replace(" ", "_");
-            await FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, layerName, featureTypeURI, false); //Hardcoded false value for ignoreSubclasses.Checked since we are removing the checkbox for now
-
-            DataGridViewRowCollection propertyRows = commonPropertiesBox.Rows;
-            Dictionary<string, List<string>> propertiesToMerge = new Dictionary<string, List<string>>() { };
-            foreach (DataGridViewRow row in propertyRows)
+                selectContentBtn.Enabled = true;
+            } else
             {
-                DataGridViewCellCollection rowCells = row.Cells;
-                var useProperty = rowCells[0].Value.ToString();
-
-                if (useProperty == "True")
-                {
-                    string mergeRule = (rowCells[2].Value!=null) ? rowCells[2].Value.ToString() : "" ;
-                    propertiesToMerge[rowCells[3].Value.ToString()] = new List<string>() { 
-                        FeatureClassHelper.GetPropertyName(rowCells[3].Value.ToString()), //We need the property name apart from the URI for merging logic
-                        mergeRule
-                    };
-                }
+                selectContentBtn.Enabled = false;
             }
-
-            EnrichData(propertiesToMerge);
-
-            //TODO::Enable the property enrichment tool since we have a layer for it to use
-            FrameworkApplication.State.Activate("kwg_query_layer_added");
         }
 
-        /**
-         * Format GeoSPARQL query
-         * 
-         * polygonWKT: the wkt literal for the user polygon
-         * featureTypeUri: the user spercified feature type
-         * ignoreSubclasses: ignore use of subclasses for feature type
-         * geoFunctions: a list of geosparql functions
-         **/
-        private JToken TypeAndGeoSPARQLQuery(string polygonWKT, string featureTypeURI, bool ignoreSubclasses, string[] geoFunctions)
+        private void SelectContent(object sender, EventArgs e)
         {
-            string query = "select distinct ?place ?placeLabel ?placeFlatType ?wkt " +
-                "where" +
-                "{" +
-                "?place geo:hasGeometry ?geometry . " +
-                "?place rdfs:label ?placeLabel . " +
-                "?geometry geo:asWKT ?wkt . " +
-                "?place rdf:type ?placeFlatType ." +
-                "{ " + polygonWKT + "^^geo:wktLiteral " +
-                geoFunctions[0] + "  ?geometry .}";
-
-            if (geoFunctions.Length == 2)
-            {
-                query += " union" +
-                    "{ " + polygonWKT + "^^geo:wktLiteral " +
-                    geoFunctions[1] + "   ?geometry . }";
-            }
-
-            if (featureTypeURI != "")
-            {
-                if (!ignoreSubclasses)
-                {
-                    query += "?place rdf:type ?placeFlatType ." +
-                    "?placeFlatType rdfs:subClassOf* <" + featureTypeURI + ">.";
-                }
-                else
-                {
-                    query += "?place rdf:type  <" + featureTypeURI + ">.";
-                }
-
-            }
-
-            query += "}";
-
-            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(query);
+            var exploreWindow = new TraverseKnowledgeGraph(this, knowledgeGraph.Text, entities);
+            Hide();
+            exploreWindow.Show();
         }
 
-        private async void EnrichData(Dictionary<string, List<string>> properties)
+        public void AddSelectedContent(List<string> uris, List<string> labels)
         {
-            Close();
+            Show();
 
-            BasicFeatureLayer mainLayer = KwgGeoModule.Current.GetLayers().First();
-            List<string> uriList = await FeatureClassHelper.GetURIs(mainLayer);
+            //We need to eliminate doubles since the value box in one line is the same as the class box in the next line
+            var uniqueUris = new List<string>() { };
+            var uniqueLabels = new List<string>() { };
 
-            List<string> commonURIs = new List<string>() { };
-            List<string> sosaObsURIs = new List<string>() { };
-            List<string> inverseURIs = new List<string>() { };
-            foreach (var property in properties)
+            for(int i=0; i<uris.Count; i++)
             {
-                if (commonPropertyUrls.Contains(property.Key))
+                if(
+                    i == 0 || 
+                    (uris[i] != uris[i-1] && uris[i] != "LiteralDataFound")
+                )
                 {
-                    commonURIs.Add(property.Key);
-                }
-                else if (sosaObsPropertyUrls.Contains(property.Key))
-                {
-                    sosaObsURIs.Add(property.Key);
-                }
-                else if (inversePropertyUrls.Contains(property.Key))
-                {
-                    inverseURIs.Add(property.Key);
+                    uniqueUris.Add(uris[i]);
+                    uniqueLabels.Add(labels[i]);
                 }
             }
 
-            if(commonURIs.Count > 0)
+            //Capture the data
+            content.Add(uniqueUris);
+
+            
+            string labelString = String.Join(" -> ", uniqueLabels);
+            string columnString = "NoAdditionalData";
+            int labelCnt = uniqueLabels.Count;
+            if (labelCnt > 1)
+                columnString = (labelCnt % 2 == 0) ? uniqueLabels[labelCnt - 1] : uniqueLabels[labelCnt - 2];
+
+            //Add the label
+            Label labelObj = new Label();
+            labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
+            labelObj.BackColor = Color.FromName("ActiveCaption");
+            labelObj.Font = knowledgeGraphLabel.Font;
+            labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
+            labelObj.Margin = knowledgeGraphLabel.Margin;
+            labelObj.Name = "contentLabel";
+            labelObj.Size = knowledgeGraphLabel.Size;
+            labelObj.MaximumSize = new Size(780, 0);
+            labelObj.Text = labelString;
+            Controls.Add(labelObj);
+
+            //Add column name textbox
+            TextBox columnText = new TextBox();
+            columnText.BorderStyle = saveLayerAs.BorderStyle;
+            columnText.Font = saveLayerAs.Font;
+            columnText.Name = "columnName" + content.Count.ToString();
+            columnText.Text = columnString;
+            columnText.Size = new System.Drawing.Size(200, 26);
+            Controls.Add(columnText);
+
+            //Add the merge dropdown
+            ComboBox mergeBox = new ComboBox();
+            mergeBox.Font = knowledgeGraph.Font;
+            mergeBox.FormattingEnabled = knowledgeGraph.FormattingEnabled;
+            mergeBox.Name = "mergeRule"+content.Count.ToString();
+            mergeBox.Size = new System.Drawing.Size(400, 26);
+            mergeBox.DisplayMember = "Value";
+            mergeBox.ValueMember = "Key";
+            mergeBox.DataSource = new BindingSource(mergeRules, null);
+            Controls.Add(mergeBox);
+
+            //Move the label
+            labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
+            int addedHeight = labelObj.Height + contentPadding;
+
+            //Move the merge dropdown and the column text
+            columnText.Location = new System.Drawing.Point(labelObj.Location.X, labelObj.Location.Y + labelObj.Height + contentPadding);
+            mergeBox.Location = new System.Drawing.Point(labelObj.Location.X + 206, labelObj.Location.Y + labelObj.Height + contentPadding);
+            addedHeight += mergeBox.Height + contentPadding;
+
+            //Adjust the total amount of spacing we've moved
+            contentTotalSpacing += addedHeight;
+
+            //Move things down
+            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + addedHeight);
+            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + addedHeight);
+            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + addedHeight);
+            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + addedHeight);
+            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
+            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
+            Height += addedHeight;
+
+            //Disable boxes if needed
+            if(columnString == "NoAdditionalData")
             {
-                //Determine which selected URIs are functional and create a function and non-functional list
-                JToken functionPropsResult = PropertyEnrichment.FunctionalPropertyQuery(commonURIs);
-                List<string> functionProps = new List<string> { };
-                foreach (var result in functionPropsResult)
+                columnText.Enabled = false;
+                mergeBox.Enabled = false;
+            }
+
+
+            CheckCanRunGeoenrichment();
+        }
+
+        private void OnFeatureNameChage(object sender, EventArgs e)
+        {
+            CheckCanRunGeoenrichment();
+        }
+
+        public void CheckCanRunGeoenrichment()
+        {
+            if (
+                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
+                (gdbFileUploaded || areaOfInterestDrawn) &&
+                content.Count > 0 &&
+                saveLayerAs.Text != ""
+              )
+            {
+                runBtn.Enabled = true;
+            }
+            else
+            {
+                runBtn.Enabled = false;
+            }
+        }
+
+        private async void RunGeoenrichment(object sender, EventArgs e)
+        {
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            bool layerFailed = false;
+            Dictionary<string, BasicFeatureLayer> tables = new Dictionary<string, BasicFeatureLayer>() { }; //entityType -> layer
+
+            //build the table and its columns
+            foreach (var shape in shapeTables)
+            {
+                string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text + "_" + shape);
+                await FeatureClassHelper.CreateFeatureClassLayer(tableName, shape);
+                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
+
+                if (fcLayer == null)
                 {
-                    functionProps.Add((string)result["property"]["value"]);
+                    MessageBox.Show($@"Failed to create {tableName} in the active map");
+                    layerFailed = true;
+                } else
+                {
+                    await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
+                    await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
+                    tables[shape] = fcLayer;
+
                 }
-                var noFunctionProps = commonURIs.Except(functionProps);
+            }
 
-                foreach (var propURI in functionProps)
+            if(!layerFailed)
+            {
+                //Build and run query for base classes
+                var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> data
+                var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
+                var finalContentGeometry = new Dictionary<string, string>() { }; //entity -> wkt
+                var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
+                string entityName; string nextEntityName;
+                string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
+                for (int j = 0; j < content.Count; j++)
                 {
-                    JToken propertyVal = PropertyEnrichment.PropertyValueQuery(uriList, propURI, false);
-                    await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", false);
-                }
-
-                foreach (var propURI in noFunctionProps)
-                {
-                    JToken propertyVal = PropertyEnrichment.PropertyValueQuery(uriList, propURI, false);
-
-                    Table tableResult = null;
-                    string tableName = "";
-                    await QueuedTask.Run(() =>
+                    //Add the column to our feature tables and track its merge rule
+                    ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j+1).ToString(), true).First();
+                    string mergeRule = mergeBox.SelectedValue.ToString();
+                    string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
+                    labelToMergeRule[columnLabel] = mergeRule;
+                    foreach (var shape in shapeTables)
                     {
-                        tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
-                        Project.Current.SaveEditsAsync();
-                        tableName = tableResult.GetName();
-                        string relationshipClassName = tableName + "_RelClass";
-                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from Knowledge Graph").Wait();
+                        if(!columnLabel.StartsWith("NoAdditionalData"))
+                            await FeatureClassHelper.AddField(tables[shape], columnLabel, "TEXT");
+                    }
 
-                        MergePropertyToTable(properties[propURI], tableName);
-                    });
-                    //string currentValuePropertyName = tableResult[2];
+                    var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
 
-                    JToken geoCheckJSON = PropertyEnrichment.CheckGeoPropertyQuery(uriList, propURI, false);
-
-                    if ((int)geoCheckJSON[0]["cnt"]["value"] > 0)
+                    for (int i = 0; i < content[j].Count; i++)
                     {
-                        JToken geoQueryResult = PropertyEnrichment.TwoDegreePropertyValueWKTquery(uriList, propURI, false);
-
-                        string propName = FeatureClassHelper.GetPropertyName(propURI);
-
-                        string outFeatureClassName = mainLayer.Name + "_" + propName;
-                        await QueuedTask.Run(() =>
+                        //Even indices are classes, odd are predicates
+                        if (i % 2 == 0)
                         {
-                            FeatureClassHelper.CreateClassFromSPARQL(geoQueryResult, outFeatureClassName);
-                            var geoLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == outFeatureClassName).FirstOrDefault() as BasicFeatureLayer;
-                            string outRelationshipClassName = outFeatureClassName + "_" + tableName + "_RelClass";
-                            string currentValuePropertyName = tableResult.GetDefinition().GetFields().Last().Name;
-                            FeatureClassHelper.CreateRelationshipClass(geoLayer, tableResult, outRelationshipClassName, "is " + propURI + " Of", "features from Knowledge Graph", currentValuePropertyName).Wait();
-                        });
+                            if (i == 0)
+                                entityName = "?entity";
+                            else
+                                entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
+                            var className = content[j][i];
+                            contentResultsQuery += entityName + " a " + className + ". ";
+                        }
+                        else
+                        {
+                            if (i == 1)
+                            {
+                                entityName = "?entity";
+                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
+                            }
+                            else
+                            {
+                                entityName = "?o" + (i / 2).ToString();
+                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
+                            }
+                            var propName = content[j][i];
+                            contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
+                        }
+                    }
+
+                    contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entityVals + "}";
+
+                    JToken contentResults = queryClass.SubmitQuery(knowledgeGraph.Text, contentResultsQuery);
+
+                    foreach (var item in contentResults)
+                    {
+                        var entityVal = item["entity"]["value"].ToString();
+
+                        //Check to see if we this entity exists, if not, set it up
+                        if (!finalContent.ContainsKey(entityVal))
+                            finalContent[entityVal] = new Dictionary<string, List<string>>() { };
+                        if (!finalContentLabels.ContainsKey(entityVal))
+                            finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
+                        if (!finalContentGeometry.ContainsKey(entityVal))
+                            finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
+
+                        //Let's prep and store the result content
+                        if (!finalContent[entityVal].ContainsKey(columnLabel))
+                            finalContent[entityVal][columnLabel] = new List<string>() { };
+
+                        if (item["o"] != null && item["o"]["value"].ToString() != "")
+                            finalContent[entityVal][columnLabel].Add(item["o"]["value"].ToString());
                     }
                 }
-            }
 
-            if(sosaObsURIs.Count > 0) {
-                foreach (var propURI in sosaObsURIs)
+                //Use data to populate table
+                await QueuedTask.Run(() =>
                 {
-                    JToken propertyVal = null;
-                    try
+
+                    foreach(var entityPair in finalContent)
                     {
-                        propertyVal = PropertyEnrichment.SosaObsPropertyValueQuery(uriList, propURI);
+                        string currEntity = entityPair.Key;
+
+                        IGeometryEngine geoEngine = GeometryEngine.Instance;
+                        SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+                        string wkt = finalContentGeometry[currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                        Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
+
+                        InsertCursor cursor = tables[geo.GetType().Name].GetTable().CreateInsertCursor();
+                        RowBuffer buff = tables[geo.GetType().Name].GetTable().CreateRowBuffer();
+
+                        buff["Label"] = finalContentLabels[currEntity];
+                        buff["URL"] = currEntity;
+                        buff["Shape"] = geo;
+
+                        //Add column data based on merge rule
+                        foreach(var dataPair in entityPair.Value)
+                        {
+                            string currLabel = dataPair.Key;
+                            if (currLabel.StartsWith("NoAdditionalData"))
+                                continue;
+
+                            switch (labelToMergeRule[currLabel])
+                            {
+                                case "first":
+                                    buff[currLabel] = dataPair.Value[0];
+                                    break;
+                                case "count":
+                                    buff[currLabel] = dataPair.Value.Count;
+                                    break;
+                                case "total":
+                                    float total = 0;
+                                    foreach(string val in dataPair.Value)
+                                    {
+                                        total += float.Parse(val);
+                                    }
+                                    buff[currLabel] = total;
+                                    break;
+                                case "high":
+                                    float high = float.Parse(dataPair.Value[0]);
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        if (float.Parse(val) > high)
+                                            high = float.Parse(val);
+                                    }
+                                    buff[currLabel] = high;
+                                    break;
+                                case "low":
+                                    float low = float.Parse(dataPair.Value[0]);
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        if (float.Parse(val) < low)
+                                            low = float.Parse(val);
+                                    }
+                                    buff[currLabel] = low;
+                                    break;
+                                case "avg":
+                                    List<float> avgValues = new List<float>() { };
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        avgValues.Add(float.Parse(val));
+                                    }
+                                    buff[currLabel] = avgValues.Average();
+                                    break;
+                                case "stdev":
+                                    List<float> stdDevValues = new List<float>() { };
+                                    foreach (string val in dataPair.Value)
+                                    {
+                                        stdDevValues.Add(float.Parse(val));
+                                    }
+                                    buff[currLabel] = Math.Sqrt(stdDevValues.Average(v => Math.Pow(v - stdDevValues.Average(), 2)));
+                                    break;
+                                case "concat":
+                                default:
+                                    buff[currLabel] = String.Join(" | ", dataPair.Value);
+                                    break;
+                            }
+                        }
+
+                        cursor.Insert(buff);
+                        cursor.Dispose();
                     }
-                    catch (Exception ex)
-                    {
-                        //MessageBox.Show("Sosa property query error for: " + propURI);
-                        continue;
-                    }
 
-                    await QueuedTask.Run(() =>
-                    {
-                        Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", false, false).Result;
-                        Project.Current.SaveEditsAsync();
-                        string tableName = tableResult.GetName();
-                        string sosaRelationshipClassName = tableName + "_RelClass";
-                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, sosaRelationshipClassName, propURI, "features from Knowledge Graph").Wait();
-
-                        MergePropertyToTable(properties[propURI], tableName);
-                    });
-                }
+                    MapView.Active.Redraw(false);
+                });
             }
 
-            if(inverseURIs.Count > 0)
-            {
-                //Determine which selected URIs are functional and create a function and non-functional list
-                JToken inverseFunctionPropsResult = PropertyEnrichment.FunctionalPropertyQuery(inverseURIs, true);
-                List<string> inverseFunctionProps = new List<string> { };
-                foreach (var result in inverseFunctionPropsResult)
-                {
-                    inverseFunctionProps.Add((string)result["property"]["value"]);
-                }
-                List<string> inverseNoFunctionProps = (List<string>)inverseURIs.Except(inverseFunctionProps);
-
-                foreach (var propURI in inverseFunctionProps)
-                {
-                    JToken propertyVal = PropertyEnrichment.InversePropertyValueQuery(uriList, propURI, false);
-                    await FeatureClassHelper.AddFieldInTableByMapping(propURI, propertyVal, "wikidataSub", "o", "URL", true);
-                }
-
-                foreach (var propURI in inverseNoFunctionProps)
-                {
-                    JToken propertyVal = PropertyEnrichment.InversePropertyValueQuery(uriList, propURI, false);
-
-                    await QueuedTask.Run(() =>
-                    {
-                        Table tableResult = FeatureClassHelper.CreateMappingTableFromJSON(propURI, propertyVal, "wikidataSub", "o", "URL", true, false).Result;
-                        Project.Current.SaveEditsAsync();
-                        string tableName = tableResult.GetName();
-                        string relationshipClassName = tableName + "_RelClass";
-                        FeatureClassHelper.CreateRelationshipClass(mainLayer, tableResult, relationshipClassName, propURI, "features from wikidata").Wait();
-
-                        MergePropertyToTable(properties[propURI], tableName);
-                    });
-                }
-            }
-        }
-
-        private async void MergePropertyToTable(List<string> property, string tableName)
-        {
-            Dictionary<string, List<string>> noFunctionalPropertyDict = FeatureClassHelper.BuildMultiValueDictFromNoFunctionalProperty(property[0], tableName, "URL").Result;
-
-            if (noFunctionalPropertyDict.Count() > 0 && property[1] != "")
-            {
-                await FeatureClassHelper.AppendFieldInFeatureClassByMergeRule(noFunctionalPropertyDict, property[0], tableName, property[1]);
-            }
+            Close();
         }
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)
@@ -409,11 +524,11 @@ namespace KWG_Geoenrichment
         {
             if(helpOpen)
             {
-                this.Size = new System.Drawing.Size(this.Size.Width - helpSpacing, this.Size.Height);
+                Size = new System.Drawing.Size(Size.Width - helpSpacing, Size.Height);
                 helpOpen = false;
             } else
             {
-                this.Size = new System.Drawing.Size(this.Size.Width + helpSpacing, this.Size.Height);
+                Size = new System.Drawing.Size(Size.Width + helpSpacing, Size.Height);
                 helpOpen = true;
             }
         }

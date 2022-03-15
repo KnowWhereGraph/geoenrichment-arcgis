@@ -6,57 +6,35 @@ namespace KWG_Geoenrichment
 {
     class QuerySPARQL
     {
-        protected string activeEndpoint;
-        protected static string defaultEndpoint = "http://stko-roy.geog.ucsb.edu:7202/repositories/plume_soil_wildfire";
+        public Dictionary<string, string> defaultEndpoints = new Dictionary<string, string>() { 
+            { "KnowWhere Graph", "https://stko-kwg.geog.ucsb.edu/sparql" }
+        };
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
-            {"bd", "http://www.bigdata.com/rdf#"},
-            {"dbo", "http://dbpedia.org/ontology/"},
-            {"dbr", "http://dbpedia.org/resource/"},
-            {"ff", "http://factforge.net/"},
+            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},
+            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
             {"geo", "http://www.opengis.net/ont/geosparql#"},
             {"geof", "http://www.opengis.net/def/function/geosparql/"},
-            {"geo-pos", "http://www.w3.org/2003/01/geo/wgs84_pos#"},
-            {"kwgr", "http://stko-kwg.geog.ucsb.edu/lod/resource/"},
-            {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},
-            {"om", "http://www.ontotext.com/owlim/"},
-            {"omgeo", "http://www.ontotext.com/owlim/geo#"},
+            {"gnisf", "http://gnis-ld.org/lod/gnis/feature/"},
+            {"cegis", "http://gnis-ld.org/lod/cegis/ontology/"},
+            {"sosa", "http://www.w3.org/ns/sosa/"},
+            {"ago", "http://awesemantic-geo.link/ontology/"},
             {"owl", "http://www.w3.org/2002/07/owl#"},
-            {"p", "http://www.wikidata.org/prop/"},
             {"rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"},
             {"rdfs", "http://www.w3.org/2000/01/rdf-schema#"},
-            {"schema", "http://schema.org/"},
-            {"sosa", "http://www.w3.org/ns/sosa/"},
-            {"ssn", "http://www.w3.org/ns/ssn/"},
             {"time", "http://www.w3.org/2006/time#"},
-            {"xsd", "http://www.w3.org/2001/XMLSchema#"},
-            {"wd", "http://www.wikidata.org/entity/"},
-            {"wdt", "http://www.wikidata.org/prop/direct/"},
-            {"wdtn", "http://www.wikidata.org/prop/direct-normalized/"},
-            {"wikibase", "http://wikiba.se/ontology#"}
+            {"xvd", "http://www.w3.org/2001/XMLSchema#"},
+            {"dc", "http://purl.org/dc/elements/1.1/"},
+            {"dcterms", "http://purl.org/dc/terms/"},
+            {"foaf", "http://xmlns.com/foaf/0.1/"},
+            {"iospress", "http://ld.iospress.nl/rdf/ontology/"}
         };
 
-        public QuerySPARQL(string endPoint = null)
+        public QuerySPARQL()
         {
-            if(endPoint!=null)
-            {
-                activeEndpoint = endPoint;
-            } else
-            {
-                activeEndpoint = defaultEndpoint;
-            }
+
         }
 
-        public string GetActiveEndPoint()
-        {
-            return activeEndpoint;
-        }
-
-        public void UpdateActiveEndPoint(string endPoint)
-        {
-            activeEndpoint = endPoint;
-        }
-
-        public JToken SubmitQuery(string query, bool doInference = false, string requestMethod = "post")
+        public JToken SubmitQuery(string endpointKey, string query)
         {
             query = MakeSPARQLPrefix() + query;
 
@@ -66,34 +44,18 @@ namespace KWG_Geoenrichment
 
             var values = new Dictionary<string, string>
             {
-                { "query", query },
-                { "format", "json" },
-                { "doInference", (doInference) ? "true" : "false" }
+                { "query", query }
             };
 
             var content = new FormUrlEncodedContent(values);
 
-            var response = client.PostAsync(activeEndpoint, content);
+            var response = client.PostAsync(defaultEndpoints[endpointKey], content);
 
             var responseString = response.Result.Content.ReadAsStringAsync().Result;
 
             JObject json = JObject.Parse(responseString);
 
             return json["results"]["bindings"];
-        }
-
-        public string MakeIRIPrefix(string iri)
-        {
-            string result = "";
-            foreach (var prefix in _PREFIX)
-            {
-                if(iri.Contains(prefix.Value))
-                {
-                    result = iri.Replace(prefix.Value, prefix.Key + ":");
-                }
-            }
-
-            return (result!="") ? result : iri;
         }
 
         private string MakeSPARQLPrefix()
@@ -105,6 +67,20 @@ namespace KWG_Geoenrichment
             }
 
             return queryPrefix;
+        }
+
+        public string IRIToPrefix(string iri)
+        {
+            string result = "";
+            foreach (var prefix in _PREFIX)
+            {
+                if (iri.Contains(prefix.Value))
+                {
+                    result = iri.Replace(prefix.Value, prefix.Key + ":");
+                }
+            }
+
+            return (result != "") ? result : iri;
         }
     }
 }

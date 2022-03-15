@@ -71,7 +71,7 @@ namespace KWG_Geoenrichment
             //Create layer for the polygon
             Random gen = new Random();
             string layerName = layerPrefix + gen.Next(999999).ToString();
-            await FeatureClassHelper.CreatePolygonFeatureLayer(layerName);
+            await FeatureClassHelper.CreateFeatureClassLayer(layerName);
 
             var mainLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
 
@@ -100,7 +100,7 @@ namespace KWG_Geoenrichment
                     MapView.Active.Redraw(false);
                 });
 
-                KwgGeoModule.Current.activeGeoenrichmentForm.SubmitGeoenrichmentForm(polygonString);
+                KwgGeoModule.Current.GetActiveForm().SetDrawnPolygon(polygonString);
             }
         }
     }

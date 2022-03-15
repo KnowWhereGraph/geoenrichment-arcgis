@@ -14,182 +14,190 @@ namespace KWG_Geoenrichment
 {
     public partial class TraverseKnowledgeGraph : Form
     {
-        private Dictionary<int, Dictionary<string, Dictionary<string, string>>> classesAndProperties;
-
-        private BasicFeatureLayer mainLayer;
+        private GeoenrichmentForm originalWindow;
+        
+        private string currentEndpoint;
+        private string entityVals;
 
         protected int maxDegree = 1;
 
-        private int propertySpacing = 115;
+        private int propertySpacing = 30;
         private int helpSpacing = 440;
         private bool helpOpen = true;
 
-        public TraverseKnowledgeGraph()
+        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities)
         {
             InitializeComponent();
             ToggleHelpMenu();
 
-            classesAndProperties = new Dictionary<int, Dictionary<string, Dictionary<string, string>>>() { };
-            mainLayer = KwgGeoModule.Current.GetLayers().First();
+            originalWindow = gf;
+            currentEndpoint = endpoint;
+            entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
 
             PopulateClassBox(1);
         }
 
-        private async void PopulateClassBox(int degree)
+        private void PopulateClassBox(int degree)
         {
-            //Clear boxes that have a higher degree
-            ComboBox matchingPropBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
-            matchingPropBox.Enabled = false;
-            matchingPropBox.Text = "";
-            matchingPropBox.Items.Clear();
-            for (int i = degree + 1; i <= maxDegree; i++)
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+            Dictionary<string, string> classes;
+
+            if (degree == 1)
             {
-                ComboBox otherClassBox = (ComboBox)this.Controls.Find("class" + i.ToString(), true).First();
-                otherClassBox.Enabled = false;
-                otherClassBox.Text = "";
-                otherClassBox.Items.Clear();
+                var typeQuery = "select distinct ?type ?label where { " +
+                    "?entity a ?type. " +
+                    "?type rdfs:label ?label. " +
+                    entityVals +
+                "}";
 
-                ComboBox otherPropBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
-                otherPropBox.Enabled = false;
-                otherPropBox.Text = "";
-                otherPropBox.Items.Clear();
-            }
+                JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
 
-            List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
-
-            JToken finderJSON = RelationshipFinderClassQuery(inplaceIRIList, degree);
-
-            ComboBox classBox = (ComboBox)this.Controls.Find("class" + degree.ToString(), true).First();
-            classBox.Enabled = true;
-            classBox.Text = "";
-            classBox.Items.Clear();
-
-            Dictionary<string, Dictionary<string, string>> classToProperties = new Dictionary<string, Dictionary<string, string>>() { };
-            foreach (var item in finderJSON)
-            {
-                string itemClass = item["classLabel"]["value"].ToString();
-                string itemVal = item["p" + degree.ToString()]["value"].ToString();
-                string itemLabel = KwgGeoModule.Current.GetQueryClass().MakeIRIPrefix(itemVal);
-
-                if(!classBox.Items.Contains(itemClass))
-                    classBox.Items.Add(itemClass);
-
-                if(classToProperties.ContainsKey(itemClass))
+                classes = new Dictionary<string, string>() { { "", "" } };
+                foreach (var item in typeResults)
                 {
-                    Dictionary<string, string> currProps = classToProperties[itemClass];
-                    if(!currProps.ContainsKey(itemLabel))
+                    string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                    string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                    if (!classes.ContainsKey(cType))
                     {
-                        currProps[itemLabel] = itemVal;
-                        classToProperties[itemClass] = currProps;
+                        classes[cType] = cLabel;
                     }
                 }
-                else
-                {
-                    classToProperties[itemClass] = new Dictionary<string, string>() { { itemLabel, itemVal } };
-                }
-            }
 
-            classesAndProperties[degree] = classToProperties;
-        }
-
-        private async void PopulatePropertyBox(int degree)
-        {
-            //Clear boxes that have a higher degree
-            for (int i = degree + 1; i <= maxDegree; i++)
-            {
-                ComboBox otherClassBox = (ComboBox)this.Controls.Find("class" + i.ToString(), true).First();
-                otherClassBox.Enabled = false;
-                otherClassBox.Text = "";
-                otherClassBox.Items.Clear();
-
-                ComboBox otherPropBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
-                otherPropBox.Enabled = false;
-                otherPropBox.Text = "";
-                otherPropBox.Items.Clear();
-            }
-
-            List<string> inplaceIRIList = await FeatureClassHelper.GetURIs(mainLayer);
-
-            ComboBox propBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
-            propBox.Enabled = true;
-            propBox.Text = "";
-            propBox.Items.Clear();
-
-            ComboBox classBox = (ComboBox)this.Controls.Find("class" + degree.ToString(), true).First();
-            string selectedClass = (string)classBox.SelectedItem;
-            foreach(var prop in classesAndProperties[degree][selectedClass])
-            {
-                propBox.Items.Add(prop.Key);
-            }
-        }
-
-        private JToken RelationshipFinderClassQuery(List<string> inplaceIRIList, int relationDegree)
-        {
-            string selectParam = "?p" + relationDegree.ToString();
-
-            string relationFinderQuery = "SELECT distinct ?classLabel " + selectParam + " WHERE { ";
-
-            if (relationDegree == 1)
-            {
-                relationFinderQuery += "{ ?place ?p1 ?o1. ?place a ?class. ?class rdfs:label ?classLabel }";
-                relationFinderQuery += " UNION ";
-                relationFinderQuery += "{ ?o1 ?p1 ?place. ?o1 a ?oclass. ?oclass rdfs:label ?classLabel }";
+                classBox.Enabled = true;
             }
             else
             {
-                for (int index = 0; index < relationDegree-1; index++)
-                {
-                    int currDegree = index + 1;
-                    ComboBox currentClassBox = (ComboBox)this.Controls.Find("class" + currDegree.ToString(), true).First();
-                    ComboBox currentPropBox = (ComboBox)this.Controls.Find("prop" + currDegree.ToString(), true).First();
-                    string currentValue = classesAndProperties[currDegree][currentClassBox.Text][currentPropBox.Text];
-                    string oValLow = (index == 0) ? "?place" : "?o" + index.ToString();
-                    string oValHigh = "?o" + currDegree.ToString();
+                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + (degree-1).ToString(), true).First();
+                string objectVal = valueBox.SelectedValue.ToString();
+                string objectLabel = valueBox.Text;
 
-                    relationFinderQuery += "{ " + oValLow + " <" + currentValue + "> " + oValHigh + ". }";
-                    relationFinderQuery += " UNION ";
-                    relationFinderQuery += "{ " + oValHigh + " <" + currentValue + "> " + oValLow + ". }";
-                }
-
-                string oValLowCurr = "?o" + (relationDegree-1).ToString();
-                string oValHighCurr = "?o" + relationDegree.ToString();
-                string pVal = "?p" + relationDegree.ToString();
-
-                relationFinderQuery += " { " + oValLowCurr + " " + pVal + " " + oValHighCurr + ". " + oValLowCurr + " a ?oclass. ?oclass rdfs:label ?classLabel }";
+                classes = new Dictionary<string, string>() { { objectVal, objectLabel } };
             }
 
-            relationFinderQuery += " VALUES ?place { ";
-
-            foreach (var iri in inplaceIRIList)
-            {
-                relationFinderQuery += "<" + iri + "> \n";
-            }
-            relationFinderQuery += "} }";
-
-            return KwgGeoModule.Current.GetQueryClass().SubmitQuery(relationFinderQuery);
+            classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
         }
 
-        private void ClassChanged(object sender, EventArgs e)
+        private void PopulatePropertyBox(int degree)
+        {
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+
+            var propQuery = "select distinct ?p ?label where {  ";
+
+            for(int i=1; i < degree + 1; i++)
+            {
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
+                string classStr = classBox.SelectedValue.ToString();
+                string predicateStr = (i == degree) ? "?p" : propBox.SelectedValue.ToString();
+                string objectStr = "?o" + i.ToString();
+
+                propQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+            }        
+            propQuery += "optional {?p rdfs:label ?label} " + entityVals + "}";
+
+            JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
+
+            Dictionary<string, string> properties = new Dictionary<string, string>() { { "", "" } };
+            foreach (var item in propResults)
+            {
+                string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
+                string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+
+                if (!properties.ContainsKey(predicate))
+                {
+                    properties[predicate] = pLabel;
+                }
+            }
+
+            ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+            currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
+            currPropBox.Enabled = true;
+        }
+
+        private void PopulateValueBox(int degree)
+        {
+            //    "?entity a " + classVal + "; " + propVal + " ?o. " + "?o a ?type. " +
+
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+
+            var valueQuery = "select distinct ?type ?label where {  ";
+
+            for (int i = 1; i < degree + 1; i++)
+            {
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
+                string classStr = classBox.SelectedValue.ToString();
+                string predicateStr = propBox.SelectedValue.ToString();
+                string objectStr = (i == degree) ? "?o. ?o a ?type" : "?o" + i.ToString();
+
+                valueQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+            }
+            valueQuery += "?type rdfs:label ?label. " + entityVals + "}";
+
+            JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
+            ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+
+            Dictionary<string, string> values;
+            if (valueResults.HasValues) {
+                values = new Dictionary<string, string>() { { "", "" } };
+                foreach (var item in valueResults)
+                {
+                    string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                    string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                    if (!values.ContainsKey(oType))
+                    {
+                        values[oType] = oLabel;
+                    }
+                }
+                currValueBox.Enabled = true;
+            }
+            else
+            {
+                values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+            }
+
+            currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
+        }
+
+        private void OnClassBoxChange(object sender, EventArgs e)
         {
             ComboBox classBox = (ComboBox)sender;
-            int degree = int.Parse(classBox.Name.Replace("class", ""));
-
-            PopulatePropertyBox(degree);
-        }
-
-        private void PropertyChanged(object sender, EventArgs e)
-        {
-            ComboBox propBox = (ComboBox)sender;
-            int degree = int.Parse(propBox.Name.Replace("prop", ""));
-
-            if (degree < maxDegree)
+            if (classBox.SelectedValue.ToString() != "")
             {
-                PopulateClassBox(degree + 1);
+                int degree = int.Parse(classBox.Name.Replace("subject", ""));
+
+                PopulatePropertyBox(degree);
             }
         }
 
-        private void AddNewProperty(object sender, MouseEventArgs e)
+        private void OnPropBoxChange(object sender, EventArgs e)
         {
+            ComboBox propBox = (ComboBox)sender;
+            if (propBox.SelectedValue.ToString() != "")
+            {
+                int degree = int.Parse(propBox.Name.Replace("predicate", ""));
+
+                PopulateValueBox(degree);
+            }
+        }
+
+        private void OnValueBoxChange(object sender, EventArgs e)
+        {
+            ComboBox valueBox = (ComboBox)sender;
+            if (valueBox.SelectedValue.ToString() != "")
+            {
+                addPropertyBtn.Enabled = true;
+            }
+        }
+
+        private void LearnMore(object sender, EventArgs e)
+        {
+            addPropertyBtn.Enabled = false;
             int newDegree = maxDegree + 1;
 
             //Expand the form and move down the button elements
@@ -199,75 +207,87 @@ namespace KWG_Geoenrichment
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
             this.helpPanel.Size = new System.Drawing.Size(this.helpPanel.Size.Width, this.helpPanel.Size.Height + propertySpacing);
 
-            //Create new property elements based on old ones
-            Label propRequired = (Label)this.Controls.Find("prop" + maxDegree.ToString() + "Req", true).First();
-            Label propRequired_copy = new Label();
-            propRequired_copy.AutoSize = propRequired.AutoSize;
-            propRequired_copy.BackColor = propRequired.BackColor;
-            propRequired_copy.Font = propRequired.Font;
-            propRequired_copy.ForeColor = propRequired.ForeColor;
-            propRequired_copy.Location = new System.Drawing.Point(45, propRequired.Location.Y + propertySpacing);
-            propRequired_copy.Name = "prop" + newDegree.ToString() + "Req";
-            propRequired_copy.Size = propRequired.Size;
-            propRequired_copy.Text = propRequired.Text;
-            this.Controls.Add(propRequired_copy);
-
-            Label propLabel = (Label)this.Controls.Find("prop" + maxDegree.ToString() + "Label", true).First();
-            Label propLabel_copy = new Label();
-            propLabel_copy.AutoSize = propLabel.AutoSize;
-            propLabel_copy.BackColor = propLabel.BackColor;
-            propLabel_copy.Font = propLabel.Font;
-            propLabel_copy.ForeColor = propLabel.ForeColor;
-            propLabel_copy.Location = new System.Drawing.Point(60, propLabel.Location.Y + propertySpacing);
-            propLabel_copy.Margin = propLabel.Margin;
-            propLabel_copy.Name = "prop" + newDegree.ToString() + "Label";
-            propLabel_copy.Size = propLabel.Size;
-            propLabel_copy.Text = "More Content";
-            this.Controls.Add(propLabel_copy);
-
-            ComboBox propBox = (ComboBox)this.Controls.Find("prop" + maxDegree.ToString(), true).First();
-            ComboBox propBox_copy = new ComboBox();
-            propBox_copy.Enabled = false;
-            propBox_copy.Font = propBox.Font;
-            propBox_copy.FormattingEnabled = propBox.FormattingEnabled;
-            propBox_copy.Location = new System.Drawing.Point(50, propBox.Location.Y + propertySpacing);
-            propBox_copy.Name = "prop" + newDegree.ToString();
-            propBox_copy.Size = propBox.Size;
-            propBox_copy.SelectedValueChanged += new System.EventHandler(this.PropertyChanged);
-            this.Controls.Add(propBox_copy);
-
-            ComboBox classBox = (ComboBox)this.Controls.Find("class" + maxDegree.ToString(), true).First();
+            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + maxDegree.ToString(), true).First();
             ComboBox classBox_copy = new ComboBox();
             classBox_copy.Enabled = false;
             classBox_copy.Font = classBox.Font;
             classBox_copy.FormattingEnabled = classBox.FormattingEnabled;
-            classBox_copy.Location = new System.Drawing.Point(50, classBox.Location.Y + propertySpacing);
-            classBox_copy.Name = "class" + newDegree.ToString();
+            classBox_copy.Location = new System.Drawing.Point(classBox.Location.X, classBox.Location.Y + propertySpacing);
+            classBox_copy.Name = "subject" + newDegree.ToString();
             classBox_copy.Size = classBox.Size;
-            classBox_copy.SelectedValueChanged += new System.EventHandler(this.ClassChanged);
+            classBox_copy.DisplayMember = "Value";
+            classBox_copy.ValueMember = "Key";
             this.Controls.Add(classBox_copy);
 
-            //Populate list options and enable if previous property is selected
-            if (propBox.Text != "")
-            {
-                classBox_copy.Enabled = true;
-                PopulateClassBox(newDegree);
-            }
+            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + maxDegree.ToString(), true).First();
+            ComboBox propBox_copy = new ComboBox();
+            propBox_copy.Enabled = false;
+            propBox_copy.Font = propBox.Font;
+            propBox_copy.FormattingEnabled = propBox.FormattingEnabled;
+            propBox_copy.Location = new System.Drawing.Point(propBox.Location.X, propBox.Location.Y + propertySpacing);
+            propBox_copy.Name = "predicate" + newDegree.ToString();
+            propBox_copy.Size = propBox.Size;
+            propBox_copy.DisplayMember = "Value";
+            propBox_copy.ValueMember = "Key";
+            propBox_copy.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
+            this.Controls.Add(propBox_copy);
+
+            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + maxDegree.ToString(), true).First();
+            ComboBox valueBox_copy = new ComboBox();
+            valueBox_copy.Enabled = false;
+            valueBox_copy.Font = valueBox.Font;
+            valueBox_copy.FormattingEnabled = valueBox.FormattingEnabled;
+            valueBox_copy.Location = new System.Drawing.Point(valueBox.Location.X, valueBox.Location.Y + propertySpacing);
+            valueBox_copy.Name = "object" + newDegree.ToString();
+            valueBox_copy.Size = valueBox.Size;
+            valueBox_copy.DisplayMember = "Value";
+            valueBox_copy.ValueMember = "Key";
+            valueBox_copy.SelectedIndexChanged += new System.EventHandler(this.OnValueBoxChange);
+            this.Controls.Add(valueBox_copy);
+
+            //Populate list options and enable
+            PopulateClassBox(newDegree);
+            PopulatePropertyBox(newDegree);
 
             maxDegree++;
         }
 
         private void RunTraverseGraph(object sender, EventArgs e)
         {
-            if (class1.Text == "")
+            if (subject1.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
             }
             else
             {
-                Close();
+                List<string> uriList = new List<string>();
+                List<string> labelList = new List<string>();
+                for (int i = 1; i < maxDegree + 1; i++)
+                {
+                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                    if (classBox.Text != null && classBox.Text != "")
+                    {
+                        uriList.Add(classBox.SelectedValue.ToString());
+                        labelList.Add(classBox.Text);
+                    }
 
-                //Do stuff
+                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                    if (propBox.Text != null && propBox.Text != "")
+                    {
+                        uriList.Add(propBox.SelectedValue.ToString());
+                        labelList.Add(propBox.Text);
+                    }
+
+                    ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
+                    if (valueBox.Text != null && valueBox.Text != "")
+                    {
+                        uriList.Add(valueBox.SelectedValue.ToString());
+                        labelList.Add(valueBox.Text);
+                    } 
+                }
+
+                originalWindow.AddSelectedContent(uriList, labelList);
+                Close();
             }
         }
 
