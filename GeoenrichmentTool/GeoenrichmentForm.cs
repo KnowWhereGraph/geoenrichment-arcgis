@@ -369,7 +369,7 @@ namespace KWG_Geoenrichment
                             if (i == 1)
                             {
                                 entityName = "?entity";
-                                nextEntityName = "?o1";
+                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
                             }
                             else
                             {

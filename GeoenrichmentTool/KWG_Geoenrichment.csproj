@@ -140,7 +140,6 @@
     <Compile Include="TraverseKnowledgeGraph.Designer.cs">
       <DependentUpon>TraverseKnowledgeGraph.cs</DependentUpon>
     </Compile>
-    <Compile Include="PropertyEnrichment.cs" />
     <Compile Include="GeoenrichmentForm.cs">
       <SubType>Form</SubType>
     </Compile>
