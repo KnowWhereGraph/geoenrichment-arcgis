@@ -44,7 +44,8 @@ namespace KWG_Geoenrichment
 
             var values = new Dictionary<string, string>
             {
-                { "query", query }
+                { "query", query },
+                { "infer", "false" }
             };
 
             var content = new FormUrlEncodedContent(values);
