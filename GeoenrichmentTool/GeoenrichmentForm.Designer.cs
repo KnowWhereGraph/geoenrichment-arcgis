@@ -47,6 +47,8 @@ namespace KWG_Geoenrichment
             this.knowledgeGraph = new System.Windows.Forms.ComboBox();
             this.runBtn = new System.Windows.Forms.Button();
             this.gdbFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             this.SuspendLayout();
@@ -191,6 +193,8 @@ namespace KWG_Geoenrichment
             // helpPanel
             // 
             this.helpPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(56)))), ((int)(((byte)(91)))));
+            this.helpPanel.Controls.Add(this.label4);
+            this.helpPanel.Controls.Add(this.label3);
             this.helpPanel.Controls.Add(this.label2);
             this.helpPanel.Controls.Add(this.label1);
             this.helpPanel.Controls.Add(this.helpPanelLogo);
@@ -204,10 +208,10 @@ namespace KWG_Geoenrichment
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(13, 149);
+            this.label2.Location = new System.Drawing.Point(13, 70);
             this.label2.MaximumSize = new System.Drawing.Size(325, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(319, 133);
+            this.label2.Size = new System.Drawing.Size(325, 114);
             this.label2.TabIndex = 2;
             this.label2.Text = resources.GetString("label2.Text");
             // 
@@ -257,6 +261,32 @@ namespace KWG_Geoenrichment
             this.runBtn.Text = "RUN";
             this.runBtn.UseVisualStyleBackColor = false;
             this.runBtn.Click += new System.EventHandler(this.RunGeoenrichment);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.label3.ForeColor = System.Drawing.Color.White;
+            this.label3.Location = new System.Drawing.Point(13, 195);
+            this.label3.MaximumSize = new System.Drawing.Size(325, 0);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(323, 76);
+            this.label3.TabIndex = 3;
+            this.label3.Text = "After selecting an area of interest, choose \"Select Content\" to learn about what " +
+    "happened in that area. You may run this feature as many times as desired.";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.label4.ForeColor = System.Drawing.Color.White;
+            this.label4.Location = new System.Drawing.Point(13, 285);
+            this.label4.MaximumSize = new System.Drawing.Size(325, 0);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(301, 57);
+            this.label4.TabIndex = 4;
+            this.label4.Text = "When you\'re ready to create your new Feature Class, provide a name for the new la" +
+    "yer and hit \"RUN\"";
             // 
             // GeoenrichmentForm
             // 
@@ -309,5 +339,7 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.ComboBox knowledgeGraph;
         private System.Windows.Forms.Button runBtn;
         private System.Windows.Forms.OpenFileDialog gdbFileDialog;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
     }
 }

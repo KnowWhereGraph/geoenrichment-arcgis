@@ -146,7 +146,7 @@ namespace KWG_Geoenrichment
                     "?arGeo geo:asWKT ?arWKT. " +
                     "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
 
-                    "?adminRegion2 geo:sfContains ?s2Cell. " +
+                    "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
                     "?s2Cell a kwg-ont:KWGCellLevel13. " +
                     "?s2Cell geo:hasGeometry ?s2Geo. " +
                     "?s2Geo geo:asWKT ?s2WKT. " +
