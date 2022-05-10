@@ -37,12 +37,12 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn = new System.Windows.Forms.Button();
             this.helpButton = new System.Windows.Forms.Button();
             this.helpPanel = new System.Windows.Forms.Panel();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.helpPanelLogo = new System.Windows.Forms.PictureBox();
             this.subject1 = new System.Windows.Forms.ComboBox();
             this.predicate1 = new System.Windows.Forms.ComboBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             this.SuspendLayout();
@@ -93,9 +93,9 @@ namespace KWG_Geoenrichment
             this.prop1Label.Location = new System.Drawing.Point(60, 166);
             this.prop1Label.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.prop1Label.Name = "prop1Label";
-            this.prop1Label.Size = new System.Drawing.Size(121, 19);
+            this.prop1Label.Size = new System.Drawing.Size(198, 19);
             this.prop1Label.TabIndex = 29;
-            this.prop1Label.Text = "Select Content";
+            this.prop1Label.Text = "Select Feature of Interest";
             // 
             // runTraverseBtn
             // 
@@ -126,7 +126,7 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.Name = "addPropertyBtn";
             this.addPropertyBtn.Size = new System.Drawing.Size(195, 26);
             this.addPropertyBtn.TabIndex = 33;
-            this.addPropertyBtn.Text = "LEARN MORE";
+            this.addPropertyBtn.Text = "EXPLORE FURTHER";
             this.addPropertyBtn.UseVisualStyleBackColor = false;
             this.addPropertyBtn.Click += new System.EventHandler(this.LearnMore);
             // 
@@ -157,6 +157,32 @@ namespace KWG_Geoenrichment
             this.helpPanel.Name = "helpPanel";
             this.helpPanel.Size = new System.Drawing.Size(377, 408);
             this.helpPanel.TabIndex = 38;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.label4.ForeColor = System.Drawing.Color.White;
+            this.label4.Location = new System.Drawing.Point(13, 226);
+            this.label4.MaximumSize = new System.Drawing.Size(325, 0);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(317, 76);
+            this.label4.TabIndex = 4;
+            this.label4.Text = "You can return to this menu multiple times to either learn more about your select" +
+    "ed feature, or to explore additional feature types.";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.label3.ForeColor = System.Drawing.Color.White;
+            this.label3.Location = new System.Drawing.Point(13, 157);
+            this.label3.MaximumSize = new System.Drawing.Size(325, 0);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(319, 57);
+            this.label3.TabIndex = 3;
+            this.label3.Text = "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the " +
+    "feature to your new Feature Class.";
             // 
             // label2
             // 
@@ -205,32 +231,6 @@ namespace KWG_Geoenrichment
             this.predicate1.TabIndex = 40;
             this.predicate1.ValueMember = "Key";
             this.predicate1.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label3.ForeColor = System.Drawing.Color.White;
-            this.label3.Location = new System.Drawing.Point(13, 157);
-            this.label3.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(319, 57);
-            this.label3.TabIndex = 3;
-            this.label3.Text = "Select \"Learn More\" to expand your exploration, or \"Add Content\" to add the featu" +
-    "re to your new Feature Class.";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label4.ForeColor = System.Drawing.Color.White;
-            this.label4.Location = new System.Drawing.Point(13, 226);
-            this.label4.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(317, 76);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "You can return to this menu multiple times to either learn more about your select" +
-    "ed feature, or to explore additional feature types.";
             // 
             // TraverseKnowledgeGraph
             // 

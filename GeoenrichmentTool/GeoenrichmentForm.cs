@@ -33,7 +33,7 @@ namespace KWG_Geoenrichment
         private List<String> entities;
         private List<List<String>> content;
         private Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
-            { "concat", "Concate values together with a \"|\"" },
+            { "concat", "Concate values together with a \" | \"" },
             { "first", "Get the first value found" },
             { "count", "Get the number of values found" },
             { "total", "Get the total of all values (numeric)" },
