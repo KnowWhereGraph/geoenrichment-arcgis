@@ -1,20 +1,11 @@
-﻿using ArcGIS.Core.Data;
-using ArcGIS.Core.Geometry;
+﻿using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Geoprocessing;
-using ArcGIS.Desktop.Editing;
-using ArcGIS.Desktop.Editing.Attributes;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 namespace KWG_Geoenrichment
 {
@@ -82,6 +73,30 @@ namespace KWG_Geoenrichment
             };
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+        }
+        
+        public static async Task<int> GetFeatureLayerCount(BasicFeatureLayer featureLayer)
+        {
+            List<object> arguments = new List<object>
+            {
+                //feature layer
+                featureLayer
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("GetCount_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
+
+            return Int32.Parse(result.ReturnValue);
+        }
+
+        public static async Task DeleteFeatureClassLayer(BasicFeatureLayer featureLayer)
+        {
+            List<object> arguments = new List<object>
+            {
+                //feature layer
+                featureLayer
+            };
+
+            IGPResult result = await Geoprocessing.ExecuteToolAsync("Delete_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
     }
 }

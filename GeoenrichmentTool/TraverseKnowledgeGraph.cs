@@ -167,7 +167,7 @@ namespace KWG_Geoenrichment
         private void OnClassBoxChange(object sender, EventArgs e)
         {
             ComboBox classBox = (ComboBox)sender;
-            if (classBox.SelectedValue.ToString() != "")
+            if (classBox.SelectedValue != null && classBox.SelectedValue.ToString() != "")
             {
                 int degree = int.Parse(classBox.Name.Replace("subject", ""));
 
@@ -178,7 +178,7 @@ namespace KWG_Geoenrichment
         private void OnPropBoxChange(object sender, EventArgs e)
         {
             ComboBox propBox = (ComboBox)sender;
-            if (propBox.SelectedValue.ToString() != "")
+            if (propBox.SelectedValue != null && propBox.SelectedValue.ToString() != "")
             {
                 int degree = int.Parse(propBox.Name.Replace("predicate", ""));
 
@@ -189,7 +189,7 @@ namespace KWG_Geoenrichment
         private void OnValueBoxChange(object sender, EventArgs e)
         {
             ComboBox valueBox = (ComboBox)sender;
-            if (valueBox.SelectedValue.ToString() != "")
+            if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
             {
                 addPropertyBtn.Enabled = true;
             }

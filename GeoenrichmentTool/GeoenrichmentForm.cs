@@ -3,20 +3,14 @@ using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
-using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using ComboBox = System.Windows.Forms.ComboBox;
 
@@ -510,6 +504,17 @@ namespace KWG_Geoenrichment
 
                     MapView.Active.Redraw(false);
                 });
+            }
+
+            //Check each table, and delete any empty ones
+            foreach (var shape in shapeTables)
+            {
+                BasicFeatureLayer currentLayer = tables[shape];
+                var tableSize = await FeatureClassHelper.GetFeatureLayerCount(tables[shape]);
+                if(tableSize == 0)
+                {
+                    await FeatureClassHelper.DeleteFeatureClassLayer(tables[shape]);
+                }
             }
 
             Close();
