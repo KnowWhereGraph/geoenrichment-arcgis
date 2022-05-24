@@ -43,8 +43,10 @@ namespace KWG_Geoenrichment
             this.helpPanelLogo = new System.Windows.Forms.PictureBox();
             this.subject1 = new System.Windows.Forms.ComboBox();
             this.predicate1 = new System.Windows.Forms.ComboBox();
+            this.edgeLoading = new System.Windows.Forms.PictureBox();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.edgeLoading)).BeginInit();
             this.SuspendLayout();
             // 
             // traverseGraph
@@ -232,6 +234,19 @@ namespace KWG_Geoenrichment
             this.predicate1.ValueMember = "Key";
             this.predicate1.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
             // 
+            // edgeLoading
+            // 
+            this.edgeLoading.BackColor = System.Drawing.Color.Transparent;
+            this.edgeLoading.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.edgeLoading.Image = global::KWG_Geoenrichment.Properties.Resources.loading;
+            this.edgeLoading.Location = new System.Drawing.Point(265, 141);
+            this.edgeLoading.Name = "edgeLoading";
+            this.edgeLoading.Size = new System.Drawing.Size(50, 50);
+            this.edgeLoading.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.edgeLoading.TabIndex = 41;
+            this.edgeLoading.TabStop = false;
+            this.edgeLoading.Visible = false;
+            // 
             // TraverseKnowledgeGraph
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -239,6 +254,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 491);
+            this.Controls.Add(this.edgeLoading);
             this.Controls.Add(this.predicate1);
             this.Controls.Add(this.subject1);
             this.Controls.Add(this.helpPanel);
@@ -255,6 +271,7 @@ namespace KWG_Geoenrichment
             this.helpPanel.ResumeLayout(false);
             this.helpPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.edgeLoading)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -276,5 +293,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.ComboBox predicate1;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.PictureBox edgeLoading;
     }
 }

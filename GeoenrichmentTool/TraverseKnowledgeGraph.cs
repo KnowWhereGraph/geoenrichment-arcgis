@@ -1,13 +1,9 @@
-﻿using ArcGIS.Desktop.Mapping;
+﻿using ArcGIS.Desktop.Framework.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace KWG_Geoenrichment
@@ -37,11 +33,11 @@ namespace KWG_Geoenrichment
             PopulateClassBox(1);
         }
 
-        private void PopulateClassBox(int degree)
+        private async void PopulateClassBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
-            Dictionary<string, string> classes;
+            Dictionary<string, string> classes = new Dictionary<string, string>() { { "", "" } };
 
             if (degree == 1)
             {
@@ -51,19 +47,25 @@ namespace KWG_Geoenrichment
                     entityVals +
                 "}";
 
-                JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
-
-                classes = new Dictionary<string, string>() { { "", "" } };
-                foreach (var item in typeResults)
+                runTraverseBtn.Enabled = false;
+                edgeLoading.Visible = true;
+                await QueuedTask.Run(() =>
                 {
-                    string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                    string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+                    JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
 
-                    if (!classes.ContainsKey(cType))
+                    foreach (var item in typeResults)
                     {
-                        classes[cType] = cLabel;
+                        string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                        string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                        if (!classes.ContainsKey(cType))
+                        {
+                            classes[cType] = cLabel;
+                        }
                     }
-                }
+                });
+                edgeLoading.Visible = false;
+                runTraverseBtn.Enabled = true;
 
                 classBox.Enabled = true;
             }
@@ -79,9 +81,10 @@ namespace KWG_Geoenrichment
             classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
         }
 
-        private void PopulatePropertyBox(int degree)
+        private async void PopulatePropertyBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
+            Dictionary<string, string> properties = new Dictionary<string, string>() { { "", "" } };
 
             var propQuery = "select distinct ?p ?label where {  ";
 
@@ -98,30 +101,36 @@ namespace KWG_Geoenrichment
             }        
             propQuery += "optional {?p rdfs:label ?label} " + entityVals + "}";
 
-            JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
-
-            Dictionary<string, string> properties = new Dictionary<string, string>() { { "", "" } };
-            foreach (var item in propResults)
+            runTraverseBtn.Enabled = false;
+            edgeLoading.Visible = true;
+            await QueuedTask.Run(() =>
             {
-                string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
-                string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+                JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
 
-                if (!properties.ContainsKey(predicate))
+                foreach (var item in propResults)
                 {
-                    properties[predicate] = pLabel;
+                    string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
+                    string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+
+                    if (!properties.ContainsKey(predicate))
+                    {
+                        properties[predicate] = pLabel;
+                    }
                 }
-            }
+            });
+            edgeLoading.Visible = false;
+            runTraverseBtn.Enabled = true;
 
             ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
             currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
             currPropBox.Enabled = true;
         }
 
-        private void PopulateValueBox(int degree)
+        private async void PopulateValueBox(int degree)
         {
-            //    "?entity a " + classVal + "; " + propVal + " ?o. " + "?o a ?type. " +
-
             var queryClass = KwgGeoModule.Current.GetQueryClass();
+            ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } }; ;
 
             var valueQuery = "select distinct ?type ?label where {  ";
 
@@ -138,29 +147,36 @@ namespace KWG_Geoenrichment
             }
             valueQuery += "?type rdfs:label ?label. " + entityVals + "}";
 
-            JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
-            ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            runTraverseBtn.Enabled = false;
+            edgeLoading.Visible = true;
+            bool keepBoxEnabled = true;
+            await QueuedTask.Run(() =>
+            {
+                JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
 
-            Dictionary<string, string> values;
-            if (valueResults.HasValues) {
-                values = new Dictionary<string, string>() { { "", "" } };
-                foreach (var item in valueResults)
+                if (valueResults.HasValues)
                 {
-                    string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                    string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
-
-                    if (!values.ContainsKey(oType))
+                    foreach (var item in valueResults)
                     {
-                        values[oType] = oLabel;
+                        string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                        string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                        if (!values.ContainsKey(oType))
+                        {
+                            values[oType] = oLabel;
+                        }
                     }
                 }
-                currValueBox.Enabled = true;
-            }
-            else
-            {
-                values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
-            }
+                else
+                {
+                    keepBoxEnabled = false;
+                    values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+                }
+            });
+            edgeLoading.Visible = false;
+            runTraverseBtn.Enabled = true;
 
+            currValueBox.Enabled = keepBoxEnabled;
             currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
         }
 
@@ -189,7 +205,7 @@ namespace KWG_Geoenrichment
         private void OnValueBoxChange(object sender, EventArgs e)
         {
             ComboBox valueBox = (ComboBox)sender;
-            if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
+            if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "" && valueBox.SelectedValue.ToString() != "LiteralDataFound")
             {
                 addPropertyBtn.Enabled = true;
             }
