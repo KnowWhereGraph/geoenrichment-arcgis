@@ -18,6 +18,8 @@ namespace KWG_Geoenrichment
 {
     public partial class GeoenrichmentForm : Form
     {
+        private string currentRepository;
+
         private bool gdbFileUploaded = false;
         private GDBProjectItem selectedGDB;
 
@@ -60,16 +62,18 @@ namespace KWG_Geoenrichment
             }
 
             knowledgeGraph.SelectedIndex = 0;
+            currentRepository = knowledgeGraph.Text;
             content = new List<List<String>>() { };
         }
 
         private void OnChangeGraph(object sender, EventArgs e)
         {
+            currentRepository = knowledgeGraph.Text;
             CheckCanSelectContent();
             CheckCanRunGeoenrichment();
         }
 
-        private void UploadGDBFile(object sender, EventArgs e)
+        private async void UploadGDBFile(object sender, EventArgs e)
         {
             if (areaOfInterestDrawn)
                 return;
@@ -82,14 +86,18 @@ namespace KWG_Geoenrichment
             {
                 selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
                 gdbFileUploaded = true;
-                SearchForEntities();
-
                 openGDBBtn.Text = selectedGDB.Name;
                 openGDBBtn.Enabled = false;
                 selectAreaBtn.Enabled = false;
 
+                Show();
+                contentLoading.Visible = true;
+
+                await QueuedTask.Run(() => SearchForEntities());
+
                 CheckCanSelectContent();
                 CheckCanRunGeoenrichment();
+                contentLoading.Visible = false;
             }
         }
 
@@ -105,19 +113,22 @@ namespace KWG_Geoenrichment
             Hide();
         }
 
-        public void SetDrawnPolygon(string polygonString)
+        public async void SetDrawnPolygon(string polygonString)
         {
             areaOfInterestPolygon = polygonString;
             areaOfInterestDrawn = true;
-            SearchForEntities();
-
             selectAreaBtn.Text = "Area Drawn";
             openGDBBtn.Enabled = false;
             selectAreaBtn.Enabled = false;
 
+            Show();
+            contentLoading.Visible = true;
+
+            await QueuedTask.Run(() => SearchForEntities());
+
             CheckCanSelectContent();
             CheckCanRunGeoenrichment();
-            Show();
+            contentLoading.Visible = false;
         }
 
         public void SearchForEntities()
@@ -147,7 +158,7 @@ namespace KWG_Geoenrichment
                     "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
                 "}";
 
-                JToken s2Results = queryClass.SubmitQuery(knowledgeGraph.Text, s2Query);
+                JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
 
                 foreach (var item in s2Results)
                 {
@@ -164,7 +175,7 @@ namespace KWG_Geoenrichment
                 s2CellVals +
             "}";
 
-            JToken entityResults = queryClass.SubmitQuery(knowledgeGraph.Text, entityQuery);
+            JToken entityResults = queryClass.SubmitQuery(currentRepository, entityQuery);
 
             foreach (var item in entityResults)
             {
@@ -188,7 +199,7 @@ namespace KWG_Geoenrichment
 
         private void SelectContent(object sender, EventArgs e)
         {
-            var exploreWindow = new TraverseKnowledgeGraph(this, knowledgeGraph.Text, entities);
+            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entities);
             Hide();
             exploreWindow.Show();
         }
@@ -391,7 +402,7 @@ namespace KWG_Geoenrichment
 
                     contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entityVals + "}";
 
-                    JToken contentResults = queryClass.SubmitQuery(knowledgeGraph.Text, contentResultsQuery);
+                    JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
 
                     foreach (var item in contentResults)
                     {
