@@ -50,9 +50,11 @@ namespace KWG_Geoenrichment
             this.runBtn = new System.Windows.Forms.Button();
             this.gdbFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.contentLoading = new System.Windows.Forms.PictureBox();
+            this.layerLoading = new System.Windows.Forms.PictureBox();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.contentLoading)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.layerLoading)).BeginInit();
             this.SuspendLayout();
             // 
             // geoFormName
@@ -303,6 +305,19 @@ namespace KWG_Geoenrichment
             this.contentLoading.TabStop = false;
             this.contentLoading.Visible = false;
             // 
+            // layerLoading
+            // 
+            this.layerLoading.BackColor = System.Drawing.Color.Transparent;
+            this.layerLoading.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.layerLoading.Image = global::KWG_Geoenrichment.Properties.Resources.loading;
+            this.layerLoading.Location = new System.Drawing.Point(617, 504);
+            this.layerLoading.Name = "layerLoading";
+            this.layerLoading.Size = new System.Drawing.Size(50, 50);
+            this.layerLoading.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.layerLoading.TabIndex = 41;
+            this.layerLoading.TabStop = false;
+            this.layerLoading.Visible = false;
+            // 
             // GeoenrichmentForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -310,6 +325,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 588);
+            this.Controls.Add(this.layerLoading);
             this.Controls.Add(this.contentLoading);
             this.Controls.Add(this.runBtn);
             this.Controls.Add(this.knowledgeGraph);
@@ -332,6 +348,7 @@ namespace KWG_Geoenrichment
             this.helpPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.contentLoading)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.layerLoading)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -359,5 +376,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.PictureBox contentLoading;
+        private System.Windows.Forms.PictureBox layerLoading;
     }
 }

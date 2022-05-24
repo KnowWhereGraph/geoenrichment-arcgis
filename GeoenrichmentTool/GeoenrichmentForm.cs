@@ -73,7 +73,7 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
-        private async void UploadGDBFile(object sender, EventArgs e)
+        private void UploadGDBFile(object sender, EventArgs e)
         {
             if (areaOfInterestDrawn)
                 return;
@@ -90,14 +90,7 @@ namespace KWG_Geoenrichment
                 openGDBBtn.Enabled = false;
                 selectAreaBtn.Enabled = false;
 
-                Show();
-                contentLoading.Visible = true;
-
-                await QueuedTask.Run(() => SearchForEntities());
-
-                CheckCanSelectContent();
-                CheckCanRunGeoenrichment();
-                contentLoading.Visible = false;
+                SearchArea();
             }
         }
 
@@ -113,7 +106,7 @@ namespace KWG_Geoenrichment
             Hide();
         }
 
-        public async void SetDrawnPolygon(string polygonString)
+        public void SetDrawnPolygon(string polygonString)
         {
             areaOfInterestPolygon = polygonString;
             areaOfInterestDrawn = true;
@@ -121,14 +114,19 @@ namespace KWG_Geoenrichment
             openGDBBtn.Enabled = false;
             selectAreaBtn.Enabled = false;
 
+            SearchArea();
+        }
+
+        public async void SearchArea()
+        {
             Show();
             contentLoading.Visible = true;
-
+            selectContentBtn.Text = "Searching area...";
             await QueuedTask.Run(() => SearchForEntities());
-
+            selectContentBtn.Text = "Select Content";
+            contentLoading.Visible = false;
             CheckCanSelectContent();
             CheckCanRunGeoenrichment();
-            contentLoading.Visible = false;
         }
 
         public void SearchForEntities()
@@ -285,6 +283,7 @@ namespace KWG_Geoenrichment
             saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + addedHeight);
             saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + addedHeight);
             helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
+            layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y + addedHeight);
             runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
             Height += addedHeight;
 
@@ -323,6 +322,10 @@ namespace KWG_Geoenrichment
 
         private async void RunGeoenrichment(object sender, EventArgs e)
         {
+            runBtn.Enabled = false;
+            runBtn.Text = "Running...";
+            layerLoading.Visible = true;
+
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             bool layerFailed = false;
             Dictionary<string, BasicFeatureLayer> tables = new Dictionary<string, BasicFeatureLayer>() { }; //entityType -> layer
@@ -343,7 +346,6 @@ namespace KWG_Geoenrichment
                     await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
                     await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
                     tables[shape] = fcLayer;
-
                 }
             }
 
@@ -528,6 +530,7 @@ namespace KWG_Geoenrichment
                 }
             }
 
+            layerLoading.Visible = false;
             Close();
         }
 
