@@ -49,25 +49,43 @@ namespace KWG_Geoenrichment
 
                 runTraverseBtn.Enabled = false;
                 edgeLoading.Visible = true;
-                await QueuedTask.Run(() =>
+                string error = await QueuedTask.Run(() =>
                 {
-                    JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
-
-                    foreach (var item in typeResults)
+                    try
                     {
-                        string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                        string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+                        JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
 
-                        if (!classes.ContainsKey(cType))
+                        foreach (var item in typeResults)
                         {
-                            classes[cType] = cLabel;
-                        }
-                    }
-                });
-                edgeLoading.Visible = false;
-                runTraverseBtn.Enabled = true;
+                            string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                            string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
 
-                classBox.Enabled = true;
+                            if (!classes.ContainsKey(cType))
+                            {
+                                classes[cType] = cLabel;
+                            }
+                        }
+                    } catch (Exception ex)
+                    {
+                        return "typ";
+                    }
+
+                    return "";
+                });
+
+                if (error == "")
+                {
+                    edgeLoading.Visible = false;
+                    runTraverseBtn.Enabled = true;
+
+                    classBox.Enabled = true;
+                }
+                else
+                {
+                    originalWindow.Show();
+                    queryClass.ReportGraphError(error);
+                    Close();
+                }
             }
             else
             {
@@ -103,27 +121,49 @@ namespace KWG_Geoenrichment
 
             runTraverseBtn.Enabled = false;
             edgeLoading.Visible = true;
-            await QueuedTask.Run(() =>
+            string error = await QueuedTask.Run(() =>
             {
-                JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
+                try {
+                    JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
 
-                foreach (var item in propResults)
-                {
-                    string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
-                    string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
-
-                    if (!properties.ContainsKey(predicate))
+                    foreach (var item in propResults)
                     {
-                        properties[predicate] = pLabel;
+                        string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
+                        string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+
+                        if (!properties.ContainsKey(predicate))
+                        {
+                            properties[predicate] = pLabel;
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    return "prp";
+                }
+
+                return "";
             });
             edgeLoading.Visible = false;
             runTraverseBtn.Enabled = true;
 
-            ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
-            currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
-            currPropBox.Enabled = true;
+            if (error == "")
+            {
+                ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+                currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
+                currPropBox.Enabled = true;
+            }
+            else
+            {
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+                classBox.SelectedValue = "";
+                if(degree > 1)
+                {
+                    ComboBox valBox = (ComboBox)this.Controls.Find("object" + (degree-1).ToString(), true).First();
+                    valBox.SelectedValue = "";
+                }
+                queryClass.ReportGraphError(error);
+            }
         }
 
         private async void PopulateValueBox(int degree)
@@ -150,34 +190,52 @@ namespace KWG_Geoenrichment
             runTraverseBtn.Enabled = false;
             edgeLoading.Visible = true;
             bool keepBoxEnabled = true;
-            await QueuedTask.Run(() =>
+            string error = await QueuedTask.Run(() =>
             {
-                JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
-
-                if (valueResults.HasValues)
+                try
                 {
-                    foreach (var item in valueResults)
-                    {
-                        string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                        string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+                    JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
 
-                        if (!values.ContainsKey(oType))
+                    if (valueResults.HasValues)
+                    {
+                        foreach (var item in valueResults)
                         {
-                            values[oType] = oLabel;
+                            string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                            string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                            if (!values.ContainsKey(oType))
+                            {
+                                values[oType] = oLabel;
+                            }
                         }
                     }
+                    else
+                    {
+                        keepBoxEnabled = false;
+                        values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    keepBoxEnabled = false;
-                    values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+                    return "cls";
                 }
+
+                return "";
             });
             edgeLoading.Visible = false;
             runTraverseBtn.Enabled = true;
 
-            currValueBox.Enabled = keepBoxEnabled;
-            currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
+            if (error == "")
+            {
+                currValueBox.Enabled = keepBoxEnabled;
+                currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
+            }
+            else
+            {
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+                propBox.SelectedValue = "";
+                queryClass.ReportGraphError(error);
+            }
         }
 
         private void OnClassBoxChange(object sender, EventArgs e)
