@@ -117,19 +117,40 @@ namespace KWG_Geoenrichment
             SearchArea();
         }
 
+        public void ResetSelectedArea()
+        {
+            areaOfInterestPolygon = null;
+            areaOfInterestDrawn = false;
+            selectAreaBtn.Text = "Select Area";
+
+            selectedGDB = null;
+            gdbFileUploaded = false;
+            openGDBBtn.Text = "Open GDB File";
+
+            openGDBBtn.Enabled = true;
+            selectAreaBtn.Enabled = true;
+        }
+
         public async void SearchArea()
         {
             Show();
             contentLoading.Visible = true;
             selectContentBtn.Text = "Searching area...";
-            await QueuedTask.Run(() => SearchForEntities());
+            string error = await QueuedTask.Run(() => SearchForEntities());
             selectContentBtn.Text = "Select Content";
             contentLoading.Visible = false;
-            CheckCanSelectContent();
-            CheckCanRunGeoenrichment();
+            if (error=="")
+            {
+                CheckCanSelectContent();
+                CheckCanRunGeoenrichment();
+            } else
+            {
+                ResetSelectedArea();
+                KwgGeoModule.Current.GetQueryClass().ReportGraphError(error);
+            }
         }
 
-        public void SearchForEntities()
+        public string SearchForEntities()
         {
             var s2CellList = new List<string>() { };
             entities = new List<string>() { };
@@ -156,11 +177,17 @@ namespace KWG_Geoenrichment
                     "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
                 "}";
 
-                JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
-
-                foreach (var item in s2Results)
+                try
                 {
-                    s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
+                    JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
+
+                    foreach (var item in s2Results)
+                    {
+                        s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
+                    }
+                } catch (Exception ex)
+                {
+                    return "s2c";
                 }
             }
 
@@ -173,12 +200,22 @@ namespace KWG_Geoenrichment
                 s2CellVals +
             "}";
 
-            JToken entityResults = queryClass.SubmitQuery(currentRepository, entityQuery);
-
-            foreach (var item in entityResults)
+            try
             {
-                entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                JToken entityResults = queryClass.SubmitQuery(currentRepository, entityQuery);
+
+                foreach (var item in entityResults)
+                {
+                    entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                }
             }
+            catch (Exception ex)
+            {
+                
+                return "ent";
+            }
+
+            return "";
         }
 
         public void CheckCanSelectContent()

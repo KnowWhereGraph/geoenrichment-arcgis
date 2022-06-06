@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using ArcGIS.Desktop.Framework.Dialogs;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
 
@@ -82,6 +83,13 @@ namespace KWG_Geoenrichment
             }
 
             return (result != "") ? result : iri;
+        }
+
+        public void ReportGraphError(string errCode)
+        {
+            string error = "Graph Error: Either query failed or connection was not established (code: " + errCode + ")";
+
+            MessageBox.Show($@"{error}");
         }
     }
 }
