@@ -168,13 +168,13 @@ namespace KWG_Geoenrichment
                     "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
                     "?adminRegion2 geo:hasGeometry ?arGeo. " +
                     "?arGeo geo:asWKT ?arWKT. " +
-                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
+                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
 
                     "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
                     "?s2Cell a kwg-ont:KWGCellLevel13. " +
                     "?s2Cell geo:hasGeometry ?s2Geo. " +
                     "?s2Geo geo:asWKT ?s2WKT. " +
-                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
+                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
                 "}";
 
                 try
