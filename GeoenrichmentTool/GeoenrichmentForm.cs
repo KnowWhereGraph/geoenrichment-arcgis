@@ -185,7 +185,8 @@ namespace KWG_Geoenrichment
                     {
                         s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
                     }
-                } catch (Exception ex)
+                } 
+                catch (Exception ex)
                 {
                     return "s2c";
                 }
@@ -441,26 +442,37 @@ namespace KWG_Geoenrichment
 
                     contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entityVals + "}";
 
-                    JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
-
-                    foreach (var item in contentResults)
+                    try
                     {
-                        var entityVal = item["entity"]["value"].ToString();
+                        JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
 
-                        //Check to see if we this entity exists, if not, set it up
-                        if (!finalContent.ContainsKey(entityVal))
-                            finalContent[entityVal] = new Dictionary<string, List<string>>() { };
-                        if (!finalContentLabels.ContainsKey(entityVal))
-                            finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
-                        if (!finalContentGeometry.ContainsKey(entityVal))
-                            finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
+                        foreach (var item in contentResults)
+                        {
+                            var entityVal = item["entity"]["value"].ToString();
 
-                        //Let's prep and store the result content
-                        if (!finalContent[entityVal].ContainsKey(columnLabel))
-                            finalContent[entityVal][columnLabel] = new List<string>() { };
+                            //Check to see if we this entity exists, if not, set it up
+                            if (!finalContent.ContainsKey(entityVal))
+                                finalContent[entityVal] = new Dictionary<string, List<string>>() { };
+                            if (!finalContentLabels.ContainsKey(entityVal))
+                                finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
+                            if (!finalContentGeometry.ContainsKey(entityVal))
+                                finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
 
-                        if (item["o"] != null && item["o"]["value"].ToString() != "")
-                            finalContent[entityVal][columnLabel].Add(item["o"]["value"].ToString());
+                            //Let's prep and store the result content
+                            if (!finalContent[entityVal].ContainsKey(columnLabel))
+                                finalContent[entityVal][columnLabel] = new List<string>() { };
+
+                            if (item["o"] != null && item["o"]["value"].ToString() != "")
+                                finalContent[entityVal][columnLabel].Add(item["o"]["value"].ToString());
+                        }
+                    } 
+                    catch(Exception ex)
+                    {
+                        runBtn.Enabled = true;
+                        runBtn.Text = "Run";
+                        layerLoading.Visible = false;
+                        queryClass.ReportGraphError("res");
+                        return;
                     }
                 }
 
