@@ -241,10 +241,20 @@ namespace KWG_Geoenrichment
         private void OnClassBoxChange(object sender, EventArgs e)
         {
             ComboBox classBox = (ComboBox)sender;
+            int degree = int.Parse(classBox.Name.Replace("subject", ""));
+
+            //We need to clear out any boxes later in the chain
+            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+            propBox.SelectedValue = "";
+            propBox.Enabled = false;
+            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            valueBox.SelectedValue = "";
+            valueBox.Enabled = false;
+            if (degree < maxDegree)
+                RemoveRows(degree);
+
             if (classBox.SelectedValue != null && classBox.SelectedValue.ToString() != "")
             {
-                int degree = int.Parse(classBox.Name.Replace("subject", ""));
-
                 PopulatePropertyBox(degree);
             }
         }
@@ -252,10 +262,17 @@ namespace KWG_Geoenrichment
         private void OnPropBoxChange(object sender, EventArgs e)
         {
             ComboBox propBox = (ComboBox)sender;
+            int degree = int.Parse(propBox.Name.Replace("predicate", ""));
+
+            //We need to clear out any boxes later in the chain
+            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            valueBox.SelectedValue = "";
+            valueBox.Enabled = false;
+            if (degree < maxDegree)
+                RemoveRows(degree);
+
             if (propBox.SelectedValue != null && propBox.SelectedValue.ToString() != "")
             {
-                int degree = int.Parse(propBox.Name.Replace("predicate", ""));
-
                 PopulateValueBox(degree);
             }
         }
@@ -263,10 +280,40 @@ namespace KWG_Geoenrichment
         private void OnValueBoxChange(object sender, EventArgs e)
         {
             ComboBox valueBox = (ComboBox)sender;
-            if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "" && valueBox.SelectedValue.ToString() != "LiteralDataFound")
+            int degree = int.Parse(valueBox.Name.Replace("object", ""));
+
+            //We need to clear out any boxes later in the chain
+            if (degree < maxDegree)
+                RemoveRows(degree);
+
+            if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
             {
-                addPropertyBtn.Enabled = true;
+                addPropertyBtn.Enabled = (valueBox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
             }
+        }
+
+        private void RemoveRows(int newMax)
+        {
+            for(int i = newMax+1; i <= maxDegree; i++)
+            {
+                //resize window and move main UI down
+                this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height - propertySpacing);
+                this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y - propertySpacing);
+                this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
+                this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
+                this.helpPanel.Size = new System.Drawing.Size(this.helpPanel.Size.Width, this.helpPanel.Size.Height - propertySpacing);
+
+                //delete property boxes for this degree
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
+
+                this.Controls.Remove(classBox);
+                this.Controls.Remove(propBox);
+                this.Controls.Remove(valueBox);
+            }
+
+            maxDegree = newMax;
         }
 
         private void LearnMore(object sender, EventArgs e)
