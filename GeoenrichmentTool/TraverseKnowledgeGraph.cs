@@ -383,5 +383,11 @@ namespace KWG_Geoenrichment
                 helpOpen = true;
             }
         }
+
+        private void TraverseKnowledgeGraph_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //This is a catch all in case the window gets closed prematurely
+            originalWindow.Show();
+        }
     }
 }

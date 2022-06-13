@@ -277,7 +277,7 @@ namespace KWG_Geoenrichment
             labelObj.Font = knowledgeGraphLabel.Font;
             labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
             labelObj.Margin = knowledgeGraphLabel.Margin;
-            labelObj.Name = "contentLabel";
+            labelObj.Name = "contentLabel" + content.Count.ToString();
             labelObj.Size = knowledgeGraphLabel.Size;
             labelObj.MaximumSize = new Size(780, 0);
             labelObj.Text = labelString;
@@ -303,13 +303,29 @@ namespace KWG_Geoenrichment
             mergeBox.DataSource = new BindingSource(mergeRules, null);
             Controls.Add(mergeBox);
 
+            //Add the remove content button
+            Button removeContent = new Button();
+            removeContent.BackColor = System.Drawing.Color.Transparent;
+            removeContent.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            removeContent.Cursor = System.Windows.Forms.Cursors.Hand;
+            removeContent.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            removeContent.FlatAppearance.BorderSize = 0;
+            removeContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            removeContent.Image = global::KWG_Geoenrichment.Properties.Resources.x;
+            removeContent.Name = "removeContent" + content.Count.ToString();
+            removeContent.Size = new System.Drawing.Size(26, 26);
+            removeContent.UseVisualStyleBackColor = false;
+            removeContent.Click += new System.EventHandler(this.RemoveSelectedContent);
+            Controls.Add(removeContent);
+
             //Move the label
             labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
             int addedHeight = labelObj.Height + contentPadding;
 
-            //Move the merge dropdown and the column text
+            //Move the merge dropdown, the remove content button, and the column text
             columnText.Location = new System.Drawing.Point(labelObj.Location.X, labelObj.Location.Y + labelObj.Height + contentPadding);
             mergeBox.Location = new System.Drawing.Point(labelObj.Location.X + 206, labelObj.Location.Y + labelObj.Height + contentPadding);
+            removeContent.Location = new System.Drawing.Point(labelObj.Location.X + 612, labelObj.Location.Y + labelObj.Height + contentPadding);
             addedHeight += mergeBox.Height + contentPadding;
 
             //Adjust the total amount of spacing we've moved
@@ -332,6 +348,64 @@ namespace KWG_Geoenrichment
                 mergeBox.Enabled = false;
             }
 
+
+            CheckCanRunGeoenrichment();
+        }
+
+        private void RemoveSelectedContent(object sender, EventArgs e)
+        {
+            //get index
+            Button clickedButton = sender as Button;
+            string buttonText = clickedButton.Name;
+            string index = buttonText.Replace("removeContent", "");
+            int idx = Int32.Parse(index);
+
+            //remove content from ui
+            Label contentLabel = (Label)this.Controls.Find("contentLabel" + index, true).First();
+            TextBox columnName = (TextBox)this.Controls.Find("columnName" + index, true).First();
+            ComboBox mergeRule = (ComboBox)this.Controls.Find("mergeRule" + index, true).First();
+
+            this.Controls.Remove(contentLabel);
+            this.Controls.Remove(columnName);
+            this.Controls.Remove(mergeRule);
+            this.Controls.Remove(clickedButton);
+
+            //remove content from array
+            int oldSize = content.Count;
+            content.RemoveAt(idx - 1);
+
+            //remove the window height
+            int addedHeight = contentLabel.Height + contentPadding;
+            addedHeight += mergeRule.Height + contentPadding;
+
+            contentTotalSpacing -= addedHeight;
+            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
+            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - addedHeight);
+            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - addedHeight);
+            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - addedHeight);
+            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y - addedHeight);
+            layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y - addedHeight);
+            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y - addedHeight);
+            Height -= addedHeight;
+
+            //remove any content that is listed after, and relabel with new index 
+            for (int i = idx+1; i <= oldSize; i++)
+            {
+                Label oldContentLabel = (Label)this.Controls.Find("contentLabel" + i.ToString(), true).First();
+                TextBox oldColumnName = (TextBox)this.Controls.Find("columnName" + i.ToString(), true).First();
+                ComboBox oldMergeRule = (ComboBox)this.Controls.Find("mergeRule" + i.ToString(), true).First();
+                Button oldRemoveContent = (Button)this.Controls.Find("removeContent" + i.ToString(), true).First();
+
+                oldContentLabel.Location = new System.Drawing.Point(oldContentLabel.Location.X, oldContentLabel.Location.Y - addedHeight);
+                oldColumnName.Location = new System.Drawing.Point(oldColumnName.Location.X, oldColumnName.Location.Y - addedHeight);
+                oldMergeRule.Location = new System.Drawing.Point(oldMergeRule.Location.X, oldMergeRule.Location.Y - addedHeight);
+                oldRemoveContent.Location = new System.Drawing.Point(oldRemoveContent.Location.X, oldRemoveContent.Location.Y - addedHeight);
+
+                oldContentLabel.Name = "contentLabel" + (i - 1).ToString();
+                oldColumnName.Name = "columnName" + (i - 1).ToString();
+                oldMergeRule.Name = "mergeRule" + (i - 1).ToString();
+                oldRemoveContent.Name = "removeContent" + (i - 1).ToString();
+            }
 
             CheckCanRunGeoenrichment();
         }

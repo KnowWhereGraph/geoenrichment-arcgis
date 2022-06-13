@@ -268,6 +268,7 @@ namespace KWG_Geoenrichment
             this.DoubleBuffered = true;
             this.Name = "TraverseKnowledgeGraph";
             this.Text = "Traverse Knowledge Graph";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TraverseKnowledgeGraph_FormClosing);
             this.helpPanel.ResumeLayout(false);
             this.helpPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).EndInit();
