@@ -18,18 +18,13 @@ namespace KWG_Geoenrichment
 {
     public partial class GeoenrichmentForm : Form
     {
-        private string currentRepository;
-
-        private bool gdbFileUploaded = false;
-        private GDBProjectItem selectedGDB;
-
-        private bool areaOfInterestDrawn = false;
-        private string areaOfInterestPolygon;
+        private string currentRepository = "";
+        private string currentLayer = "";
 
         private List<String> entities;
         private List<List<String>> content;
-        private Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
-            { "concat", "Concate values together with a \" | \"" },
+        private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
+            { "concat", "Concatenate values together with a \" | \"" },
             { "first", "Get the first value found" },
             { "count", "Get the number of values found" },
             { "total", "Get the total of all values (numeric)" },
@@ -39,17 +34,21 @@ namespace KWG_Geoenrichment
             { "stdev", "Get the standard deviation of all values (numeric)" },
         };
 
-        private List<String> shapeTables = new List<String>() {
+
+        //List of supported geometries
+        //On execution, we build one of each to 
+        private readonly List<String> shapeTables = new List<String>() {
             "MapPoint",
             "Polyline",
             "Polygon"
         };
 
         private int contentTotalSpacing = 50;
-        private int contentPadding = 11;
-        private int helpSpacing = 400;
+        private readonly int contentPadding = 11;
+        private readonly int helpSpacing = 400;
         private bool helpOpen = true;
 
+        //Initializes the form
         public GeoenrichmentForm()
         {
             InitializeComponent();
@@ -62,43 +61,39 @@ namespace KWG_Geoenrichment
             }
 
             knowledgeGraph.SelectedIndex = 0;
-            currentRepository = knowledgeGraph.Text;
+
+            PopulateActiveLayers();
             content = new List<List<String>>() { };
         }
 
+        //Grabs each layer name from the active map layer
+        public void PopulateActiveLayers()
+        {
+            selectedLayer.Items.Clear();
+
+            foreach (Layer activeLayer in MapView.Active.Map.GetLayersAsFlattenedList())
+            {
+                selectedLayer.Items.Add(activeLayer.Name);
+            }
+        }
+        
+        //Graph endpoint changed, so see if we can select content
         private void OnChangeGraph(object sender, EventArgs e)
         {
             currentRepository = knowledgeGraph.Text;
-            CheckCanSelectContent();
-            CheckCanRunGeoenrichment();
+            UpdateEntityList();
         }
 
-        private void UploadGDBFile(object sender, EventArgs e)
+        //Selected layer changed, so see if we can select content
+        private void OnChangeLayer(object sender, EventArgs e)
         {
-            if (areaOfInterestDrawn)
-                return;
-
-            var bpf = new BrowseProjectFilter("esri_browseDialogFilters_geodatabases_file");
-            bpf.Name = "File Geodatabases";
-            var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
-
-            if ((bool)openItemDialog.ShowDialog())
-            {
-                selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
-                gdbFileUploaded = true;
-                openGDBBtn.Text = selectedGDB.Name;
-                openGDBBtn.Enabled = false;
-                selectAreaBtn.Enabled = false;
-
-                SearchArea();
-            }
+            currentLayer = selectedLayer.Text;
+            UpdateEntityList();
         }
 
+        //We are adding a new layer, so open the custom draw tool to do so
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
-            if (gdbFileUploaded)
-                return;
-
             FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
 
             KwgGeoModule.Current.SetActiveForm(this);
@@ -106,47 +101,48 @@ namespace KWG_Geoenrichment
             Hide();
         }
 
-        public void SetDrawnPolygon(string polygonString)
+        //Once draw tool compeletes, the newly created layer is set as the active layer
+        public void SetDrawnLayer(string layerName)
         {
-            areaOfInterestPolygon = polygonString;
-            areaOfInterestDrawn = true;
-            selectAreaBtn.Text = "Area Drawn";
-            openGDBBtn.Enabled = false;
-            selectAreaBtn.Enabled = false;
-
-            SearchArea();
+            PopulateActiveLayers();
+            selectedLayer.SelectedIndex = selectedLayer.FindStringExact(layerName);
         }
 
-        public void ResetSelectedArea()
+
+        //Search for entities using the selected knowledge graph and layer
+        //If entities found AND no errors occured, enable Select Content
+        public async void UpdateEntityList()
         {
-            areaOfInterestPolygon = null;
-            areaOfInterestDrawn = false;
-            selectAreaBtn.Text = "Select Area";
-
-            selectedGDB = null;
-            gdbFileUploaded = false;
-            openGDBBtn.Text = "Open GDB File";
-
-            openGDBBtn.Enabled = true;
-            selectAreaBtn.Enabled = true;
-        }
-
-        public async void SearchArea()
-        {
-            Show();
-            contentLoading.Visible = true;
-            selectContentBtn.Text = "Searching area...";
-            string error = await QueuedTask.Run(() => SearchForEntities());
-            selectContentBtn.Text = "Select Content";
-            contentLoading.Visible = false;
-            if (error=="")
+            if (
+                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
+                selectedLayer.SelectedItem != null && selectedLayer.SelectedItem.ToString() != ""
+              )
             {
-                CheckCanSelectContent();
-                CheckCanRunGeoenrichment();
-            } else
+                contentLoading.Visible = true;
+                selectContentBtn.Text = "Searching area...";
+                string error = await QueuedTask.Run(() => SearchForEntities());
+                selectContentBtn.Text = "Select Content";
+                contentLoading.Visible = false;
+                if (error == "")
+                {
+                    if (entities.Count > 0)
+                        selectContentBtn.Enabled = true;
+                    else
+                    {
+                        selectContentBtn.Enabled = false;
+                        MessageBox.Show($@"No content found in the selected Map Layer. Try a different feature layer!");
+                    }
+                }
+                else
+                {
+                    selectedLayer.SelectedItem = null;
+                    selectContentBtn.Enabled = false;
+                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(error);
+                }
+            }
+            else
             {
-                ResetSelectedArea();
-                KwgGeoModule.Current.GetQueryClass().ReportGraphError(error);
+                selectContentBtn.Enabled = false;
             }
         }
 
@@ -156,40 +152,35 @@ namespace KWG_Geoenrichment
             entities = new List<string>() { };
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
+            List<string> polygonWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
+
             //Get s2Cells related to the polygon
             //TODO:: Change function base on spatial relation
-            if (gdbFileUploaded)
+            var s2Query = "select ?s2Cell where { " +
+                "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
+                "?adminRegion2 geo:hasGeometry ?arGeo. " +
+                "?arGeo geo:asWKT ?arWKT. " +
+                "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
+
+                "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
+                "?s2Cell a kwg-ont:KWGCellLevel13. " +
+                "?s2Cell geo:hasGeometry ?s2Geo. " +
+                "?s2Geo geo:asWKT ?s2WKT. " +
+                "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
+            "}";
+
+            try
             {
+                JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
 
-            }
-            else if (areaOfInterestDrawn)
-            {
-                var s2Query = "select ?s2Cell where { " +
-                    "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
-                    "?adminRegion2 geo:hasGeometry ?arGeo. " +
-                    "?arGeo geo:asWKT ?arWKT. " +
-                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
-
-                    "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
-                    "?s2Cell a kwg-ont:KWGCellLevel13. " +
-                    "?s2Cell geo:hasGeometry ?s2Geo. " +
-                    "?s2Geo geo:asWKT ?s2WKT. " +
-                    "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
-                "}";
-
-                try
+                foreach (var item in s2Results)
                 {
-                    JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
-
-                    foreach (var item in s2Results)
-                    {
-                        s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
-                    }
-                } 
-                catch (Exception ex)
-                {
-                    return "s2c";
+                    s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
                 }
+            }
+            catch (Exception ex)
+            {
+                return "s2c";
             }
 
             var s2CellVals = "values ?s2Cell {" + String.Join(" ", s2CellList) + "}";
@@ -212,26 +203,38 @@ namespace KWG_Geoenrichment
             }
             catch (Exception ex)
             {
-                
+
                 return "ent";
             }
 
             return "";
         }
 
-        public void CheckCanSelectContent()
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        private void UploadLayer(object sender, EventArgs e)
         {
-            if(
-                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
-                (gdbFileUploaded || areaOfInterestDrawn)
-              )
-            {
-                selectContentBtn.Enabled = true;
-            } else
-            {
-                selectContentBtn.Enabled = false;
-            }
+            //var bpf = new BrowseProjectFilter("esri_browseDialogFilters_geodatabases_file");
+            //bpf.Name = "File Geodatabases";
+            //var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
+
+            //if ((bool)openItemDialog.ShowDialog())
+            //{
+            //    selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
+            //    gdbFileUploaded = true;
+            //    openLayerBtn.Text = selectedGDB.Name;
+            //    openLayerBtn.Enabled = false;
+            //    addLayerBtn.Enabled = false;
+
+            //    SearchArea();
+            //}
         }
+
+        
+
+        
+
+        
 
         private void SelectContent(object sender, EventArgs e)
         {

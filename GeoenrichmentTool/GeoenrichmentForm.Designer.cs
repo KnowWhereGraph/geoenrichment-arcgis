@@ -37,8 +37,8 @@ namespace KWG_Geoenrichment
             this.requiredSaveLayerAs = new System.Windows.Forms.Label();
             this.saveLayerAsLabel = new System.Windows.Forms.Label();
             this.saveLayerAs = new System.Windows.Forms.TextBox();
-            this.selectAreaBtn = new System.Windows.Forms.Button();
-            this.openGDBBtn = new System.Windows.Forms.Button();
+            this.addLayerBtn = new System.Windows.Forms.Button();
+            this.openLayerBtn = new System.Windows.Forms.Button();
             this.helpButton = new System.Windows.Forms.Button();
             this.helpPanel = new System.Windows.Forms.Panel();
             this.label2 = new System.Windows.Forms.Label();
@@ -51,8 +51,8 @@ namespace KWG_Geoenrichment
             this.layerLoading = new System.Windows.Forms.PictureBox();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.selectedLayer = new System.Windows.Forms.ComboBox();
+            this.refreshLayersBtn = new System.Windows.Forms.Button();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.contentLoading)).BeginInit();
@@ -148,37 +148,37 @@ namespace KWG_Geoenrichment
             this.saveLayerAs.TabIndex = 27;
             this.saveLayerAs.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnFeatureNameChage);
             // 
-            // selectAreaBtn
+            // addLayerBtn
             // 
-            this.selectAreaBtn.BackColor = System.Drawing.Color.Transparent;
-            this.selectAreaBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.selectAreaBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
-            this.selectAreaBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.selectAreaBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.selectAreaBtn.ForeColor = System.Drawing.Color.Black;
-            this.selectAreaBtn.Image = global::KWG_Geoenrichment.Properties.Resources.plus;
-            this.selectAreaBtn.Location = new System.Drawing.Point(749, 241);
-            this.selectAreaBtn.Name = "selectAreaBtn";
-            this.selectAreaBtn.Size = new System.Drawing.Size(36, 36);
-            this.selectAreaBtn.TabIndex = 28;
-            this.selectAreaBtn.UseVisualStyleBackColor = false;
-            this.selectAreaBtn.Click += new System.EventHandler(this.DrawAreaOfInterest);
+            this.addLayerBtn.BackColor = System.Drawing.Color.Transparent;
+            this.addLayerBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.addLayerBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.addLayerBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.addLayerBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.addLayerBtn.ForeColor = System.Drawing.Color.Black;
+            this.addLayerBtn.Image = global::KWG_Geoenrichment.Properties.Resources.plus;
+            this.addLayerBtn.Location = new System.Drawing.Point(749, 241);
+            this.addLayerBtn.Name = "addLayerBtn";
+            this.addLayerBtn.Size = new System.Drawing.Size(36, 36);
+            this.addLayerBtn.TabIndex = 28;
+            this.addLayerBtn.UseVisualStyleBackColor = false;
+            this.addLayerBtn.Click += new System.EventHandler(this.DrawAreaOfInterest);
             // 
-            // openGDBBtn
+            // openLayerBtn
             // 
-            this.openGDBBtn.BackColor = System.Drawing.Color.Transparent;
-            this.openGDBBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.openGDBBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
-            this.openGDBBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.openGDBBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.openGDBBtn.ForeColor = System.Drawing.Color.Black;
-            this.openGDBBtn.Image = global::KWG_Geoenrichment.Properties.Resources.file;
-            this.openGDBBtn.Location = new System.Drawing.Point(791, 241);
-            this.openGDBBtn.Name = "openGDBBtn";
-            this.openGDBBtn.Size = new System.Drawing.Size(36, 36);
-            this.openGDBBtn.TabIndex = 29;
-            this.openGDBBtn.UseVisualStyleBackColor = false;
-            this.openGDBBtn.Click += new System.EventHandler(this.UploadGDBFile);
+            this.openLayerBtn.BackColor = System.Drawing.Color.Transparent;
+            this.openLayerBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.openLayerBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.openLayerBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.openLayerBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.openLayerBtn.ForeColor = System.Drawing.Color.Black;
+            this.openLayerBtn.Image = global::KWG_Geoenrichment.Properties.Resources.file;
+            this.openLayerBtn.Location = new System.Drawing.Point(791, 241);
+            this.openLayerBtn.Name = "openLayerBtn";
+            this.openLayerBtn.Size = new System.Drawing.Size(36, 36);
+            this.openLayerBtn.TabIndex = 29;
+            this.openLayerBtn.UseVisualStyleBackColor = false;
+            this.openLayerBtn.Click += new System.EventHandler(this.UploadLayer);
             // 
             // helpButton
             // 
@@ -317,29 +317,30 @@ namespace KWG_Geoenrichment
             this.label6.TabIndex = 42;
             this.label6.Text = "*";
             // 
-            // comboBox1
+            // selectedLayer
             // 
-            this.comboBox1.Font = new System.Drawing.Font("Arial", 12F);
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(51, 247);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(650, 26);
-            this.comboBox1.TabIndex = 44;
+            this.selectedLayer.Font = new System.Drawing.Font("Arial", 12F);
+            this.selectedLayer.FormattingEnabled = true;
+            this.selectedLayer.Location = new System.Drawing.Point(51, 247);
+            this.selectedLayer.Name = "selectedLayer";
+            this.selectedLayer.Size = new System.Drawing.Size(650, 26);
+            this.selectedLayer.TabIndex = 44;
+            this.selectedLayer.SelectedIndexChanged += new System.EventHandler(this.OnChangeLayer);
             // 
-            // button1
+            // refreshLayersBtn
             // 
-            this.button1.BackColor = System.Drawing.Color.Transparent;
-            this.button1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.button1.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
-            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.button1.ForeColor = System.Drawing.Color.Black;
-            this.button1.Image = global::KWG_Geoenrichment.Properties.Resources.refresh;
-            this.button1.Location = new System.Drawing.Point(707, 241);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(36, 36);
-            this.button1.TabIndex = 45;
-            this.button1.UseVisualStyleBackColor = false;
+            this.refreshLayersBtn.BackColor = System.Drawing.Color.Transparent;
+            this.refreshLayersBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.refreshLayersBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.refreshLayersBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.refreshLayersBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.refreshLayersBtn.ForeColor = System.Drawing.Color.Black;
+            this.refreshLayersBtn.Image = global::KWG_Geoenrichment.Properties.Resources.refresh;
+            this.refreshLayersBtn.Location = new System.Drawing.Point(707, 241);
+            this.refreshLayersBtn.Name = "refreshLayersBtn";
+            this.refreshLayersBtn.Size = new System.Drawing.Size(36, 36);
+            this.refreshLayersBtn.TabIndex = 45;
+            this.refreshLayersBtn.UseVisualStyleBackColor = false;
             // 
             // GeoenrichmentForm
             // 
@@ -348,9 +349,10 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 588);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.comboBox1);
-            this.Controls.Add(this.openGDBBtn);
+            this.ControlBox = false;
+            this.Controls.Add(this.refreshLayersBtn);
+            this.Controls.Add(this.selectedLayer);
+            this.Controls.Add(this.openLayerBtn);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.layerLoading);
@@ -360,7 +362,7 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.helpPanel);
             this.Controls.Add(this.helpButton);
             this.Controls.Add(this.selectContentBtn);
-            this.Controls.Add(this.selectAreaBtn);
+            this.Controls.Add(this.addLayerBtn);
             this.Controls.Add(this.saveLayerAs);
             this.Controls.Add(this.saveLayerAsLabel);
             this.Controls.Add(this.requiredSaveLayerAs);
@@ -369,6 +371,8 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.geoFormName);
             this.DoubleBuffered = true;
             this.HelpButton = true;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "GeoenrichmentForm";
             this.Text = "KnowWhereGraph Geoenrichment";
             this.helpPanel.ResumeLayout(false);
@@ -390,8 +394,8 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label requiredSaveLayerAs;
         private System.Windows.Forms.Label saveLayerAsLabel;
         private System.Windows.Forms.TextBox saveLayerAs;
-        private System.Windows.Forms.Button selectAreaBtn;
-        private System.Windows.Forms.Button openGDBBtn;
+        private System.Windows.Forms.Button addLayerBtn;
+        private System.Windows.Forms.Button openLayerBtn;
         private System.Windows.Forms.Button helpButton;
         private System.Windows.Forms.Panel helpPanel;
         private System.Windows.Forms.PictureBox helpPanelLogo;
@@ -404,7 +408,7 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.PictureBox layerLoading;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ComboBox selectedLayer;
+        private System.Windows.Forms.Button refreshLayersBtn;
     }
 }

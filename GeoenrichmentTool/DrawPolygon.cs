@@ -73,11 +73,12 @@ namespace KWG_Geoenrichment
             string layerName = layerPrefix + gen.Next(999999).ToString();
             await FeatureClassHelper.CreateFeatureClassLayer(layerName);
 
-            var mainLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
+            BasicFeatureLayer mainLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
 
             if (mainLayer == null)
             {
                 MessageBox.Show($@"Unable to find {layerName} in the active map");
+                KwgGeoModule.Current.GetActiveForm().Show();
             }
             else
             {
@@ -100,7 +101,8 @@ namespace KWG_Geoenrichment
                     MapView.Active.Redraw(false);
                 });
 
-                KwgGeoModule.Current.GetActiveForm().SetDrawnPolygon(polygonString);
+                KwgGeoModule.Current.GetActiveForm().Show();
+                KwgGeoModule.Current.GetActiveForm().SetDrawnLayer(mainLayer.Name);
             }
         }
     }

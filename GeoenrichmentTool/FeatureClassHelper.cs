@@ -98,5 +98,12 @@ namespace KWG_Geoenrichment
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("Delete_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
         }
+
+        public static List<string> GetPolygonStringsFromActiveLayer(string layerName)
+        {
+            List<string> wkts = new List<string>() { };
+
+            return wkts;
+        }
     }
 }
