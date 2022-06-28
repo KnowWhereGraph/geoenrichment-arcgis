@@ -73,7 +73,12 @@ namespace KWG_Geoenrichment
 
             foreach (Layer activeLayer in MapView.Active.Map.GetLayersAsFlattenedList())
             {
-                selectedLayer.Items.Add(activeLayer.Name);
+                if (activeLayer is BasicFeatureLayer)
+                {
+                    var geoLayer = activeLayer as BasicFeatureLayer;
+                    if(geoLayer.ShapeType == ArcGIS.Core.CIM.esriGeometryType.esriGeometryPolygon)
+                        selectedLayer.Items.Add(geoLayer.Name);
+                }
             }
         }
         
@@ -154,33 +159,36 @@ namespace KWG_Geoenrichment
 
             List<string> polygonWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
 
-            //Get s2Cells related to the polygon
-            //TODO:: Change function base on spatial relation
-            var s2Query = "select ?s2Cell where { " +
-                "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
-                "?adminRegion2 geo:hasGeometry ?arGeo. " +
-                "?arGeo geo:asWKT ?arWKT. " +
-                "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?arWKT)). " +
-
-                "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
-                "?s2Cell a kwg-ont:KWGCellLevel13. " +
-                "?s2Cell geo:hasGeometry ?s2Geo. " +
-                "?s2Geo geo:asWKT ?s2WKT. " +
-                "FILTER(geof:sfIntersects(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + areaOfInterestPolygon + "\"^^geo:wktLiteral, ?s2WKT)). " +
-            "}";
-
-            try
+            foreach (var wkt in polygonWKTs)
             {
-                JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
+                //Get s2Cells related to the polygon
+                //TODO:: Change function base on spatial relation
+                var s2Query = "select ?s2Cell where { " +
+                    "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
+                    "?adminRegion2 geo:hasGeometry ?arGeo. " +
+                    "?arGeo geo:asWKT ?arWKT. " +
+                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT)). " +
 
-                foreach (var item in s2Results)
+                    "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
+                    "?s2Cell a kwg-ont:KWGCellLevel13. " +
+                    "?s2Cell geo:hasGeometry ?s2Geo. " +
+                    "?s2Geo geo:asWKT ?s2WKT. " +
+                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?s2WKT)). " +
+                "}";
+
+                try
                 {
-                    s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
+                    JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
+
+                    foreach (var item in s2Results)
+                    {
+                        s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                return "s2c";
+                catch (Exception ex)
+                {
+                    return "s2c";
+                }
             }
 
             var s2CellVals = "values ?s2Cell {" + String.Join(" ", s2CellList) + "}";
@@ -421,8 +429,6 @@ namespace KWG_Geoenrichment
         public void CheckCanRunGeoenrichment()
         {
             if (
-                knowledgeGraph.SelectedItem != null && knowledgeGraph.SelectedItem.ToString() != "" &&
-                (gdbFileUploaded || areaOfInterestDrawn) &&
                 content.Count > 0 &&
                 saveLayerAs.Text != ""
               )
@@ -676,6 +682,11 @@ namespace KWG_Geoenrichment
                 Size = new System.Drawing.Size(Size.Width + helpSpacing, Size.Height);
                 helpOpen = true;
             }
+        }
+
+        private void CloseWindow(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

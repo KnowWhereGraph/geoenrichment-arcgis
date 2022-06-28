@@ -53,6 +53,7 @@ namespace KWG_Geoenrichment
             this.label6 = new System.Windows.Forms.Label();
             this.selectedLayer = new System.Windows.Forms.ComboBox();
             this.refreshLayersBtn = new System.Windows.Forms.Button();
+            this.closeForm = new System.Windows.Forms.Button();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.contentLoading)).BeginInit();
@@ -342,6 +343,22 @@ namespace KWG_Geoenrichment
             this.refreshLayersBtn.TabIndex = 45;
             this.refreshLayersBtn.UseVisualStyleBackColor = false;
             // 
+            // closeForm
+            // 
+            this.closeForm.BackColor = System.Drawing.Color.Transparent;
+            this.closeForm.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.closeForm.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.closeForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.closeForm.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.closeForm.ForeColor = System.Drawing.Color.Black;
+            this.closeForm.Image = global::KWG_Geoenrichment.Properties.Resources.x;
+            this.closeForm.Location = new System.Drawing.Point(12, 12);
+            this.closeForm.Name = "closeForm";
+            this.closeForm.Size = new System.Drawing.Size(36, 36);
+            this.closeForm.TabIndex = 46;
+            this.closeForm.UseVisualStyleBackColor = false;
+            this.closeForm.Click += new System.EventHandler(this.CloseWindow);
+            // 
             // GeoenrichmentForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -350,6 +367,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 588);
             this.ControlBox = false;
+            this.Controls.Add(this.closeForm);
             this.Controls.Add(this.refreshLayersBtn);
             this.Controls.Add(this.selectedLayer);
             this.Controls.Add(this.openLayerBtn);
@@ -410,5 +428,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox selectedLayer;
         private System.Windows.Forms.Button refreshLayersBtn;
+        private System.Windows.Forms.Button closeForm;
     }
 }

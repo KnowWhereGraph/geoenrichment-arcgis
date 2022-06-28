@@ -1,10 +1,12 @@
-﻿using ArcGIS.Core.Geometry;
+﻿using ArcGIS.Core.Data;
+using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Geoprocessing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace KWG_Geoenrichment
@@ -102,6 +104,28 @@ namespace KWG_Geoenrichment
         public static List<string> GetPolygonStringsFromActiveLayer(string layerName)
         {
             List<string> wkts = new List<string>() { };
+
+            BasicFeatureLayer mainLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == layerName).FirstOrDefault() as BasicFeatureLayer;
+
+            RowCursor rowCursor = mainLayer.GetTable().Search();
+
+            while(rowCursor.MoveNext())
+            {
+                Row row = rowCursor.Current;
+
+                Feature feature = row as Feature;
+                Polygon polyGeo = (Polygon)feature.GetShape();
+
+                var coordinates = polyGeo.Copy2DCoordinatesToList();
+                List<string> coorArray = new List<string>();
+                foreach (Coordinate2D coor in coordinates)
+                {
+                    MapPoint geoCoor = coor.ToMapPoint();
+                    coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
+                }
+                string polygonString = "Polygon((" + String.Join(", ", coorArray) + "))";
+                wkts.Add(polygonString);
+            }
 
             return wkts;
         }

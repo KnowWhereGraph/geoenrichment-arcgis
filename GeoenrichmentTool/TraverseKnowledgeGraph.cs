@@ -436,5 +436,10 @@ namespace KWG_Geoenrichment
             //This is a catch all in case the window gets closed prematurely
             originalWindow.Show();
         }
+
+        private void CloseWindow(object sender, EventArgs e)
+        {
+
+        }
     }
 }

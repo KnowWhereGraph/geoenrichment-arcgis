@@ -44,6 +44,7 @@ namespace KWG_Geoenrichment
             this.subject1 = new System.Windows.Forms.ComboBox();
             this.predicate1 = new System.Windows.Forms.ComboBox();
             this.edgeLoading = new System.Windows.Forms.PictureBox();
+            this.closeForm = new System.Windows.Forms.Button();
             this.helpPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.edgeLoading)).BeginInit();
@@ -247,6 +248,22 @@ namespace KWG_Geoenrichment
             this.edgeLoading.TabStop = false;
             this.edgeLoading.Visible = false;
             // 
+            // closeForm
+            // 
+            this.closeForm.BackColor = System.Drawing.Color.Transparent;
+            this.closeForm.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.closeForm.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.closeForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.closeForm.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
+            this.closeForm.ForeColor = System.Drawing.Color.Black;
+            this.closeForm.Image = global::KWG_Geoenrichment.Properties.Resources.x;
+            this.closeForm.Location = new System.Drawing.Point(12, 12);
+            this.closeForm.Name = "closeForm";
+            this.closeForm.Size = new System.Drawing.Size(36, 36);
+            this.closeForm.TabIndex = 47;
+            this.closeForm.UseVisualStyleBackColor = false;
+            this.closeForm.Click += new System.EventHandler(this.CloseWindow);
+            // 
             // TraverseKnowledgeGraph
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -254,6 +271,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 491);
+            this.Controls.Add(this.closeForm);
             this.Controls.Add(this.edgeLoading);
             this.Controls.Add(this.predicate1);
             this.Controls.Add(this.subject1);
@@ -266,6 +284,8 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.prop1Label);
             this.Controls.Add(this.traverseGraph);
             this.DoubleBuffered = true;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "TraverseKnowledgeGraph";
             this.Text = "Traverse Knowledge Graph";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TraverseKnowledgeGraph_FormClosing);
@@ -295,5 +315,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.PictureBox edgeLoading;
+        private System.Windows.Forms.Button closeForm;
     }
 }
