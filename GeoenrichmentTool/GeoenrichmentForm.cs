@@ -4,6 +4,7 @@ using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Internal.Catalog;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
@@ -96,6 +97,11 @@ namespace KWG_Geoenrichment
             UpdateEntityList();
         }
 
+        private void RefreshLayerList(object sender, EventArgs e)
+        {
+            PopulateActiveLayers();
+        }
+
         //We are adding a new layer, so open the custom draw tool to do so
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
@@ -111,6 +117,24 @@ namespace KWG_Geoenrichment
         {
             PopulateActiveLayers();
             selectedLayer.SelectedIndex = selectedLayer.FindStringExact(layerName);
+        }
+
+        private async void UploadLayer(object sender, EventArgs e)
+        {
+            var bpf = new BrowseProjectFilter("esri_browseDialogFilters_featureClasses_layerProperties_polygon");
+            bpf.Name = "Polygon Feature Class";
+            var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
+
+            if ((bool)openItemDialog.ShowDialog())
+            {
+                Item fileItem = openItemDialog.Items.First();
+
+                Uri uri = new Uri(fileItem.Path);
+                await QueuedTask.Run(() => LayerFactory.Instance.CreateLayer(uri, MapView.Active.Map));
+
+                PopulateActiveLayers();
+                selectedLayer.SelectedIndex = selectedLayer.FindStringExact(fileItem.Name);
+            }
         }
 
 
@@ -220,30 +244,6 @@ namespace KWG_Geoenrichment
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        private void UploadLayer(object sender, EventArgs e)
-        {
-            //var bpf = new BrowseProjectFilter("esri_browseDialogFilters_geodatabases_file");
-            //bpf.Name = "File Geodatabases";
-            //var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
-
-            //if ((bool)openItemDialog.ShowDialog())
-            //{
-            //    selectedGDB = (GDBProjectItem)openItemDialog.Items.First();
-            //    gdbFileUploaded = true;
-            //    openLayerBtn.Text = selectedGDB.Name;
-            //    openLayerBtn.Enabled = false;
-            //    addLayerBtn.Enabled = false;
-
-            //    SearchArea();
-            //}
-        }
-
-        
-
-        
-
-        
-
         private void SelectContent(object sender, EventArgs e)
         {
             var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entities);
@@ -330,7 +330,7 @@ namespace KWG_Geoenrichment
             Controls.Add(removeContent);
 
             //Move the label
-            labelObj.Location = new System.Drawing.Point(knowledgeGraph.Location.X, knowledgeGraph.Location.Y + contentTotalSpacing);
+            labelObj.Location = new System.Drawing.Point(selectedLayer.Location.X, selectedLayer.Location.Y + contentTotalSpacing);
             int addedHeight = labelObj.Height + contentPadding;
 
             //Move the merge dropdown, the remove content button, and the column text

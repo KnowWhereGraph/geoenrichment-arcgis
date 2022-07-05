@@ -342,6 +342,7 @@ namespace KWG_Geoenrichment
             this.refreshLayersBtn.Size = new System.Drawing.Size(36, 36);
             this.refreshLayersBtn.TabIndex = 45;
             this.refreshLayersBtn.UseVisualStyleBackColor = false;
+            this.refreshLayersBtn.Click += new System.EventHandler(this.RefreshLayerList);
             // 
             // closeForm
             // 

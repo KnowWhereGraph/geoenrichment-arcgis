@@ -43,24 +43,15 @@ namespace KWG_Geoenrichment
         {
             query = MakeSPARQLPrefix() + query;
 
-            //_httpClient.DefaultRequestHeaders.Add("Accept", "application/sparql-results+json");
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/sparql-results+json");
 
-            /*var values = new Dictionary<string, string>
+            var values = new Dictionary<string, string>
             {
                 { "query", query },
                 { "infer", "false" }
             };
 
-            var content = new FormUrlEncodedContent(values);*/
-
-            var values = new
-            {
-                query = query,
-                infer = false
-            };
-
-            var stringPayload = JsonConvert.SerializeObject(values);
-            var content = new StringContent(stringPayload, Encoding.UTF8, "application/json");
+            var content = new FormUrlEncodedContent(values);
 
             var response = _httpClient.PostAsync(defaultEndpoints[endpointKey], content);
             var responseString = response.Result.Content.ReadAsStringAsync().Result;
