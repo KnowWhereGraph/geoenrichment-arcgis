@@ -252,7 +252,9 @@ namespace KWG_Geoenrichment
             // 
             this.closeForm.BackColor = System.Drawing.Color.Transparent;
             this.closeForm.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.closeForm.Cursor = System.Windows.Forms.Cursors.Hand;
             this.closeForm.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
+            this.closeForm.FlatAppearance.BorderSize = 0;
             this.closeForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.closeForm.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
             this.closeForm.ForeColor = System.Drawing.Color.Black;
@@ -271,6 +273,7 @@ namespace KWG_Geoenrichment
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1284, 491);
+            this.ControlBox = false;
             this.Controls.Add(this.closeForm);
             this.Controls.Add(this.edgeLoading);
             this.Controls.Add(this.predicate1);
@@ -284,10 +287,12 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.prop1Label);
             this.Controls.Add(this.traverseGraph);
             this.DoubleBuffered = true;
+            this.HelpButton = true;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "TraverseKnowledgeGraph";
-            this.Text = "Traverse Knowledge Graph";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.Text = "Explore Knowledge Graph";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TraverseKnowledgeGraph_FormClosing);
             this.helpPanel.ResumeLayout(false);
             this.helpPanel.PerformLayout();

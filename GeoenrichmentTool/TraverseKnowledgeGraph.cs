@@ -439,7 +439,8 @@ namespace KWG_Geoenrichment
 
         private void CloseWindow(object sender, EventArgs e)
         {
-
+            originalWindow.Show();
+            Close();
         }
     }
 }

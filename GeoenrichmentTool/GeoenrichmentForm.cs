@@ -55,6 +55,8 @@ namespace KWG_Geoenrichment
             InitializeComponent();
             ToggleHelpMenu();
 
+            content = new List<List<String>>() { };
+
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             foreach(var endpoint in queryClass.defaultEndpoints)
             {
@@ -64,7 +66,6 @@ namespace KWG_Geoenrichment
             knowledgeGraph.SelectedIndex = 0;
 
             PopulateActiveLayers();
-            content = new List<List<String>>() { };
         }
 
         //Grabs each layer name from the active map layer
@@ -86,6 +87,24 @@ namespace KWG_Geoenrichment
         //Graph endpoint changed, so see if we can select content
         private void OnChangeGraph(object sender, EventArgs e)
         {
+            //If we didn't actually change, don't do anything
+            if (knowledgeGraph.Text == currentRepository)
+                return;
+
+            if (content.Count > 0)
+            {
+                DialogResult dialogResult = MessageBox.Show("Changing graph repositories will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    ResetSelectedContent();
+                }
+                if (dialogResult == DialogResult.No)
+                {
+                    knowledgeGraph.Text = currentRepository;
+                    return;
+                }
+            }
+
             currentRepository = knowledgeGraph.Text;
             UpdateEntityList();
         }
@@ -93,10 +112,29 @@ namespace KWG_Geoenrichment
         //Selected layer changed, so see if we can select content
         private void OnChangeLayer(object sender, EventArgs e)
         {
+            //If we didn't actually change, don't do anything
+            if (selectedLayer.Text == currentLayer)
+                return;
+
+            if (content.Count > 0)
+            {
+                DialogResult dialogResult = MessageBox.Show("Changing layers will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    ResetSelectedContent();
+                }
+                if (dialogResult == DialogResult.No)
+                {
+                    selectedLayer.Text = currentLayer;
+                    return;
+                }
+            }
+
             currentLayer = selectedLayer.Text;
             UpdateEntityList();
         }
 
+        //Refresh the layer list to fit the current map state
         private void RefreshLayerList(object sender, EventArgs e)
         {
             PopulateActiveLayers();
@@ -105,6 +143,19 @@ namespace KWG_Geoenrichment
         //We are adding a new layer, so open the custom draw tool to do so
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
+            if (content.Count > 0)
+            {
+                DialogResult dialogResult = MessageBox.Show("Drawing a new layer will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    ResetSelectedContent();
+                }
+                if (dialogResult == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
             FrameworkApplication.SetCurrentToolAsync("KWG_Geoenrichment_DrawPolygon");
 
             KwgGeoModule.Current.SetActiveForm(this);
@@ -119,8 +170,22 @@ namespace KWG_Geoenrichment
             selectedLayer.SelectedIndex = selectedLayer.FindStringExact(layerName);
         }
 
+        //Once layer file is loaded, the layer is added to the map and is set as the active layer
         private async void UploadLayer(object sender, EventArgs e)
         {
+            if (content.Count > 0)
+            {
+                DialogResult dialogResult = MessageBox.Show("Loading a layer will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    ResetSelectedContent();
+                }
+                if (dialogResult == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
             var bpf = new BrowseProjectFilter("esri_browseDialogFilters_featureClasses_layerProperties_polygon");
             bpf.Name = "Polygon Feature Class";
             var openItemDialog = new OpenItemDialog { BrowseFilter = bpf };
@@ -418,6 +483,40 @@ namespace KWG_Geoenrichment
                 oldRemoveContent.Name = "removeContent" + (i - 1).ToString();
             }
 
+            CheckCanRunGeoenrichment();
+        }
+
+        private void ResetSelectedContent()
+        {
+            for (int i = 1; i <= content.Count; i++)
+            {
+                //remove content from ui
+                Label contentLabel = (Label)this.Controls.Find("contentLabel" + i.ToString(), true).First();
+                TextBox columnName = (TextBox)this.Controls.Find("columnName" + i.ToString(), true).First();
+                ComboBox mergeRule = (ComboBox)this.Controls.Find("mergeRule" + i.ToString(), true).First();
+                Button removeContent = (Button)this.Controls.Find("removeContent" + i.ToString(), true).First();
+
+                this.Controls.Remove(contentLabel);
+                this.Controls.Remove(columnName);
+                this.Controls.Remove(mergeRule);
+                this.Controls.Remove(removeContent);
+
+                //remove the window height
+                int addedHeight = contentLabel.Height + contentPadding;
+                addedHeight += mergeRule.Height + contentPadding;
+
+                contentTotalSpacing -= addedHeight;
+                selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
+                requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - addedHeight);
+                saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - addedHeight);
+                saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - addedHeight);
+                helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y - addedHeight);
+                layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y - addedHeight);
+                runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y - addedHeight);
+                Height -= addedHeight;
+            }
+
+            content = new List<List<String>>() { };
             CheckCanRunGeoenrichment();
         }
 
