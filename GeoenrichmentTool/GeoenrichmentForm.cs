@@ -253,22 +253,24 @@ namespace KWG_Geoenrichment
                 //Get s2Cells related to the polygon
                 //TODO:: Change function base on spatial relation
                 var entityQuery = "select distinct ?entity where { " +
+                    "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
+
                     "?adminRegion2 a kwg-ont:AdministrativeRegion_2. " +
                     "?adminRegion2 geo:hasGeometry ?arGeo2. " +
                     "?arGeo2 geo:asWKT ?arWKT2. " +
-                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT2) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT2)). " +
+                    "FILTER(geof:sfIntersects(?userWKT, ?arWKT2) || geof:sfWithin(?userWKT, ?arWKT2)). " +
 
                     "?adminRegion3 kwg-ont:sfWithin ?adminRegion2." +
                     "?adminRegion3 a kwg-ont:AdministrativeRegion_3. " +
                     "?adminRegion3 geo:hasGeometry ?arGeo3. " +
                     "?arGeo3 geo:asWKT ?arWKT3. " +
-                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT3) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT3)). " +
+                    "FILTER(geof:sfIntersects(?userWKT, ?arWKT3) || geof:sfWithin(?userWKT, ?arWKT3)). " +
 
                     "?adminRegion3 kwg-ont:sfContains ?s2Cell. " +
                     "?s2Cell a kwg-ont:KWGCellLevel13. " +
                     "?s2Cell geo:hasGeometry ?s2Geo. " +
                     "?s2Geo geo:asWKT ?s2WKT. " +
-                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?s2WKT)). " +
+                    "FILTER(geof:sfIntersects(?userWKT, ?s2WKT) || geof:sfWithin(?userWKT, ?s2WKT)). " +
 
                     "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
                     "?entity a geo:Feature. " +
