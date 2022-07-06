@@ -252,56 +252,41 @@ namespace KWG_Geoenrichment
             {
                 //Get s2Cells related to the polygon
                 //TODO:: Change function base on spatial relation
-                var s2Query = "select ?s2Cell where { " +
-                    "?adminRegion2 a kwg-ont:AdministrativeRegion_3. " +
-                    "?adminRegion2 geo:hasGeometry ?arGeo. " +
-                    "?arGeo geo:asWKT ?arWKT. " +
-                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT)). " +
+                var entityQuery = "select distinct ?entity where { " +
+                    "?adminRegion2 a kwg-ont:AdministrativeRegion_2. " +
+                    "?adminRegion2 geo:hasGeometry ?arGeo2. " +
+                    "?arGeo2 geo:asWKT ?arWKT2. " +
+                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT2) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT2)). " +
 
-                    "?adminRegion2 kwg-ont:sfContains ?s2Cell. " +
+                    "?adminRegion3 kwg-ont:sfWithin ?adminRegion2." +
+                    "?adminRegion3 a kwg-ont:AdministrativeRegion_3. " +
+                    "?adminRegion3 geo:hasGeometry ?arGeo3. " +
+                    "?arGeo3 geo:asWKT ?arWKT3. " +
+                    "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT3) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?arWKT3)). " +
+
+                    "?adminRegion3 kwg-ont:sfContains ?s2Cell. " +
                     "?s2Cell a kwg-ont:KWGCellLevel13. " +
                     "?s2Cell geo:hasGeometry ?s2Geo. " +
                     "?s2Geo geo:asWKT ?s2WKT. " +
                     "FILTER(geof:sfIntersects(\"" + wkt + "\"^^geo:wktLiteral, ?s2WKT) || geof:sfWithin(\"" + wkt + "\"^^geo:wktLiteral, ?s2WKT)). " +
+
+                    "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
+                    "?entity a geo:Feature. " +
                 "}";
 
                 try
                 {
-                    JToken s2Results = queryClass.SubmitQuery(currentRepository, s2Query);
+                    JToken s2Results = queryClass.SubmitQuery(currentRepository, entityQuery);
 
                     foreach (var item in s2Results)
                     {
-                        s2CellList.Add(queryClass.IRIToPrefix(item["s2Cell"]["value"].ToString()));
+                        entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
                     }
                 }
                 catch (Exception ex)
                 {
-                    return "s2c";
+                    return "ent";
                 }
-            }
-
-            var s2CellVals = "values ?s2Cell {" + String.Join(" ", s2CellList) + "}";
-
-            //Lets get our list of entities
-            var entityQuery = "select distinct ?entity where { " +
-                "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
-                "?entity a geo:Feature. " +
-                s2CellVals +
-            "}";
-
-            try
-            {
-                JToken entityResults = queryClass.SubmitQuery(currentRepository, entityQuery);
-
-                foreach (var item in entityResults)
-                {
-                    entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
-                }
-            }
-            catch (Exception ex)
-            {
-
-                return "ent";
             }
 
             return "";
