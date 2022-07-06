@@ -1,7 +1,9 @@
 ﻿using ArcGIS.Desktop.Framework.Dialogs;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 
 namespace KWG_Geoenrichment
 {
@@ -29,19 +31,19 @@ namespace KWG_Geoenrichment
             {"foaf", "http://xmlns.com/foaf/0.1/"},
             {"iospress", "http://ld.iospress.nl/rdf/ontology/"}
         };
+        
+        private HttpClient _httpClient;
 
         public QuerySPARQL()
         {
-
+            _httpClient = new HttpClient();
         }
 
         public JToken SubmitQuery(string endpointKey, string query)
         {
             query = MakeSPARQLPrefix() + query;
 
-            HttpClient client = new HttpClient();
-
-            client.DefaultRequestHeaders.Add("Accept", "application/sparql-results+json");
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/sparql-results+json");
 
             var values = new Dictionary<string, string>
             {
@@ -51,8 +53,7 @@ namespace KWG_Geoenrichment
 
             var content = new FormUrlEncodedContent(values);
 
-            var response = client.PostAsync(defaultEndpoints[endpointKey], content);
-
+            var response = _httpClient.PostAsync(defaultEndpoints[endpointKey], content);
             var responseString = response.Result.Content.ReadAsStringAsync().Result;
 
             JObject json = JObject.Parse(responseString);
