@@ -18,13 +18,14 @@ namespace KWG_Geoenrichment
         protected int maxDegree = 1;
 
         private int propertySpacing = 30;
-        private int helpSpacing = 440;
-        private bool helpOpen = true;
+
+        private readonly string helpText = "Select a geography feature from the first box.You may use successive boxes to explore additional information about that feature.\n\n" +
+            "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
+            "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types.";
 
         public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities)
         {
             InitializeComponent();
-            ToggleHelpMenu();
 
             originalWindow = gf;
             currentEndpoint = endpoint;
@@ -301,7 +302,6 @@ namespace KWG_Geoenrichment
                 this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y - propertySpacing);
                 this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
                 this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
-                this.helpPanel.Size = new System.Drawing.Size(this.helpPanel.Size.Width, this.helpPanel.Size.Height - propertySpacing);
 
                 //delete property boxes for this degree
                 ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
@@ -326,7 +326,6 @@ namespace KWG_Geoenrichment
             this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y + propertySpacing);
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
-            this.helpPanel.Size = new System.Drawing.Size(this.helpPanel.Size.Width, this.helpPanel.Size.Height + propertySpacing);
 
             ComboBox classBox = (ComboBox)this.Controls.Find("subject" + maxDegree.ToString(), true).First();
             ComboBox classBox_copy = new ComboBox();
@@ -414,21 +413,8 @@ namespace KWG_Geoenrichment
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)
         {
-            ToggleHelpMenu();
-        }
-
-        private void ToggleHelpMenu()
-        {
-            if (helpOpen)
-            {
-                this.Size = new System.Drawing.Size(this.Size.Width - helpSpacing, this.Size.Height);
-                helpOpen = false;
-            }
-            else
-            {
-                this.Size = new System.Drawing.Size(this.Size.Width + helpSpacing, this.Size.Height);
-                helpOpen = true;
-            }
+            var helpWindow = new KWGHelp(helpText);
+            helpWindow.Show();
         }
 
         private void TraverseKnowledgeGraph_FormClosing(object sender, FormClosingEventArgs e)

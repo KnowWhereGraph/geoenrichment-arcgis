@@ -29,7 +29,6 @@ namespace KWG_Geoenrichment
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GeoenrichmentForm));
             this.geoFormName = new System.Windows.Forms.Label();
             this.requiredKnowledgeGraph = new System.Windows.Forms.Label();
             this.knowledgeGraphLabel = new System.Windows.Forms.Label();
@@ -40,10 +39,6 @@ namespace KWG_Geoenrichment
             this.addLayerBtn = new System.Windows.Forms.Button();
             this.openLayerBtn = new System.Windows.Forms.Button();
             this.helpButton = new System.Windows.Forms.Button();
-            this.helpPanel = new System.Windows.Forms.Panel();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.helpPanelLogo = new System.Windows.Forms.PictureBox();
             this.knowledgeGraph = new System.Windows.Forms.ComboBox();
             this.runBtn = new System.Windows.Forms.Button();
             this.gdbFileDialog = new System.Windows.Forms.OpenFileDialog();
@@ -54,8 +49,7 @@ namespace KWG_Geoenrichment
             this.selectedLayer = new System.Windows.Forms.ComboBox();
             this.refreshLayersBtn = new System.Windows.Forms.Button();
             this.closeForm = new System.Windows.Forms.Button();
-            this.helpPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
+            this.helpProvider1 = new System.Windows.Forms.HelpProvider();
             ((System.ComponentModel.ISupportInitialize)(this.contentLoading)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.layerLoading)).BeginInit();
             this.SuspendLayout();
@@ -201,49 +195,6 @@ namespace KWG_Geoenrichment
             this.helpButton.UseVisualStyleBackColor = false;
             this.helpButton.Click += new System.EventHandler(this.ClickToggleHelpMenu);
             // 
-            // helpPanel
-            // 
-            this.helpPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(56)))), ((int)(((byte)(91)))));
-            this.helpPanel.Controls.Add(this.label2);
-            this.helpPanel.Controls.Add(this.label1);
-            this.helpPanel.Controls.Add(this.helpPanelLogo);
-            this.helpPanel.Location = new System.Drawing.Point(885, 51);
-            this.helpPanel.Name = "helpPanel";
-            this.helpPanel.Size = new System.Drawing.Size(377, 525);
-            this.helpPanel.TabIndex = 37;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(13, 70);
-            this.label2.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(323, 380);
-            this.label2.TabIndex = 2;
-            this.label2.Text = resources.GetString("label2.Text");
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Arial", 18F, System.Drawing.FontStyle.Bold);
-            this.label1.ForeColor = System.Drawing.Color.White;
-            this.label1.Location = new System.Drawing.Point(17, 149);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(315, 29);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Choose Knowledge Graph";
-            // 
-            // helpPanelLogo
-            // 
-            this.helpPanelLogo.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
-            this.helpPanelLogo.Location = new System.Drawing.Point(17, 3);
-            this.helpPanelLogo.Name = "helpPanelLogo";
-            this.helpPanelLogo.Size = new System.Drawing.Size(66, 64);
-            this.helpPanelLogo.TabIndex = 0;
-            this.helpPanelLogo.TabStop = false;
-            // 
             // knowledgeGraph
             // 
             this.knowledgeGraph.Font = new System.Drawing.Font("Arial", 12F);
@@ -374,7 +325,7 @@ namespace KWG_Geoenrichment
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.ClientSize = new System.Drawing.Size(1284, 588);
+            this.ClientSize = new System.Drawing.Size(892, 588);
             this.ControlBox = false;
             this.Controls.Add(this.closeForm);
             this.Controls.Add(this.refreshLayersBtn);
@@ -386,7 +337,6 @@ namespace KWG_Geoenrichment
             this.Controls.Add(this.contentLoading);
             this.Controls.Add(this.runBtn);
             this.Controls.Add(this.knowledgeGraph);
-            this.Controls.Add(this.helpPanel);
             this.Controls.Add(this.helpButton);
             this.Controls.Add(this.selectContentBtn);
             this.Controls.Add(this.addLayerBtn);
@@ -403,9 +353,6 @@ namespace KWG_Geoenrichment
             this.Name = "GeoenrichmentForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "KnowWhereGraph Geoenrichment";
-            this.helpPanel.ResumeLayout(false);
-            this.helpPanel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.contentLoading)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.layerLoading)).EndInit();
             this.ResumeLayout(false);
@@ -425,10 +372,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Button addLayerBtn;
         private System.Windows.Forms.Button openLayerBtn;
         private System.Windows.Forms.Button helpButton;
-        private System.Windows.Forms.Panel helpPanel;
-        private System.Windows.Forms.PictureBox helpPanelLogo;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox knowledgeGraph;
         private System.Windows.Forms.Button runBtn;
         private System.Windows.Forms.OpenFileDialog gdbFileDialog;
@@ -439,5 +382,6 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.ComboBox selectedLayer;
         private System.Windows.Forms.Button refreshLayersBtn;
         private System.Windows.Forms.Button closeForm;
+        private System.Windows.Forms.HelpProvider helpProvider1;
     }
 }
