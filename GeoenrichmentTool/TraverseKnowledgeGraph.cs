@@ -98,6 +98,7 @@ namespace KWG_Geoenrichment
             }
 
             classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
+            classBox.DropDownWidth = classes.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, classBox.Font).Width);
         }
 
         private async void PopulatePropertyBox(int degree)
@@ -152,6 +153,7 @@ namespace KWG_Geoenrichment
             {
                 ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
                 currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
+                currPropBox.DropDownWidth = properties.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currPropBox.Font).Width);
                 currPropBox.Enabled = true;
             }
             else
@@ -230,6 +232,7 @@ namespace KWG_Geoenrichment
             {
                 currValueBox.Enabled = keepBoxEnabled;
                 currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
+                currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
             }
             else
             {
