@@ -257,9 +257,9 @@ namespace KWG_Geoenrichment
             this.label5.Location = new System.Drawing.Point(61, 225);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(165, 19);
+            this.label5.Size = new System.Drawing.Size(233, 19);
             this.label5.TabIndex = 43;
-            this.label5.Text = "Select Feature Layer";
+            this.label5.Text = "Select Polygon Feature Layer";
             // 
             // label6
             // 
@@ -323,6 +323,7 @@ namespace KWG_Geoenrichment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScroll = true;
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(892, 588);

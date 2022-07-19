@@ -68,6 +68,11 @@ namespace KWG_Geoenrichment
             knowledgeGraph.SelectedIndex = 0;
 
             PopulateActiveLayers();
+
+            ToolTip buttonToolTips = new ToolTip();
+            buttonToolTips.SetToolTip(refreshLayersBtn, "Refresh Polygon Layer List");
+            buttonToolTips.SetToolTip(addLayerBtn, "Draw New Polygon Layer");
+            buttonToolTips.SetToolTip(openLayerBtn, "Open Polygon Layer File");
         }
 
         //Grabs each layer name from the active map layer
