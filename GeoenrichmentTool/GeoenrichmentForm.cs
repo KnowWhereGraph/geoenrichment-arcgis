@@ -46,14 +46,16 @@ namespace KWG_Geoenrichment
 
         private int contentTotalSpacing = 50;
         private readonly int contentPadding = 11;
-        private readonly int helpSpacing = 400;
-        private bool helpOpen = true;
+
+        private readonly string helpText = "The entire KnowWhereGraph is available to explore. In the future, the Choose Knowledge Graph list will allow you to select specific repositories in the KnowWhereGraph to explore.\n\n" +
+            "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the "+ " button to manually draw a new polygon layer representing your area of interest.\n\n" +
+            "After selecting an area of interest, choose \"Select Content\" to learn about what happened in that area.You may run this feature as many times as desired.\n\n" +
+            "When you're ready to create your new Feature Class, provide a name for the new layer and hit \"RUN\".";
 
         //Initializes the form
         public GeoenrichmentForm()
         {
             InitializeComponent();
-            ToggleHelpMenu();
 
             content = new List<List<String>>() { };
 
@@ -66,6 +68,11 @@ namespace KWG_Geoenrichment
             knowledgeGraph.SelectedIndex = 0;
 
             PopulateActiveLayers();
+
+            ToolTip buttonToolTips = new ToolTip();
+            buttonToolTips.SetToolTip(refreshLayersBtn, "Refresh Polygon Layer List");
+            buttonToolTips.SetToolTip(addLayerBtn, "Draw New Polygon Layer");
+            buttonToolTips.SetToolTip(openLayerBtn, "Open Polygon Layer File");
         }
 
         //Grabs each layer name from the active map layer
@@ -293,8 +300,6 @@ namespace KWG_Geoenrichment
 
             return "";
         }
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         private void SelectContent(object sender, EventArgs e)
         {
@@ -754,20 +759,8 @@ namespace KWG_Geoenrichment
 
         private void ClickToggleHelpMenu(object sender, EventArgs e)
         {
-            ToggleHelpMenu();
-        }
-
-        private void ToggleHelpMenu()
-        {
-            if(helpOpen)
-            {
-                Size = new System.Drawing.Size(Size.Width - helpSpacing, Size.Height);
-                helpOpen = false;
-            } else
-            {
-                Size = new System.Drawing.Size(Size.Width + helpSpacing, Size.Height);
-                helpOpen = true;
-            }
+            var helpWindow = new KWGHelp(helpText);
+            helpWindow.Show();
         }
 
         private void CloseWindow(object sender, EventArgs e)

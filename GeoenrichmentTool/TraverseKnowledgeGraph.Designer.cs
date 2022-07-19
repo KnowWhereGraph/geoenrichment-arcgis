@@ -36,17 +36,10 @@ namespace KWG_Geoenrichment
             this.runTraverseBtn = new System.Windows.Forms.Button();
             this.addPropertyBtn = new System.Windows.Forms.Button();
             this.helpButton = new System.Windows.Forms.Button();
-            this.helpPanel = new System.Windows.Forms.Panel();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.helpPanelLogo = new System.Windows.Forms.PictureBox();
             this.subject1 = new System.Windows.Forms.ComboBox();
             this.predicate1 = new System.Windows.Forms.ComboBox();
             this.edgeLoading = new System.Windows.Forms.PictureBox();
             this.closeForm = new System.Windows.Forms.Button();
-            this.helpPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.edgeLoading)).BeginInit();
             this.SuspendLayout();
             // 
@@ -149,66 +142,6 @@ namespace KWG_Geoenrichment
             this.helpButton.UseVisualStyleBackColor = false;
             this.helpButton.Click += new System.EventHandler(this.ClickToggleHelpMenu);
             // 
-            // helpPanel
-            // 
-            this.helpPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(56)))), ((int)(((byte)(91)))));
-            this.helpPanel.Controls.Add(this.label4);
-            this.helpPanel.Controls.Add(this.label3);
-            this.helpPanel.Controls.Add(this.label2);
-            this.helpPanel.Controls.Add(this.helpPanelLogo);
-            this.helpPanel.Location = new System.Drawing.Point(885, 51);
-            this.helpPanel.Name = "helpPanel";
-            this.helpPanel.Size = new System.Drawing.Size(377, 408);
-            this.helpPanel.TabIndex = 38;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label4.ForeColor = System.Drawing.Color.White;
-            this.label4.Location = new System.Drawing.Point(13, 226);
-            this.label4.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(317, 76);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "You can return to this menu multiple times to either learn more about your select" +
-    "ed feature, or to explore additional feature types.";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label3.ForeColor = System.Drawing.Color.White;
-            this.label3.Location = new System.Drawing.Point(13, 157);
-            this.label3.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(319, 57);
-            this.label3.TabIndex = 3;
-            this.label3.Text = "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the " +
-    "feature to your new Feature Class.";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(13, 70);
-            this.label2.MaximumSize = new System.Drawing.Size(325, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(321, 76);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "Select a geography feature from the first box. You may use successive boxes to ex" +
-    "plore additional information about that feature.";
-            // 
-            // helpPanelLogo
-            // 
-            this.helpPanelLogo.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
-            this.helpPanelLogo.Location = new System.Drawing.Point(17, 3);
-            this.helpPanelLogo.Name = "helpPanelLogo";
-            this.helpPanelLogo.Size = new System.Drawing.Size(66, 64);
-            this.helpPanelLogo.TabIndex = 0;
-            this.helpPanelLogo.TabStop = false;
-            // 
             // subject1
             // 
             this.subject1.DisplayMember = "Value";
@@ -270,15 +203,15 @@ namespace KWG_Geoenrichment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScroll = true;
             this.BackgroundImage = global::KWG_Geoenrichment.Properties.Resources.background_landing__2_;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.ClientSize = new System.Drawing.Size(1284, 491);
+            this.ClientSize = new System.Drawing.Size(892, 491);
             this.ControlBox = false;
             this.Controls.Add(this.closeForm);
             this.Controls.Add(this.edgeLoading);
             this.Controls.Add(this.predicate1);
             this.Controls.Add(this.subject1);
-            this.Controls.Add(this.helpPanel);
             this.Controls.Add(this.helpButton);
             this.Controls.Add(this.addPropertyBtn);
             this.Controls.Add(this.runTraverseBtn);
@@ -294,9 +227,6 @@ namespace KWG_Geoenrichment
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "Explore Knowledge Graph";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TraverseKnowledgeGraph_FormClosing);
-            this.helpPanel.ResumeLayout(false);
-            this.helpPanel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.edgeLoading)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -312,13 +242,8 @@ namespace KWG_Geoenrichment
         private System.Windows.Forms.Button runTraverseBtn;
         private System.Windows.Forms.Button addPropertyBtn;
         private System.Windows.Forms.Button helpButton;
-        private System.Windows.Forms.Panel helpPanel;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.PictureBox helpPanelLogo;
         private System.Windows.Forms.ComboBox subject1;
         private System.Windows.Forms.ComboBox predicate1;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.PictureBox edgeLoading;
         private System.Windows.Forms.Button closeForm;
     }
