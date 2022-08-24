@@ -1,9 +1,7 @@
 ﻿using ArcGIS.Desktop.Framework.Dialogs;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 
 namespace KWG_Geoenrichment
 {
