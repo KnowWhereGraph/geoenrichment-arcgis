@@ -547,6 +547,7 @@ namespace KWG_Geoenrichment
             //build the table and its columns
             for (int j = 0; j < content.Count; j++)
             {
+                var firstShape = true;
                 var className = content[j][0].Contains(':') ? content[j][0].Split(':')[1] : content[j][0];
 
                 if (!tables.ContainsKey(className))
@@ -574,13 +575,20 @@ namespace KWG_Geoenrichment
                         }
                     }
 
-                    //Add the additional data column to our feature tables and track its merge rule
+                    //Add the additional data column to our feature tables
                     ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j + 1).ToString(), true).First();
                     string mergeRule = mergeBox.SelectedValue.ToString();
                     string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
 
-                    columnLabels.Add(columnLabel);
-                    labelToMergeRule[columnLabel] = mergeRule;
+
+                    if (firstShape)
+                    {
+                        //We are adding the same column to multiple shape type features, so only capture it for reference the first time
+                        columnLabels.Add(columnLabel);
+                        labelToMergeRule[columnLabel] = mergeRule;
+                        firstShape = false;
+                    }
+                    
                     if (!columnLabel.StartsWith("NoAdditionalData"))
                         await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
                 }
@@ -673,7 +681,6 @@ namespace KWG_Geoenrichment
                 }
 
                 //Use data to populate table
-                var test = "";
                 await QueuedTask.Run(() =>
                 {
                     foreach (var entityType in finalContent)
