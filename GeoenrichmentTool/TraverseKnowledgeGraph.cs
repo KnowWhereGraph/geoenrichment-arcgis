@@ -198,7 +198,6 @@ namespace KWG_Geoenrichment
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
             Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } };
-            bool keepBoxEnabled = true;
 
             for (int j = 0; j < entityVals.Count; j++)
             {
@@ -225,23 +224,15 @@ namespace KWG_Geoenrichment
                     {
                         JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
 
-                        if (valueResults.HasValues)
+                        foreach (var item in valueResults)
                         {
-                            foreach (var item in valueResults)
-                            {
-                                string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                                string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+                            string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                            string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
 
-                                if (!values.ContainsKey(oType))
-                                {
-                                    values[oType] = oLabel;
-                                }
+                            if (!values.ContainsKey(oType))
+                            {
+                                values[oType] = oLabel;
                             }
-                        }
-                        else
-                        {
-                            keepBoxEnabled = false;
-                            values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
                         }
                     }
                     catch (Exception ex)
@@ -263,6 +254,13 @@ namespace KWG_Geoenrichment
 
                     return;
                 }
+            }
+
+            bool keepBoxEnabled = true;
+            if (values.Count == 1)
+            {
+                keepBoxEnabled = false;
+                values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
             }
 
             edgeLoading.Visible = false;
