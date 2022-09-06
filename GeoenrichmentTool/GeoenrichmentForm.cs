@@ -23,6 +23,9 @@ namespace KWG_Geoenrichment
         private string currentLayer = "";
 
         private List<String> entities;
+        private List<String> entitiesFormatted;
+        Dictionary<string, string> entitiesClasses;
+
         private List<List<String>> content;
         private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
             { "concat", "Concatenate values together with a \" | \"" },
@@ -227,7 +230,9 @@ namespace KWG_Geoenrichment
                 if (error == "")
                 {
                     if (entities.Count > 0)
+                    {
                         selectContentBtn.Enabled = true;
+                    }
                     else
                     {
                         selectContentBtn.Enabled = false;
@@ -247,10 +252,26 @@ namespace KWG_Geoenrichment
             }
         }
 
+        //Split entitie lists into not only a SPARQL format, but chunked by sets of 1000
+        private static List<string> SplitEntityList(List<string> originalList)
+        {
+            var newEntityList = new List<string>();
+
+            for (int i = 0; i < originalList.Count; i += 1000)
+            {
+                List<string> subList = originalList.GetRange(i, Math.Min(1000, originalList.Count - i));
+                newEntityList.Add("values ?entity {" + String.Join(" ", subList) + "}");
+            }
+
+            return newEntityList;
+        }
+
         public string SearchForEntities()
         {
             var s2CellList = new List<string>() { };
             entities = new List<string>() { };
+            entitiesFormatted = new List<string>() { };
+            entitiesClasses = new Dictionary<string, string>() { { "", "" } };
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
             List<string> polygonWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
@@ -313,12 +334,53 @@ namespace KWG_Geoenrichment
                 }
             }
 
+            entitiesFormatted = SplitEntityList(entities);
+
+            for (int i = 0; i < entitiesFormatted.Count; i++)
+            {
+                var typeQuery = "select distinct ?type ?label where { " +
+                    "?entity a ?type. " +
+                    "?type rdfs:label ?label. " +
+                    entitiesFormatted[i] +
+                "}";
+
+                string error = QueuedTask.Run(() =>
+                {
+                    try
+                    {
+                        JToken typeResults = queryClass.SubmitQuery(currentRepository, typeQuery);
+
+                        foreach (var item in typeResults)
+                        {
+                            string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                            string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                            if (!entitiesClasses.ContainsKey(cType))
+                            {
+                                entitiesClasses[cType] = cLabel;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return "typ";
+                    }
+
+                    return "";
+                }).Result;
+
+                if (error != "")
+                {
+                    return error;
+                }
+            }
+
             return "";
         }
 
         private void SelectContent(object sender, EventArgs e)
         {
-            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entities);
+            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entitiesFormatted, entitiesClasses);
             Hide();
             exploreWindow.Show();
         }

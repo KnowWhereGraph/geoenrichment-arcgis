@@ -14,6 +14,7 @@ namespace KWG_Geoenrichment
         
         private string currentEndpoint;
         private List<string> entityVals;
+        private Dictionary<string, string> entityClasses;
 
         protected int maxDegree = 1;
 
@@ -23,31 +24,19 @@ namespace KWG_Geoenrichment
             "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
             "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types.";
 
-        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities)
+        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, Dictionary<string, string> entitiesClasses)
         {
             InitializeComponent();
 
             originalWindow = gf;
             currentEndpoint = endpoint;
-            entityVals = SplitEntityList(entities);
+            entityVals = entities;
+            entityClasses = entitiesClasses;
 
             PopulateClassBox(1);
         }
 
-        private static List<string> SplitEntityList(List<string> originalList)
-        {
-            var newEntityList = new List<string>();
-
-            for (int i = 0; i < originalList.Count; i += 1000)
-            {
-                List<string> subList = originalList.GetRange(i, Math.Min(1000, originalList.Count - i));
-                newEntityList.Add("values ?entity {" + String.Join(" ", subList) + "}");
-            }
-
-            return newEntityList;
-        }
-
-        private async void PopulateClassBox(int degree)
+        private void PopulateClassBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
@@ -55,49 +44,7 @@ namespace KWG_Geoenrichment
 
             if (degree == 1)
             {
-                for (int i = 0; i < entityVals.Count; i++)
-                {
-                    var typeQuery = "select distinct ?type ?label where { " +
-                        "?entity a ?type. " +
-                        "?type rdfs:label ?label. " +
-                        entityVals[i] +
-                    "}";
-
-                    runTraverseBtn.Enabled = false;
-                    edgeLoading.Visible = true;
-                    string error = await QueuedTask.Run(() =>
-                    {
-                        try
-                        {
-                            JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
-
-                            foreach (var item in typeResults)
-                            {
-                                string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                                string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
-
-                                if (!classes.ContainsKey(cType))
-                                {
-                                    classes[cType] = cLabel;
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            return "typ";
-                        }
-
-                        return "";
-                    });
-
-                    if(error != "")
-                    {
-                        originalWindow.Show();
-                        queryClass.ReportGraphError(error);
-                        Close();
-                        return;
-                    }
-                }
+                classes = entityClasses;
 
                 edgeLoading.Visible = false;
                 runTraverseBtn.Enabled = true;
