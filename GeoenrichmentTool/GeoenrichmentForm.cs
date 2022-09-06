@@ -678,82 +678,86 @@ namespace KWG_Geoenrichment
                 var finalContentLabels = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
                 string entityName; string nextEntityName;
-                string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
+
                 for (int j = 0; j < content.Count; j++)
                 {
                     var classNameForTableArray = content[j][0].Contains(':') ? content[j][0].Split(':')[1] : content[j][0]; //We use this to divide all the content into class type so they go to the appropriate table later
-                    var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
 
-                    //Set entity type key for arrays if needed
-                    if (!finalContent.ContainsKey(classNameForTableArray))
-                        finalContent[classNameForTableArray] = new Dictionary<string, Dictionary<string, List<string>>>();
-                    if (!finalContentLabels.ContainsKey(classNameForTableArray))
-                        finalContentLabels[classNameForTableArray] = new Dictionary<string, string>();
-                    if (!finalContentGeometry.ContainsKey(classNameForTableArray))
-                        finalContentGeometry[classNameForTableArray] = new Dictionary<string, string>();
-
-                    for (int i = 0; i < content[j].Count; i++)
+                    for (int k = 0; k < entitiesFormatted.Count; k++)
                     {
-                        //Even indices are classes, odd are predicates
-                        if (i % 2 == 0)
+                        var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
+
+                        //Set entity type key for arrays if needed
+                        if (!finalContent.ContainsKey(classNameForTableArray))
+                            finalContent[classNameForTableArray] = new Dictionary<string, Dictionary<string, List<string>>>();
+                        if (!finalContentLabels.ContainsKey(classNameForTableArray))
+                            finalContentLabels[classNameForTableArray] = new Dictionary<string, string>();
+                        if (!finalContentGeometry.ContainsKey(classNameForTableArray))
+                            finalContentGeometry[classNameForTableArray] = new Dictionary<string, string>();
+
+                        for (int i = 0; i < content[j].Count; i++)
                         {
-                            if (i == 0)
-                                entityName = "?entity";
-                            else
-                                entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
-                            var className = content[j][i];
-                            contentResultsQuery += entityName + " a " + className + ". ";
-                        }
-                        else
-                        {
-                            if (i == 1)
+                            //Even indices are classes, odd are predicates
+                            if (i % 2 == 0)
                             {
-                                entityName = "?entity";
-                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
+                                if (i == 0)
+                                    entityName = "?entity";
+                                else
+                                    entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
+                                var className = content[j][i];
+                                contentResultsQuery += entityName + " a " + className + ". ";
                             }
                             else
                             {
-                                entityName = "?o" + (i / 2).ToString();
-                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
+                                if (i == 1)
+                                {
+                                    entityName = "?entity";
+                                    nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
+                                }
+                                else
+                                {
+                                    entityName = "?o" + (i / 2).ToString();
+                                    nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
+                                }
+                                var propName = content[j][i];
+                                contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
                             }
-                            var propName = content[j][i];
-                            contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
                         }
-                    }
 
-                    contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entityVals + "}";
+                        contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entitiesFormatted[k] + "}";
 
-                    try
-                    {
-                        JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
-
-                        foreach (var item in contentResults)
+                        try
                         {
-                            var entityVal = item["entity"]["value"].ToString();
+                            JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
 
-                            //Check to see if we this entity exists, if not, set it up
-                            if (!finalContent[classNameForTableArray].ContainsKey(entityVal))
-                                finalContent[classNameForTableArray][entityVal] = new Dictionary<string, List<string>>() { };
-                            if (!finalContentLabels[classNameForTableArray].ContainsKey(entityVal))
-                                finalContentLabels[classNameForTableArray][entityVal] = item["entityLabel"]["value"].ToString();
-                            if (!finalContentGeometry[classNameForTableArray].ContainsKey(entityVal))
-                                finalContentGeometry[classNameForTableArray][entityVal] = item["wkt"]["value"].ToString();
+                            foreach (var item in contentResults)
+                            {
+                                var entityVal = item["entity"]["value"].ToString();
 
-                            //Let's prep and store the result content
-                            if (!finalContent[classNameForTableArray][entityVal].ContainsKey(columnLabels[j]))
-                                finalContent[classNameForTableArray][entityVal][columnLabels[j]] = new List<string>() { };
+                                //Check to see if we this entity exists, if not, set it up
+                                if (!finalContent[classNameForTableArray].ContainsKey(entityVal))
+                                    finalContent[classNameForTableArray][entityVal] = new Dictionary<string, List<string>>() { };
+                                if (!finalContentLabels[classNameForTableArray].ContainsKey(entityVal))
+                                    finalContentLabels[classNameForTableArray][entityVal] = item["entityLabel"]["value"].ToString();
+                                if (!finalContentGeometry[classNameForTableArray].ContainsKey(entityVal))
+                                    finalContentGeometry[classNameForTableArray][entityVal] = item["wkt"]["value"].ToString();
 
-                            if (item["o"] != null && item["o"]["value"].ToString() != "")
-                                finalContent[classNameForTableArray][entityVal][columnLabels[j]].Add(item["o"]["value"].ToString());
+                                //Let's prep and store the result content
+                                if (!finalContent[classNameForTableArray][entityVal].ContainsKey(columnLabels[j]))
+                                    finalContent[classNameForTableArray][entityVal][columnLabels[j]] = new List<string>() { };
+
+                                if (item["o"] != null && item["o"]["value"].ToString() != "")
+                                    finalContent[classNameForTableArray][entityVal][columnLabels[j]].Add(item["o"]["value"].ToString());
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        runBtn.Enabled = true;
-                        runBtn.Text = "Run";
-                        layerLoading.Visible = false;
-                        queryClass.ReportGraphError("res");
-                        return;
+                        catch (Exception ex)
+                        {
+                            runBtn.Enabled = true;
+                            runBtn.Text = "Run";
+                            layerLoading.Visible = false;
+                            queryClass.ReportGraphError("res");
+                            return;
+                        }
                     }
                 }
 
