@@ -1,16 +1,15 @@
 ﻿using ArcGIS.Desktop.Framework.Dialogs;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 
 namespace KWG_Geoenrichment
 {
     class QuerySPARQL
     {
-        public Dictionary<string, string> defaultEndpoints = new Dictionary<string, string>() { 
-            { "KnowWhereGraph", "https://stko-kwg.geog.ucsb.edu/sparql" }
+        public Dictionary<string, string> defaultEndpoints = new Dictionary<string, string>() {
+            { "KnowWhere Graph", "https://stko-kwg.geog.ucsb.edu/sparql" },
+            { "KnowWhere Graph - Staging", "https://staging.knowwheregraph.org/graphdb/repositories/KWG" }
         };
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
             {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},

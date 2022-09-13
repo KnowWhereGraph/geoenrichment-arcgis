@@ -23,6 +23,9 @@ namespace KWG_Geoenrichment
         private string currentLayer = "";
 
         private List<String> entities;
+        private List<String> entitiesFormatted;
+        Dictionary<string, string> entitiesClasses;
+
         private List<List<String>> content;
         private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
             { "concat", "Concatenate values together with a \" | \"" },
@@ -227,7 +230,9 @@ namespace KWG_Geoenrichment
                 if (error == "")
                 {
                     if (entities.Count > 0)
+                    {
                         selectContentBtn.Enabled = true;
+                    }
                     else
                     {
                         selectContentBtn.Enabled = false;
@@ -247,54 +252,126 @@ namespace KWG_Geoenrichment
             }
         }
 
+        //Split entitie lists into not only a SPARQL format, but chunked by sets of 1000
+        private static List<string> SplitEntityList(List<string> originalList)
+        {
+            var newEntityList = new List<string>();
+
+            for (int i = 0; i < originalList.Count; i += 1000)
+            {
+                List<string> subList = originalList.GetRange(i, Math.Min(1000, originalList.Count - i));
+                newEntityList.Add("values ?entity {" + String.Join(" ", subList) + "}");
+            }
+
+            return newEntityList;
+        }
+
         public string SearchForEntities()
         {
             var s2CellList = new List<string>() { };
             entities = new List<string>() { };
+            entitiesFormatted = new List<string>() { };
+            entitiesClasses = new Dictionary<string, string>() { { "", "" } };
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
             List<string> polygonWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
 
             foreach (var wkt in polygonWKTs)
             {
-                //Get s2Cells related to the polygon
-                //TODO:: Change function base on spatial relation
-                var entityQuery = "select distinct ?entity where { " +
-                    "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
+                //Get entitites via s2Cells related to the polygon
+                bool pagination = true;
+                int offset = 0;
+                while (pagination) {
+                    var entityQuery = "select distinct ?entity where { " +
+                        "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
 
-                    "?adminRegion2 a kwg-ont:AdministrativeRegion_2. " +
-                    "?adminRegion2 geo:hasGeometry ?arGeo2. " +
-                    "?arGeo2 geo:asWKT ?arWKT2. " +
-                    "FILTER(geof:sfIntersects(?userWKT, ?arWKT2) || geof:sfWithin(?userWKT, ?arWKT2)). " +
+                        "?adminRegion2 a kwg-ont:AdministrativeRegion_2. " +
+                        "?adminRegion2 geo:hasGeometry ?arGeo2. " +
+                        "?arGeo2 geo:asWKT ?arWKT2. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?arWKT2) || geof:sfWithin(?userWKT, ?arWKT2)). " +
 
-                    "?adminRegion3 kwg-ont:sfWithin ?adminRegion2." +
-                    "?adminRegion3 a kwg-ont:AdministrativeRegion_3. " +
-                    "?adminRegion3 geo:hasGeometry ?arGeo3. " +
-                    "?arGeo3 geo:asWKT ?arWKT3. " +
-                    "FILTER(geof:sfIntersects(?userWKT, ?arWKT3) || geof:sfWithin(?userWKT, ?arWKT3)). " +
+                        "?adminRegion3 kwg-ont:sfWithin ?adminRegion2." +
+                        "?adminRegion3 a kwg-ont:AdministrativeRegion_3. " +
+                        "?adminRegion3 geo:hasGeometry ?arGeo3. " +
+                        "?arGeo3 geo:asWKT ?arWKT3. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?arWKT3) || geof:sfWithin(?userWKT, ?arWKT3)). " +
 
-                    "?adminRegion3 kwg-ont:sfContains ?s2Cell. " +
-                    "?s2Cell a kwg-ont:KWGCellLevel13. " +
-                    "?s2Cell geo:hasGeometry ?s2Geo. " +
-                    "?s2Geo geo:asWKT ?s2WKT. " +
-                    "FILTER(geof:sfIntersects(?userWKT, ?s2WKT) || geof:sfWithin(?userWKT, ?s2WKT)). " +
+                        "?adminRegion3 kwg-ont:sfContains ?s2Cell. " +
+                        "?s2Cell a kwg-ont:KWGCellLevel13. " +
+                        "?s2Cell geo:hasGeometry ?s2Geo. " +
+                        "?s2Geo geo:asWKT ?s2WKT. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?s2WKT) || geof:sfWithin(?userWKT, ?s2WKT)). " +
 
-                    "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
-                    "?entity a geo:Feature. " +
-                "}";
+                        "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
+                        "?entity a geo:Feature. " +
+                    "} " +
+                    "ORDER BY ?entity " +
+                    "LIMIT 10000 " +
+                    "OFFSET " + offset.ToString();
 
-                try
-                {
-                    JToken s2Results = queryClass.SubmitQuery(currentRepository, entityQuery);
-
-                    foreach (var item in s2Results)
+                    try
                     {
-                        entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                        JToken s2Results = queryClass.SubmitQuery(currentRepository, entityQuery);
+
+                        foreach (var item in s2Results)
+                        {
+                            entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                        }
+
+                        if(s2Results.Count() == 10000)
+                        {
+                            offset += 10000;
+                        } 
+                        else
+                        {
+                            pagination = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return "ent";
                     }
                 }
-                catch (Exception ex)
+            }
+
+            entitiesFormatted = SplitEntityList(entities);
+
+            for (int i = 0; i < entitiesFormatted.Count; i++)
+            {
+                var typeQuery = "select distinct ?type ?label where { " +
+                    "?entity a ?type. " +
+                    "?type rdfs:label ?label. " +
+                    entitiesFormatted[i] +
+                "}";
+
+                string error = QueuedTask.Run(() =>
                 {
-                    return "ent";
+                    try
+                    {
+                        JToken typeResults = queryClass.SubmitQuery(currentRepository, typeQuery);
+
+                        foreach (var item in typeResults)
+                        {
+                            string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
+                            string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+
+                            if (!entitiesClasses.ContainsKey(cType))
+                            {
+                                entitiesClasses[cType] = cLabel;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return "typ";
+                    }
+
+                    return "";
+                }).Result;
+
+                if (error != "")
+                {
+                    return error;
                 }
             }
 
@@ -303,7 +380,7 @@ namespace KWG_Geoenrichment
 
         private void SelectContent(object sender, EventArgs e)
         {
-            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entities);
+            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entitiesFormatted, entitiesClasses);
             Hide();
             exploreWindow.Show();
         }
@@ -540,216 +617,255 @@ namespace KWG_Geoenrichment
 
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             bool layerFailed = false;
-            Dictionary<string, BasicFeatureLayer> tables = new Dictionary<string, BasicFeatureLayer>() { }; //entityType -> layer
+            Dictionary<string, Dictionary<string, BasicFeatureLayer>> tables = new Dictionary<string, Dictionary<string, BasicFeatureLayer>>() { }; //entityType -> shape -> layer
+            var columnLabels = new List<string>() { };
+            var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
 
             //build the table and its columns
-            foreach (var shape in shapeTables)
+            for (int j = 0; j < content.Count; j++)
             {
-                string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text + "_" + shape);
-                await FeatureClassHelper.CreateFeatureClassLayer(tableName, shape);
-                var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
+                var firstShape = true;
+                var className = content[j][0].Contains(':') ? content[j][0].Split(':')[1] : content[j][0];
 
-                if (fcLayer == null)
-                {
-                    MessageBox.Show($@"Failed to create {tableName} in the active map");
-                    layerFailed = true;
-                } else
-                {
-                    await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
-                    await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
-                    tables[shape] = fcLayer;
-                }
-            }
+                if (!tables.ContainsKey(className))
+                    tables[className] = new Dictionary<string, BasicFeatureLayer>();
 
-            if(!layerFailed)
-            {
-                //Build and run query for base classes
-                var finalContent = new Dictionary<string, Dictionary<string, List<string>>>() { }; //entity -> column label -> data
-                var finalContentLabels = new Dictionary<string, string>() { }; //entity -> entityLabel
-                var finalContentGeometry = new Dictionary<string, string>() { }; //entity -> wkt
-                var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
-                string entityName; string nextEntityName;
-                string entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
-                for (int j = 0; j < content.Count; j++)
+                foreach (var shape in shapeTables)
                 {
-                    //Add the column to our feature tables and track its merge rule
-                    ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j+1).ToString(), true).First();
-                    string mergeRule = mergeBox.SelectedValue.ToString();
-                    string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
-                    labelToMergeRule[columnLabel] = mergeRule;
-                    foreach (var shape in shapeTables)
+                    //Make the table if it doesn't exist yet
+                    if (!tables[className].ContainsKey(shape))
                     {
-                        if(!columnLabel.StartsWith("NoAdditionalData"))
-                            await FeatureClassHelper.AddField(tables[shape], columnLabel, "TEXT");
-                    }
+                        string tableName = FeatureClassHelper.ValidateTableName(saveLayerAs.Text + "_" + className + "_" + shape);
+                        await FeatureClassHelper.CreateFeatureClassLayer(tableName, shape);
+                        var fcLayer = MapView.Active.Map.GetLayersAsFlattenedList().Where((l) => l.Name == tableName).FirstOrDefault() as BasicFeatureLayer;
 
-                    var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
-
-                    for (int i = 0; i < content[j].Count; i++)
-                    {
-                        //Even indices are classes, odd are predicates
-                        if (i % 2 == 0)
+                        if (fcLayer == null)
                         {
-                            if (i == 0)
-                                entityName = "?entity";
-                            else
-                                entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
-                            var className = content[j][i];
-                            contentResultsQuery += entityName + " a " + className + ". ";
+                            MessageBox.Show($@"Failed to create {tableName} in the active map");
+                            layerFailed = true;
                         }
                         else
                         {
-                            if (i == 1)
-                            {
-                                entityName = "?entity";
-                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
-                            }
-                            else
-                            {
-                                entityName = "?o" + (i / 2).ToString();
-                                nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
-                            }
-                            var propName = content[j][i];
-                            contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
+                            await FeatureClassHelper.AddField(fcLayer, "Label", "TEXT");
+                            await FeatureClassHelper.AddField(fcLayer, "URL", "TEXT");
+                            tables[className][shape] = fcLayer;
                         }
                     }
 
-                    contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entityVals + "}";
+                    //Add the additional data column to our feature tables
+                    ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j + 1).ToString(), true).First();
+                    string mergeRule = mergeBox.SelectedValue.ToString();
+                    string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
 
-                    try
+
+                    if (firstShape)
                     {
-                        JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
+                        //We are adding the same column to multiple shape type features, so only capture it for reference the first time
+                        columnLabels.Add(columnLabel);
+                        labelToMergeRule[columnLabel] = mergeRule;
+                        firstShape = false;
+                    }
+                    
+                    if (!columnLabel.StartsWith("NoAdditionalData"))
+                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
+                }
+            }
 
-                        foreach (var item in contentResults)
+            if (!layerFailed)
+            {
+                //Build and run query for base classes
+                var finalContent = new Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>>() { }; //entityType -> entity -> column label -> data
+                var finalContentLabels = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> entityLabel
+                var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
+                string entityName; string nextEntityName;
+
+                for (int j = 0; j < content.Count; j++)
+                {
+                    var classNameForTableArray = content[j][0].Contains(':') ? content[j][0].Split(':')[1] : content[j][0]; //We use this to divide all the content into class type so they go to the appropriate table later
+
+                    for (int k = 0; k < entitiesFormatted.Count; k++)
+                    {
+                        var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
+
+                        //Set entity type key for arrays if needed
+                        if (!finalContent.ContainsKey(classNameForTableArray))
+                            finalContent[classNameForTableArray] = new Dictionary<string, Dictionary<string, List<string>>>();
+                        if (!finalContentLabels.ContainsKey(classNameForTableArray))
+                            finalContentLabels[classNameForTableArray] = new Dictionary<string, string>();
+                        if (!finalContentGeometry.ContainsKey(classNameForTableArray))
+                            finalContentGeometry[classNameForTableArray] = new Dictionary<string, string>();
+
+                        for (int i = 0; i < content[j].Count; i++)
                         {
-                            var entityVal = item["entity"]["value"].ToString();
-
-                            //Check to see if we this entity exists, if not, set it up
-                            if (!finalContent.ContainsKey(entityVal))
-                                finalContent[entityVal] = new Dictionary<string, List<string>>() { };
-                            if (!finalContentLabels.ContainsKey(entityVal))
-                                finalContentLabels[entityVal] = item["entityLabel"]["value"].ToString();
-                            if (!finalContentGeometry.ContainsKey(entityVal))
-                                finalContentGeometry[entityVal] = item["wkt"]["value"].ToString();
-
-                            //Let's prep and store the result content
-                            if (!finalContent[entityVal].ContainsKey(columnLabel))
-                                finalContent[entityVal][columnLabel] = new List<string>() { };
-
-                            if (item["o"] != null && item["o"]["value"].ToString() != "")
-                                finalContent[entityVal][columnLabel].Add(item["o"]["value"].ToString());
+                            //Even indices are classes, odd are predicates
+                            if (i % 2 == 0)
+                            {
+                                if (i == 0)
+                                    entityName = "?entity";
+                                else
+                                    entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
+                                var className = content[j][i];
+                                contentResultsQuery += entityName + " a " + className + ". ";
+                            }
+                            else
+                            {
+                                if (i == 1)
+                                {
+                                    entityName = "?entity";
+                                    nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
+                                }
+                                else
+                                {
+                                    entityName = "?o" + (i / 2).ToString();
+                                    nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
+                                }
+                                var propName = content[j][i];
+                                contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
+                            }
                         }
-                    } 
-                    catch(Exception ex)
-                    {
-                        runBtn.Enabled = true;
-                        runBtn.Text = "Run";
-                        layerLoading.Visible = false;
-                        queryClass.ReportGraphError("res");
-                        return;
+
+                        contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entitiesFormatted[k] + "}";
+
+                        try
+                        {
+                            JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
+
+                            foreach (var item in contentResults)
+                            {
+                                var entityVal = item["entity"]["value"].ToString();
+
+                                //Check to see if we this entity exists, if not, set it up
+                                if (!finalContent[classNameForTableArray].ContainsKey(entityVal))
+                                    finalContent[classNameForTableArray][entityVal] = new Dictionary<string, List<string>>() { };
+                                if (!finalContentLabels[classNameForTableArray].ContainsKey(entityVal))
+                                    finalContentLabels[classNameForTableArray][entityVal] = item["entityLabel"]["value"].ToString();
+                                if (!finalContentGeometry[classNameForTableArray].ContainsKey(entityVal))
+                                    finalContentGeometry[classNameForTableArray][entityVal] = item["wkt"]["value"].ToString();
+
+                                //Let's prep and store the result content
+                                if (!finalContent[classNameForTableArray][entityVal].ContainsKey(columnLabels[j]))
+                                    finalContent[classNameForTableArray][entityVal][columnLabels[j]] = new List<string>() { };
+
+                                if (item["o"] != null && item["o"]["value"].ToString() != "")
+                                    finalContent[classNameForTableArray][entityVal][columnLabels[j]].Add(item["o"]["value"].ToString());
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            runBtn.Enabled = true;
+                            runBtn.Text = "Run";
+                            layerLoading.Visible = false;
+                            queryClass.ReportGraphError("res");
+                            return;
+                        }
                     }
                 }
 
                 //Use data to populate table
                 await QueuedTask.Run(() =>
                 {
-
-                    foreach(var entityPair in finalContent)
+                    foreach (var entityType in finalContent)
                     {
-                        string currEntity = entityPair.Key;
-
-                        IGeometryEngine geoEngine = GeometryEngine.Instance;
-                        SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
-                        string wkt = finalContentGeometry[currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
-                        Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
-
-                        InsertCursor cursor = tables[geo.GetType().Name].GetTable().CreateInsertCursor();
-                        RowBuffer buff = tables[geo.GetType().Name].GetTable().CreateRowBuffer();
-
-                        buff["Label"] = finalContentLabels[currEntity];
-                        buff["URL"] = currEntity;
-                        buff["Shape"] = geo;
-
-                        //Add column data based on merge rule
-                        foreach(var dataPair in entityPair.Value)
+                        foreach (var entityPair in finalContent[entityType.Key])
                         {
-                            string currLabel = dataPair.Key;
-                            if (currLabel.StartsWith("NoAdditionalData"))
-                                continue;
+                            string currEntity = entityPair.Key;
 
-                            switch (labelToMergeRule[currLabel])
+                            IGeometryEngine geoEngine = GeometryEngine.Instance;
+                            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+                            string wkt = finalContentGeometry[entityType.Key][currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                            Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
+
+                            InsertCursor cursor = tables[entityType.Key][geo.GetType().Name].GetTable().CreateInsertCursor();
+                            RowBuffer buff = tables[entityType.Key][geo.GetType().Name].GetTable().CreateRowBuffer();
+
+                            buff["Label"] = finalContentLabels[entityType.Key][currEntity];
+                            buff["URL"] = currEntity;
+                            buff["Shape"] = geo;
+
+                            //Add column data based on merge rule
+                            foreach (var dataPair in entityPair.Value)
                             {
-                                case "first":
-                                    buff[currLabel] = dataPair.Value[0];
-                                    break;
-                                case "count":
-                                    buff[currLabel] = dataPair.Value.Count;
-                                    break;
-                                case "total":
-                                    float total = 0;
-                                    foreach(string val in dataPair.Value)
-                                    {
-                                        total += float.Parse(val);
-                                    }
-                                    buff[currLabel] = total;
-                                    break;
-                                case "high":
-                                    float high = float.Parse(dataPair.Value[0]);
-                                    foreach (string val in dataPair.Value)
-                                    {
-                                        if (float.Parse(val) > high)
-                                            high = float.Parse(val);
-                                    }
-                                    buff[currLabel] = high;
-                                    break;
-                                case "low":
-                                    float low = float.Parse(dataPair.Value[0]);
-                                    foreach (string val in dataPair.Value)
-                                    {
-                                        if (float.Parse(val) < low)
-                                            low = float.Parse(val);
-                                    }
-                                    buff[currLabel] = low;
-                                    break;
-                                case "avg":
-                                    List<float> avgValues = new List<float>() { };
-                                    foreach (string val in dataPair.Value)
-                                    {
-                                        avgValues.Add(float.Parse(val));
-                                    }
-                                    buff[currLabel] = avgValues.Average();
-                                    break;
-                                case "stdev":
-                                    List<float> stdDevValues = new List<float>() { };
-                                    foreach (string val in dataPair.Value)
-                                    {
-                                        stdDevValues.Add(float.Parse(val));
-                                    }
-                                    buff[currLabel] = Math.Sqrt(stdDevValues.Average(v => Math.Pow(v - stdDevValues.Average(), 2)));
-                                    break;
-                                case "concat":
-                                default:
-                                    buff[currLabel] = String.Join(" | ", dataPair.Value);
-                                    break;
-                            }
-                        }
+                                string currLabel = dataPair.Key;
+                                if (currLabel.StartsWith("NoAdditionalData"))
+                                    continue;
 
-                        cursor.Insert(buff);
-                        cursor.Dispose();
+                                switch (labelToMergeRule[currLabel])
+                                {
+                                    case "first":
+                                        buff[currLabel] = dataPair.Value[0];
+                                        break;
+                                    case "count":
+                                        buff[currLabel] = dataPair.Value.Count;
+                                        break;
+                                    case "total":
+                                        float total = 0;
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            total += float.Parse(val);
+                                        }
+                                        buff[currLabel] = total;
+                                        break;
+                                    case "high":
+                                        float high = float.Parse(dataPair.Value[0]);
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            if (float.Parse(val) > high)
+                                                high = float.Parse(val);
+                                        }
+                                        buff[currLabel] = high;
+                                        break;
+                                    case "low":
+                                        float low = float.Parse(dataPair.Value[0]);
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            if (float.Parse(val) < low)
+                                                low = float.Parse(val);
+                                        }
+                                        buff[currLabel] = low;
+                                        break;
+                                    case "avg":
+                                        List<float> avgValues = new List<float>() { };
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            avgValues.Add(float.Parse(val));
+                                        }
+                                        buff[currLabel] = avgValues.Average();
+                                        break;
+                                    case "stdev":
+                                        List<float> stdDevValues = new List<float>() { };
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            stdDevValues.Add(float.Parse(val));
+                                        }
+                                        buff[currLabel] = Math.Sqrt(stdDevValues.Average(v => Math.Pow(v - stdDevValues.Average(), 2)));
+                                        break;
+                                    case "concat":
+                                    default:
+                                        buff[currLabel] = String.Join(" | ", dataPair.Value);
+                                        break;
+                                }
+                            }
+
+                            cursor.Insert(buff);
+                            cursor.Dispose();
+                        }
                     }
 
                     MapView.Active.Redraw(false);
                 });
             }
 
-            //Check each table, and delete any empty ones
-            foreach (var shape in shapeTables)
+            ////Check each table, and delete any empty ones
+            foreach (var classLabel in tables)
             {
-                BasicFeatureLayer currentLayer = tables[shape];
-                var tableSize = await FeatureClassHelper.GetFeatureLayerCount(tables[shape]);
-                if(tableSize == 0)
+                foreach (var shape in tables[classLabel.Key])
                 {
-                    await FeatureClassHelper.DeleteFeatureClassLayer(tables[shape]);
+                    BasicFeatureLayer currentLayer = tables[classLabel.Key][shape.Key];
+                    var tableSize = await FeatureClassHelper.GetFeatureLayerCount(currentLayer);
+                    if (tableSize == 0)
+                    {
+                        await FeatureClassHelper.DeleteFeatureClassLayer(currentLayer);
+                    }
                 }
             }
 

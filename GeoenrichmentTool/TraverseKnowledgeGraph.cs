@@ -13,7 +13,8 @@ namespace KWG_Geoenrichment
         private GeoenrichmentForm originalWindow;
         
         private string currentEndpoint;
-        private string entityVals;
+        private List<string> entityVals;
+        private Dictionary<string, string> entityClasses;
 
         protected int maxDegree = 1;
 
@@ -23,18 +24,19 @@ namespace KWG_Geoenrichment
             "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
             "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types.";
 
-        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities)
+        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, Dictionary<string, string> entitiesClasses)
         {
             InitializeComponent();
 
             originalWindow = gf;
             currentEndpoint = endpoint;
-            entityVals = "values ?entity {" + String.Join(" ", entities) + "}";
+            entityVals = entities;
+            entityClasses = entitiesClasses;
 
             PopulateClassBox(1);
         }
 
-        private async void PopulateClassBox(int degree)
+        private void PopulateClassBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
@@ -42,51 +44,12 @@ namespace KWG_Geoenrichment
 
             if (degree == 1)
             {
-                var typeQuery = "select distinct ?type ?label where { " +
-                    "?entity a ?type. " +
-                    "?type rdfs:label ?label. " +
-                    entityVals +
-                "}";
+                classes = entityClasses;
 
-                runTraverseBtn.Enabled = false;
-                edgeLoading.Visible = true;
-                string error = await QueuedTask.Run(() =>
-                {
-                    try
-                    {
-                        JToken typeResults = queryClass.SubmitQuery(currentEndpoint, typeQuery);
+                edgeLoading.Visible = false;
+                runTraverseBtn.Enabled = true;
 
-                        foreach (var item in typeResults)
-                        {
-                            string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                            string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
-
-                            if (!classes.ContainsKey(cType))
-                            {
-                                classes[cType] = cLabel;
-                            }
-                        }
-                    } catch (Exception ex)
-                    {
-                        return "typ";
-                    }
-
-                    return "";
-                });
-
-                if (error == "")
-                {
-                    edgeLoading.Visible = false;
-                    runTraverseBtn.Enabled = true;
-
-                    classBox.Enabled = true;
-                }
-                else
-                {
-                    originalWindow.Show();
-                    queryClass.ReportGraphError(error);
-                    Close();
-                }
+                classBox.Enabled = true;
             }
             else
             {
@@ -106,101 +69,108 @@ namespace KWG_Geoenrichment
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             Dictionary<string, string> properties = new Dictionary<string, string>() { { "", "" } };
 
-            var propQuery = "select distinct ?p ?label where {  ";
-
-            for(int i=1; i < degree + 1; i++)
+            for (int j = 0; j < entityVals.Count; j++)
             {
-                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
-                string classStr = classBox.SelectedValue.ToString();
-                string predicateStr = (i == degree) ? "?p" : propBox.SelectedValue.ToString();
-                string objectStr = "?o" + i.ToString();
+                var propQuery = "select distinct ?p ?label where {  ";
 
-                propQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
-            }        
-            propQuery += "optional {?p rdfs:label ?label} " + entityVals + "}";
+                for (int i = 1; i < degree + 1; i++)
+                {
+                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                    string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
+                    string classStr = classBox.SelectedValue.ToString();
+                    string predicateStr = (i == degree) ? "?p" : propBox.SelectedValue.ToString();
+                    string objectStr = "?o" + i.ToString();
 
-            runTraverseBtn.Enabled = false;
-            edgeLoading.Visible = true;
-            string error = await QueuedTask.Run(() =>
-            {
-                try {
-                    JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
+                    propQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+                }
+                propQuery += "optional {?p rdfs:label ?label} " + entityVals[j] + "}";
 
-                    foreach (var item in propResults)
+                runTraverseBtn.Enabled = false;
+                edgeLoading.Visible = true;
+                string error = await QueuedTask.Run(() =>
+                {
+                    try
                     {
-                        string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
-                        string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+                        JToken propResults = queryClass.SubmitQuery(currentEndpoint, propQuery);
 
-                        if (!properties.ContainsKey(predicate))
+                        foreach (var item in propResults)
                         {
-                            properties[predicate] = pLabel;
+                            string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
+                            string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
+
+                            if (!properties.ContainsKey(predicate))
+                            {
+                                properties[predicate] = pLabel;
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    return "prp";
-                }
+                    catch (Exception ex)
+                    {
+                        return "prp";
+                    }
 
-                return "";
-            });
+                    return "";
+                });
+
+                if (error != "")
+                {
+                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
+                    classBox.SelectedValue = "";
+                    if (degree > 1)
+                    {
+                        ComboBox valBox = (ComboBox)this.Controls.Find("object" + (degree - 1).ToString(), true).First();
+                        valBox.SelectedValue = "";
+                    }
+                    queryClass.ReportGraphError(error);
+
+                    edgeLoading.Visible = false;
+                    runTraverseBtn.Enabled = true;
+
+                    return;
+                }
+            }
+
             edgeLoading.Visible = false;
             runTraverseBtn.Enabled = true;
 
-            if (error == "")
-            {
-                ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
-                currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
-                currPropBox.DropDownWidth = properties.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currPropBox.Font).Width);
-                currPropBox.Enabled = true;
-            }
-            else
-            {
-                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
-                classBox.SelectedValue = "";
-                if(degree > 1)
-                {
-                    ComboBox valBox = (ComboBox)this.Controls.Find("object" + (degree-1).ToString(), true).First();
-                    valBox.SelectedValue = "";
-                }
-                queryClass.ReportGraphError(error);
-            }
+            ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+            currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
+            currPropBox.DropDownWidth = properties.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currPropBox.Font).Width);
+            currPropBox.Enabled = true;
         }
 
         private async void PopulateValueBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
-            Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } }; ;
+            Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } };
 
-            var valueQuery = "select distinct ?type ?label where {  ";
-
-            for (int i = 1; i < degree + 1; i++)
+            for (int j = 0; j < entityVals.Count; j++)
             {
-                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
-                string classStr = classBox.SelectedValue.ToString();
-                string predicateStr = propBox.SelectedValue.ToString();
-                string objectStr = (i == degree) ? "?o. ?o a ?type" : "?o" + i.ToString();
+                var valueQuery = "select distinct ?type ?label where {  ";
 
-                valueQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
-            }
-            valueQuery += "?type rdfs:label ?label. " + entityVals + "}";
-
-            runTraverseBtn.Enabled = false;
-            edgeLoading.Visible = true;
-            bool keepBoxEnabled = true;
-            string error = await QueuedTask.Run(() =>
-            {
-                try
+                for (int i = 1; i < degree + 1; i++)
                 {
-                    JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
+                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                    string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
+                    string classStr = classBox.SelectedValue.ToString();
+                    string predicateStr = propBox.SelectedValue.ToString();
+                    string objectStr = (i == degree) ? "?o. ?o a ?type" : "?o" + i.ToString();
 
-                    if (valueResults.HasValues)
+                    valueQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+                }
+                valueQuery += "?type rdfs:label ?label. " + entityVals[j] + "}";
+
+                runTraverseBtn.Enabled = false;
+                edgeLoading.Visible = true;
+                string error = await QueuedTask.Run(() =>
+                {
+                    try
                     {
+                        JToken valueResults = queryClass.SubmitQuery(currentEndpoint, valueQuery);
+
                         foreach (var item in valueResults)
                         {
                             string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
@@ -212,34 +182,40 @@ namespace KWG_Geoenrichment
                             }
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        keepBoxEnabled = false;
-                        values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+                        return "cls";
                     }
-                }
-                catch (Exception ex)
-                {
-                    return "cls";
-                }
 
-                return "";
-            });
+                    return "";
+                });
+
+                if (error != "")
+                {
+                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+                    propBox.SelectedValue = "";
+                    queryClass.ReportGraphError(error);
+
+                    edgeLoading.Visible = false;
+                    runTraverseBtn.Enabled = true;
+
+                    return;
+                }
+            }
+
+            bool keepBoxEnabled = true;
+            if (values.Count == 1)
+            {
+                keepBoxEnabled = false;
+                values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+            }
+
             edgeLoading.Visible = false;
             runTraverseBtn.Enabled = true;
 
-            if (error == "")
-            {
-                currValueBox.Enabled = keepBoxEnabled;
-                currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
-                currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
-            }
-            else
-            {
-                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
-                propBox.SelectedValue = "";
-                queryClass.ReportGraphError(error);
-            }
+            currValueBox.Enabled = keepBoxEnabled;
+            currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
+            currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
         }
 
         private void OnClassBoxChange(object sender, EventArgs e)
