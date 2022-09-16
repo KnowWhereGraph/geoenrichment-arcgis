@@ -1,5 +1,5 @@
 ﻿<ArcGIS defaultAssembly="KWG_Geoenrichment.dll" defaultNamespace="KWG_Geoenrichment" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
-  <AddInInfo id="{2c67f191-2703-4291-bce4-994cf0016027}" version="v0.8.0-beta" desktopVersion="2.8.29751">
+  <AddInInfo id="{2c67f191-2703-4291-bce4-994cf0016027}" version="v0.8.1-beta" desktopVersion="2.8.29751">
     <Name>KnowWhereGraph Geoenrichment</Name>
     <Description>Enrich your dataset with the vast information present in knowledge graphs to ask the question, "what happened here?"</Description>
     <Image>Images\logo-button.png</Image>
