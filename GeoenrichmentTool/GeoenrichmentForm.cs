@@ -21,6 +21,7 @@ namespace KWG_Geoenrichment
     {
         private string currentRepository = "";
         private string currentLayer = "";
+        private List<string> currentLayerWKTs;
 
         private List<String> entities;
         private List<String> entitiesFormatted;
@@ -274,9 +275,9 @@ namespace KWG_Geoenrichment
             entitiesClasses = new Dictionary<string, string>() { { "", "" } };
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
-            List<string> polygonWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
+            currentLayerWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
 
-            foreach (var wkt in polygonWKTs)
+            foreach (var wkt in currentLayerWKTs)
             {
                 //Get entitites via s2Cells related to the polygon
                 bool pagination = true;
@@ -621,6 +622,16 @@ namespace KWG_Geoenrichment
             var columnLabels = new List<string>() { };
             var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
 
+            IGeometryEngine geoEngine = GeometryEngine.Instance;
+            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+
+            //Pull all geometries from the area of interest
+            List<Geometry> userGeos = new List<Geometry>() { };
+            for(int i = 0; i < currentLayerWKTs.Count; i++)
+            {
+                userGeos.Add(geoEngine.ImportFromWKT(0, currentLayerWKTs[i], sr));
+            }
+
             //build the table and its columns
             for (int j = 0; j < content.Count; j++)
             {
@@ -770,10 +781,18 @@ namespace KWG_Geoenrichment
                         {
                             string currEntity = entityPair.Key;
 
-                            IGeometryEngine geoEngine = GeometryEngine.Instance;
-                            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
                             string wkt = finalContentGeometry[entityType.Key][currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
                             Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
+
+                            //Validate that our geometry actually intersects the original user area
+                            //We do this because we originally used s2Cell approximation to find the entities
+                            bool doesIntersectWithUserArea = false;
+                            for(int i = 0; i < userGeos.Count; i++) {
+                                if(GeometryEngine.Instance.Intersects(geo, userGeos[i]))
+                                    doesIntersectWithUserArea = true;
+                            }
+                            if (!doesIntersectWithUserArea)
+                                continue;
 
                             InsertCursor cursor = tables[entityType.Key][geo.GetType().Name].GetTable().CreateInsertCursor();
                             RowBuffer buff = tables[entityType.Key][geo.GetType().Name].GetTable().CreateRowBuffer();
@@ -860,11 +879,11 @@ namespace KWG_Geoenrichment
             {
                 foreach (var shape in tables[classLabel.Key])
                 {
-                    BasicFeatureLayer currentLayer = tables[classLabel.Key][shape.Key];
-                    var tableSize = await FeatureClassHelper.GetFeatureLayerCount(currentLayer);
+                    BasicFeatureLayer currLayer = tables[classLabel.Key][shape.Key];
+                    var tableSize = await FeatureClassHelper.GetFeatureLayerCount(currLayer);
                     if (tableSize == 0)
                     {
-                        await FeatureClassHelper.DeleteFeatureClassLayer(currentLayer);
+                        await FeatureClassHelper.DeleteFeatureClassLayer(currLayer);
                     }
                 }
             }
