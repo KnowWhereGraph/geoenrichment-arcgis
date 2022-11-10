@@ -2,7 +2,7 @@
 
 ### Download the plugin
 
-1. Navigate to INSERTRELEASESLINK to download the latest version
+1. Navigate to [Releases](https://github.com/KnowWhereGraph/geoenrichment-arcgis/releases) to download the latest version
 2. Move the esriAddinX file on a computer with ArcGIS Pro installed
 
 ### Installing the plugin
@@ -18,4 +18,4 @@
 4. Open the plugin via the “KWG Geoenrichment” menu tab
 
 ### Report an issue
-- If you encounter any issue with the tool or have any feedback, please report on the [INSERTISSUESLINK]()
+- If you encounter any issue with the tool or have any feedback, please report on the [Github repository](https://github.com/KnowWhereGraph/geoenrichment-arcgis/issues)
