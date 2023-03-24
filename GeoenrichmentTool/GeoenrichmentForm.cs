@@ -283,6 +283,7 @@ namespace KWG_Geoenrichment
                 bool pagination = true;
                 int offset = 0;
                 while (pagination) {
+                    string geoPrefix = currentRepository == "KnowWhere Graph V2 (stable)" ? "kwg-ont" : "geo";
                     var entityQuery = "select distinct ?entity where { " +
                         "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
 
@@ -291,7 +292,7 @@ namespace KWG_Geoenrichment
                         "?arGeo2 geo:asWKT ?arWKT2. " +
                         "FILTER(geof:sfIntersects(?userWKT, ?arWKT2) || geof:sfWithin(?userWKT, ?arWKT2)). " +
 
-                        "?adminRegion3 kwg-ont:sfWithin ?adminRegion2." +
+                        "?adminRegion3 " + geoPrefix + ":sfWithin ?adminRegion2." +
                         "?adminRegion3 a kwg-ont:AdministrativeRegion_3. " +
                         "?adminRegion3 geo:hasGeometry ?arGeo3. " +
                         "?arGeo3 geo:asWKT ?arWKT3. " +

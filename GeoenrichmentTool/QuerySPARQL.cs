@@ -8,8 +8,8 @@ namespace KWG_Geoenrichment
     class QuerySPARQL
     {
         public Dictionary<string, string> defaultEndpoints = new Dictionary<string, string>() {
-            { "KnowWhere Graph", "https://stko-kwg.geog.ucsb.edu/sparql" },
-            { "KnowWhere Graph - Staging", "https://staging.knowwheregraph.org/graphdb/repositories/KWG" }
+            { "KnowWhere Graph V2 (stable)", "https://stko-kwg.geog.ucsb.edu/graphdb/repositories/KWG-V2-Vienna" },
+            { "KnowWhere Graph V3 (beta)", "https://stko-kwg.geog.ucsb.edu/sparql" }
         };
         protected Dictionary<string, string> _PREFIX = new Dictionary<string, string>() {
             {"kwg-ont", "http://stko-kwg.geog.ucsb.edu/lod/ontology/"},
