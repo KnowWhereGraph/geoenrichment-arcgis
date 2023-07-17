@@ -1,5 +1,6 @@
-﻿<ArcGIS defaultAssembly="KWG_Geoenrichment.dll" defaultNamespace="KWG_Geoenrichment" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
-  <AddInInfo id="{2c67f191-2703-4291-bce4-994cf0016027}" version="v0.9.0-beta" desktopVersion="2.8.29751">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArcGIS defaultAssembly="KWG_Geoenrichment.dll" defaultNamespace="KWG_Geoenrichment" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
+  <AddInInfo id="{2c67f191-2703-4291-bce4-994cf0016027}" version="v0.9.1-beta" desktopVersion="3.1.41833">
     <Name>KnowWhereGraph Geoenrichment</Name>
     <Description>Enrich your dataset with the vast information present in knowledge graphs to ask the question, "what happened here?"</Description>
     <Image>Images\logo-button.png</Image>
@@ -30,12 +31,11 @@
           <tooltip heading="Begin Geoenrichment">
 				  Begin exploring the KnowWhereGraph<disabledText>Map pane required</disabledText></tooltip>
         </button>
-		<tool id="KWG_Geoenrichment_DrawPolygon" caption="Select Area" className="DrawPolygon" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
-			<tooltip heading="Select Area">
+        <tool id="KWG_Geoenrichment_DrawPolygon" caption="Select Area" className="DrawPolygon" loadOnClick="true" smallImage="Images\graph-query.png" largeImage="Images\graph-query.png" condition="esri_mapping_mapPane">
+          <tooltip heading="Select Area">
 				Manually draw the polygonal area of interest for the initial query to a SPARQL endpoint
-				<disabledText>Map pane required</disabledText>
-			</tooltip>
-		</tool>
+				<disabledText>Map pane required</disabledText></tooltip>
+        </tool>
       </controls>
     </insertModule>
   </modules>
