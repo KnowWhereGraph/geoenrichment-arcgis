@@ -33,12 +33,6 @@ namespace KWG_Geoenrichment
 
         protected override Task OnToolActivateAsync(bool active)
         {
-            QueuedTask.Run(() =>
-            {
-                sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
-                MapView.Active.Map.SetSpatialReference(sr);
-            });
-
             return base.OnToolActivateAsync(active);
         }
 
