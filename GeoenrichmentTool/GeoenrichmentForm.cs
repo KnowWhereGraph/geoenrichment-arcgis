@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ComboBox = System.Windows.Forms.ComboBox;
 
@@ -253,15 +254,15 @@ namespace KWG_Geoenrichment
             }
         }
 
-        //Split entitie lists into not only a SPARQL format, but chunked by sets of 1000
-        private static List<string> SplitEntityList(List<string> originalList)
+        //Split value lists into chunks to make smaller efficient queries
+        private List<string> SplitValueList(List<string> originalList, string queryVar, int queryChunk)
         {
             var newEntityList = new List<string>();
 
-            for (int i = 0; i < originalList.Count; i += 1000)
+            for (int i = 0; i < originalList.Count; i += queryChunk)
             {
-                List<string> subList = originalList.GetRange(i, Math.Min(1000, originalList.Count - i));
-                newEntityList.Add("values ?entity {" + String.Join(" ", subList) + "}");
+                List<string> subList = originalList.GetRange(i, Math.Min(queryChunk, originalList.Count - i));
+                newEntityList.Add("values ?" + queryVar + " {" + String.Join(" ", subList) + "} ");
             }
 
             return newEntityList;
@@ -269,7 +270,6 @@ namespace KWG_Geoenrichment
 
         public string SearchForEntities()
         {
-            var s2CellList = new List<string>() { };
             entities = new List<string>() { };
             entitiesFormatted = new List<string>() { };
             entitiesClasses = new Dictionary<string, string>() { { "", "" } };
@@ -279,51 +279,58 @@ namespace KWG_Geoenrichment
 
             foreach (var wkt in currentLayerWKTs)
             {
-                //Get entitites via s2Cells related to the polygon
+                List<string> s2CellFourList = new List<string>() { };
+                List<string> s2CellEightList = new List<string>() { };
+                List<string> s2CellThirteenList = new List<string>() { };
+
+                //Get s2 Cells at level 4
                 bool pagination = true;
                 int offset = 0;
-                while (pagination) {
-                    string geoPrefix = currentRepository == "KnowWhere Graph V2 (stable)" ? "kwg-ont" : "geo";
-                    var entityQuery = "select distinct ?entity where { " +
+                while (pagination)
+                {
+                    var s2CellQuery = "select distinct ?s2Cell4 where { " +
                         "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
-
-                        "?adminRegion2 a kwg-ont:AdministrativeRegion_2. " +
-                        "?adminRegion2 geo:hasGeometry ?arGeo2. " +
-                        "?arGeo2 geo:asWKT ?arWKT2. " +
-                        "FILTER(geof:sfIntersects(?userWKT, ?arWKT2) || geof:sfWithin(?userWKT, ?arWKT2)). " +
-
-                        "?adminRegion3 " + geoPrefix + ":sfWithin ?adminRegion2." +
-                        "?adminRegion3 a kwg-ont:AdministrativeRegion_3. " +
-                        "?adminRegion3 geo:hasGeometry ?arGeo3. " +
-                        "?arGeo3 geo:asWKT ?arWKT3. " +
-                        "FILTER(geof:sfIntersects(?userWKT, ?arWKT3) || geof:sfWithin(?userWKT, ?arWKT3)). " +
-
-                        "?adminRegion3 kwg-ont:sfContains ?s2Cell. " +
-                        "?s2Cell a kwg-ont:KWGCellLevel13. " +
-                        "?s2Cell geo:hasGeometry ?s2Geo. " +
-                        "?s2Geo geo:asWKT ?s2WKT. " +
-                        "FILTER(geof:sfIntersects(?userWKT, ?s2WKT) || geof:sfWithin(?userWKT, ?s2WKT)). " +
-
-                        "{?entity ?p ?s2Cell.} union {?s2Cell ?p ?entity.} " +
-                        "?entity a geo:Feature. " +
+                        
+                        "?s2Cell1 a kwg-ont:KWGCellLevel1. " +
+                        "?s2Cell1 geo:hasGeometry ?s2CellGeo1. " +
+                        "?s2CellGeo1 geo:asWKT ?s2CellWKT1. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT1) || geof:sfWithin(?userWKT, ?s2CellWKT1)). " +
+                        
+                        "?s2Cell1 kwg-ont:sfContains ?s2Cell2. " +
+                        "?s2Cell2 a kwg-ont:KWGCellLevel2. " +
+                        "?s2Cell2 geo:hasGeometry ?s2CellGeo2. " +
+                        "?s2CellGeo2 geo:asWKT ?s2CellWKT2. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT2) || geof:sfWithin(?userWKT, ?s2CellWKT2)). " +
+                        
+                        "?s2Cell2 kwg-ont:sfContains ?s2Cell3. " +
+                        "?s2Cell3 a kwg-ont:KWGCellLevel3. " +
+                        "?s2Cell3 geo:hasGeometry ?s2CellGeo3. " +
+                        "?s2CellGeo3 geo:asWKT ?s2CellWKT3. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT3) || geof:sfWithin(?userWKT, ?s2CellWKT3)). " +
+                        
+                        "?s2Cell3 kwg-ont:sfContains ?s2Cell4. " +
+                        "?s2Cell4 a kwg-ont:KWGCellLevel4. " +
+                        "?s2Cell4 geo:hasGeometry ?s2CellGeo4. " +
+                        "?s2CellGeo4 geo:asWKT ?s2CellWKT4. " +
+                        "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT4) || geof:sfWithin(?userWKT, ?s2CellWKT4)). " +
                     "} " +
-                    "ORDER BY ?entity " +
+                    "ORDER BY ?s2Cell4 " +
                     "LIMIT 10000 " +
                     "OFFSET " + offset.ToString();
 
                     try
                     {
-                        JToken s2Results = queryClass.SubmitQuery(currentRepository, entityQuery);
+                        JToken s2Results = queryClass.SubmitQuery(currentRepository, s2CellQuery);
 
                         foreach (var item in s2Results)
                         {
-                            entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                            s2CellFourList.Add(queryClass.IRIToPrefix(item["s2Cell4"]["value"].ToString()));
                         }
 
-                        if(s2Results.Count() == 10000)
+                        if (s2Results.Count() == 10000)
                         {
                             offset += 10000;
-                        } 
+                        }
                         else
                         {
                             pagination = false;
@@ -331,23 +338,211 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "ent";
+                        return "s2c4";
+                    }
+                }
+
+                //Split the list by groups, the goal is to super chunk queries
+                List<string> s24ValueChunks = SplitValueList(s2CellFourList, "s2Cell4", 10);
+
+                //Get s2 Cells at level 8
+                for (int i = 0; i < s24ValueChunks.Count; i++)
+                {
+                    pagination = true;
+                    offset = 0;
+                    while (pagination)
+                    {
+                        var s2CellQuery = "select distinct ?s2Cell8 where { " +
+                            "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
+
+                            s24ValueChunks[i] +
+
+                            "?s2Cell4 kwg-ont:sfContains ?s2Cell5. " +
+                            "?s2Cell5 a kwg-ont:KWGCellLevel5. " +
+                            "?s2Cell5 geo:hasGeometry ?s2CellGeo5. " +
+                            "?s2CellGeo5 geo:asWKT ?s2CellWKT5. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT5) || geof:sfWithin(?userWKT, ?s2CellWKT5)). " +
+
+                            "?s2Cell5 kwg-ont:sfContains ?s2Cell6. " +
+                            "?s2Cell6 a kwg-ont:KWGCellLevel6. " +
+                            "?s2Cell6 geo:hasGeometry ?s2CellGeo6. " +
+                            "?s2CellGeo6 geo:asWKT ?s2CellWKT6. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT6) || geof:sfWithin(?userWKT, ?s2CellWKT6)). " +
+
+                            "?s2Cell6 kwg-ont:sfContains ?s2Cell7. " +
+                            "?s2Cell7 a kwg-ont:KWGCellLevel7. " +
+                            "?s2Cell7 geo:hasGeometry ?s2CellGeo7. " +
+                            "?s2CellGeo7 geo:asWKT ?s2CellWKT7. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT7) || geof:sfWithin(?userWKT, ?s2CellWKT7)). " +
+
+                            "?s2Cell7 kwg-ont:sfContains ?s2Cell8. " +
+                            "?s2Cell8 a kwg-ont:KWGCellLevel8. " +
+                            "?s2Cell8 geo:hasGeometry ?s2CellGeo8. " +
+                            "?s2CellGeo8 geo:asWKT ?s2CellWKT8. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT8) || geof:sfWithin(?userWKT, ?s2CellWKT8)). " +
+                        "} " +
+                        "ORDER BY ?s2Cell8 " +
+                        "LIMIT 10000 " +
+                        "OFFSET " + offset.ToString();
+
+                        try
+                        {
+                            JToken s2Results = queryClass.SubmitQuery(currentRepository, s2CellQuery);
+
+                            foreach (var item in s2Results)
+                            {
+                                s2CellEightList.Add(queryClass.IRIToPrefix(item["s2Cell8"]["value"].ToString()));
+                            }
+
+                            if (s2Results.Count() == 10000)
+                            {
+                                offset += 10000;
+                            }
+                            else
+                            {
+                                pagination = false;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            return "s2c8";
+                        }
+                    }
+                }
+
+                //Split the list by groups, the goal is to super chunk queries
+                List<string> s28ValueChunks = SplitValueList(s2CellEightList, "s2Cell8", 10);
+
+                //Get s2 Cells at level 13
+                for (int i = 0; i < s28ValueChunks.Count; i++)
+                {
+                    pagination = true;
+                    offset = 0;
+                    while (pagination)
+                    {
+                        var s2CellQuery = "select distinct ?s2Cell13 where { " +
+                            "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
+
+                            s28ValueChunks[i] +
+
+                            "?s2Cell8 kwg-ont:sfContains ?s2Cell9. " +
+                            "?s2Cell9 a kwg-ont:KWGCellLevel9. " +
+                            "?s2Cell9 geo:hasGeometry ?s2CellGeo9. " +
+                            "?s2CellGeo9 geo:asWKT ?s2CellWKT9. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT9) || geof:sfWithin(?userWKT, ?s2CellWKT9)). " +
+
+                            "?s2Cell9 kwg-ont:sfContains ?s2Cell10. " +
+                            "?s2Cell10 a kwg-ont:KWGCellLevel10. " +
+                            "?s2Cell10 geo:hasGeometry ?s2CellGeo10. " +
+                            "?s2CellGeo10 geo:asWKT ?s2CellWKT10. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT10) || geof:sfWithin(?userWKT, ?s2CellWKT10)). " +
+
+                            "?s2Cell10 kwg-ont:sfContains ?s2Cell11. " +
+                            "?s2Cell11 a kwg-ont:KWGCellLevel11." +
+                            "?s2Cell11 geo:hasGeometry ?s2CellGeo11. " +
+                            "?s2CellGeo11 geo:asWKT ?s2CellWKT11. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT11) || geof:sfWithin(?userWKT, ?s2CellWKT11)). " +
+
+                            "?s2Cell11 kwg-ont:sfContains ?s2Cell12. " +
+                            "?s2Cell12 a kwg-ont:KWGCellLevel12. " +
+                            "?s2Cell12 geo:hasGeometry ?s2CellGeo12. " +
+                            "?s2CellGeo12 geo:asWKT ?s2CellWKT12. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT12) || geof:sfWithin(?userWKT, ?s2CellWKT12)). " +
+
+                            "?s2Cell12 kwg-ont:sfContains ?s2Cell13. " +
+                            "?s2Cell13 a kwg-ont:KWGCellLevel13. " +
+                            "?s2Cell13 geo:hasGeometry ?s2CellGeo13. " +
+                            "?s2CellGeo13 geo:asWKT ?s2CellWKT13. " +
+                            "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT13) || geof:sfWithin(?userWKT, ?s2CellWKT13))." +
+                        "} " +
+                        "ORDER BY ?entity " +
+                        "LIMIT 10000 " +
+                        "OFFSET " + offset.ToString();
+
+                        try
+                        {
+                            JToken s2Results = queryClass.SubmitQuery(currentRepository, s2CellQuery);
+
+                            foreach (var item in s2Results)
+                            {
+                                s2CellThirteenList.Add(queryClass.IRIToPrefix(item["s2Cell13"]["value"].ToString()));
+                            }
+
+                            if (s2Results.Count() == 10000)
+                            {
+                                offset += 10000;
+                            }
+                            else
+                            {
+                                pagination = false;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            return "s2c13";
+                        }
+                    }
+                }
+
+                //Split the list by groups, the goal is to super chunk queries
+                List<string> s213ValueChunks = SplitValueList(s2CellThirteenList, "s2Cell13", 10000);
+
+                //Get entitites via s2Cells
+                for (int i = 0; i < s213ValueChunks.Count; i++)
+                {
+                    pagination = true;
+                    offset = 0;
+                    while (pagination)
+                    {
+                        var entityQuery = "select distinct ?entity where { " +
+                            s213ValueChunks[i] +
+
+                            "{?entity ?p ?s2Cell13.} union {?s2Cell13 ?p ?entity.} " +
+                            "?entity a geo:Feature. " +
+                        "} " +
+                        "ORDER BY ?entity " +
+                        "LIMIT 10000 " +
+                        "OFFSET " + offset.ToString();
+
+                        try
+                        {
+                            JToken s2Results = queryClass.SubmitQuery(currentRepository, entityQuery);
+
+                            foreach (var item in s2Results)
+                            {
+                                entities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                            }
+
+                            if (s2Results.Count() == 10000)
+                            {
+                                offset += 10000;
+                            }
+                            else
+                            {
+                                pagination = false;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            return "ent";
+                        }
                     }
                 }
             }
 
-            entitiesFormatted = SplitEntityList(entities);
+            entitiesFormatted = SplitValueList(entities, "entity", 10000);
 
             for (int i = 0; i < entitiesFormatted.Count; i++)
             {
-                var typeQuery = "select distinct ?type ?label where { " +
-                    "?entity a ?type. " +
-                    "?type rdfs:label ?label. " +
-                    entitiesFormatted[i] +
-                "}";
-
-                string error = QueuedTask.Run(() =>
+                bool pagination = true;
+                int offset = 0;
+                while (pagination)
                 {
+                    var typeQuery = "select distinct ?type ?label where { " +
+                        "?entity a ?type. " +
+                        "?type rdfs:label ?label. " +
+                        entitiesFormatted[i] +
+                    "}";
                     try
                     {
                         JToken typeResults = queryClass.SubmitQuery(currentRepository, typeQuery);
@@ -362,18 +557,20 @@ namespace KWG_Geoenrichment
                                 entitiesClasses[cType] = cLabel;
                             }
                         }
+
+                        if (typeResults.Count() == 10000)
+                        {
+                            offset += 10000;
+                        }
+                        else
+                        {
+                            pagination = false;
+                        }
                     }
                     catch (Exception ex)
                     {
-                        return "typ";
+                        return "type";
                     }
-
-                    return "";
-                }).Result;
-
-                if (error != "")
-                {
-                    return error;
                 }
             }
 
