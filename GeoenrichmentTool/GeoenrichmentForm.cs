@@ -455,7 +455,7 @@ namespace KWG_Geoenrichment
                             "?s2CellGeo13 geo:asWKT ?s2CellWKT13. " +
                             "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT13) || geof:sfWithin(?userWKT, ?s2CellWKT13))." +
                         "} " +
-                        "ORDER BY ?entity " +
+                        "ORDER BY ?s2Cell13 " +
                         "LIMIT 10000 " +
                         "OFFSET " + offset.ToString();
 
