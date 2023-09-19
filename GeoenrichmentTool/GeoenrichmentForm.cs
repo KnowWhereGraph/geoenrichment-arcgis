@@ -29,7 +29,7 @@ namespace KWG_Geoenrichment
         Dictionary<string, string> entitiesClasses;
 
         private List<List<String>> content;
-        private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() { 
+        private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
             { "concat", "Concatenate values together with a \" | \"" },
             { "first", "Get the first value found" },
             { "count", "Get the number of values found" },
@@ -53,7 +53,7 @@ namespace KWG_Geoenrichment
         private readonly int contentPadding = 11;
 
         private readonly string helpText = "The entire KnowWhereGraph is available to explore. In the future, the Choose Knowledge Graph list will allow you to select specific repositories in the KnowWhereGraph to explore.\n\n" +
-            "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the "+ " button to manually draw a new polygon layer representing your area of interest.\n\n" +
+            "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the " + " button to manually draw a new polygon layer representing your area of interest.\n\n" +
             "After selecting an area of interest, choose \"Select Content\" to learn about what happened in that area.You may run this feature as many times as desired.\n\n" +
             "When you're ready to create your new Feature Class, provide a name for the new layer and hit \"RUN\".";
 
@@ -65,7 +65,7 @@ namespace KWG_Geoenrichment
             content = new List<List<String>>() { };
 
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
-            foreach(var endpoint in queryClass.defaultEndpoints)
+            foreach (var endpoint in queryClass.defaultEndpoints)
             {
                 knowledgeGraph.Items.Add(endpoint.Key);
             }
@@ -90,12 +90,12 @@ namespace KWG_Geoenrichment
                 if (activeLayer is BasicFeatureLayer)
                 {
                     var geoLayer = activeLayer as BasicFeatureLayer;
-                    if(geoLayer.ShapeType == ArcGIS.Core.CIM.esriGeometryType.esriGeometryPolygon)
+                    if (geoLayer.ShapeType == ArcGIS.Core.CIM.esriGeometryType.esriGeometryPolygon)
                         selectedLayer.Items.Add(geoLayer.Name);
                 }
             }
         }
-        
+
         //Graph endpoint changed, so see if we can select content
         private void OnChangeGraph(object sender, EventArgs e)
         {
@@ -214,7 +214,6 @@ namespace KWG_Geoenrichment
             }
         }
 
-
         //Search for entities using the selected knowledge graph and layer
         //If entities found AND no errors occured, enable Select Content
         public async void UpdateEntityList()
@@ -224,33 +223,36 @@ namespace KWG_Geoenrichment
                 selectedLayer.SelectedItem != null && selectedLayer.SelectedItem.ToString() != ""
               )
             {
+                featuresOfInterest.Enabled = false;
                 contentLoading.Visible = true;
-                selectContentBtn.Text = "Searching area...";
                 string error = await QueuedTask.Run(() => SearchForEntities());
-                selectContentBtn.Text = "Select Content";
                 contentLoading.Visible = false;
                 if (error == "")
                 {
                     if (entities.Count > 0)
                     {
-                        selectContentBtn.Enabled = true;
+                        Dictionary<string, string> classes = new Dictionary<string, string>() { { "", "" } };
+                        classes = entitiesClasses;
+
+                        featuresOfInterest.Enabled = true;
+                        featuresOfInterest.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
+                        featuresOfInterest.DropDownWidth = classes.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, featuresOfInterest.Font).Width);
                     }
                     else
                     {
-                        selectContentBtn.Enabled = false;
                         MessageBox.Show($@"No content found in the selected Map Layer. Try a different feature layer!");
                     }
                 }
                 else
                 {
                     selectedLayer.SelectedItem = null;
-                    selectContentBtn.Enabled = false;
+                    featuresOfInterest.Enabled = false;
                     KwgGeoModule.Current.GetQueryClass().ReportGraphError(error);
                 }
             }
             else
             {
-                selectContentBtn.Enabled = false;
+                featuresOfInterest.Enabled = false;
             }
         }
 
@@ -290,24 +292,24 @@ namespace KWG_Geoenrichment
                 {
                     var s2CellQuery = "select distinct ?s2Cell4 where { " +
                         "values ?userWKT {\"" + wkt + "\"^^geo:wktLiteral}. " +
-                        
+
                         "?s2Cell1 a kwg-ont:KWGCellLevel1. " +
                         "?s2Cell1 geo:hasGeometry ?s2CellGeo1. " +
                         "?s2CellGeo1 geo:asWKT ?s2CellWKT1. " +
                         "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT1) || geof:sfWithin(?userWKT, ?s2CellWKT1)). " +
-                        
+
                         "?s2Cell1 kwg-ont:sfContains ?s2Cell2. " +
                         "?s2Cell2 a kwg-ont:KWGCellLevel2. " +
                         "?s2Cell2 geo:hasGeometry ?s2CellGeo2. " +
                         "?s2CellGeo2 geo:asWKT ?s2CellWKT2. " +
                         "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT2) || geof:sfWithin(?userWKT, ?s2CellWKT2)). " +
-                        
+
                         "?s2Cell2 kwg-ont:sfContains ?s2Cell3. " +
                         "?s2Cell3 a kwg-ont:KWGCellLevel3. " +
                         "?s2Cell3 geo:hasGeometry ?s2CellGeo3. " +
                         "?s2CellGeo3 geo:asWKT ?s2CellWKT3. " +
                         "FILTER(geof:sfIntersects(?userWKT, ?s2CellWKT3) || geof:sfWithin(?userWKT, ?s2CellWKT3)). " +
-                        
+
                         "?s2Cell3 kwg-ont:sfContains ?s2Cell4. " +
                         "?s2Cell4 a kwg-ont:KWGCellLevel4. " +
                         "?s2Cell4 geo:hasGeometry ?s2CellGeo4. " +
@@ -552,10 +554,11 @@ namespace KWG_Geoenrichment
                             string cType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
                             string cLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
 
+                            if (cType == "sosa:FeatureOfInterest" || cType == "geo:Feature")
+                                continue;
+
                             if (!entitiesClasses.ContainsKey(cType))
-                            {
                                 entitiesClasses[cType] = cLabel;
-                            }
                         }
 
                         if (typeResults.Count() == 10000)
@@ -577,7 +580,7 @@ namespace KWG_Geoenrichment
             return "";
         }
 
-        private void SelectContent(object sender, EventArgs e)
+        private void SelectContent(object sender, EventArgs e) //TODO
         {
             var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entitiesFormatted, entitiesClasses);
             Hide();
@@ -592,11 +595,11 @@ namespace KWG_Geoenrichment
             var uniqueUris = new List<string>() { };
             var uniqueLabels = new List<string>() { };
 
-            for(int i=0; i<uris.Count; i++)
+            for (int i = 0; i < uris.Count; i++)
             {
-                if(
-                    i == 0 || 
-                    (uris[i] != uris[i-1] && uris[i] != "LiteralDataFound")
+                if (
+                    i == 0 ||
+                    (uris[i] != uris[i - 1] && uris[i] != "LiteralDataFound")
                 )
                 {
                     uniqueUris.Add(uris[i]);
@@ -607,7 +610,7 @@ namespace KWG_Geoenrichment
             //Capture the data
             content.Add(uniqueUris);
 
-            
+
             string labelString = String.Join(" -> ", uniqueLabels);
             string columnString = "NoAdditionalData";
             int labelCnt = uniqueLabels.Count;
@@ -640,7 +643,7 @@ namespace KWG_Geoenrichment
             ComboBox mergeBox = new ComboBox();
             mergeBox.Font = knowledgeGraph.Font;
             mergeBox.FormattingEnabled = knowledgeGraph.FormattingEnabled;
-            mergeBox.Name = "mergeRule"+content.Count.ToString();
+            mergeBox.Name = "mergeRule" + content.Count.ToString();
             mergeBox.Size = new System.Drawing.Size(400, 26);
             mergeBox.DisplayMember = "Value";
             mergeBox.ValueMember = "Key";
@@ -676,7 +679,7 @@ namespace KWG_Geoenrichment
             contentTotalSpacing += addedHeight;
 
             //Move things down
-            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + addedHeight);
+            //selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + addedHeight);
             requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + addedHeight);
             saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + addedHeight);
             saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + addedHeight);
@@ -686,7 +689,7 @@ namespace KWG_Geoenrichment
             Height += addedHeight;
 
             //Disable boxes if needed
-            if(columnString == "NoAdditionalData")
+            if (columnString == "NoAdditionalData")
             {
                 columnText.Enabled = false;
                 mergeBox.Enabled = false;
@@ -723,7 +726,7 @@ namespace KWG_Geoenrichment
             addedHeight += mergeRule.Height + contentPadding;
 
             contentTotalSpacing -= addedHeight;
-            selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
+            //selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
             requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - addedHeight);
             saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - addedHeight);
             saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - addedHeight);
@@ -733,7 +736,7 @@ namespace KWG_Geoenrichment
             Height -= addedHeight;
 
             //remove any content that is listed after, and relabel with new index 
-            for (int i = idx+1; i <= oldSize; i++)
+            for (int i = idx + 1; i <= oldSize; i++)
             {
                 Label oldContentLabel = (Label)this.Controls.Find("contentLabel" + i.ToString(), true).First();
                 TextBox oldColumnName = (TextBox)this.Controls.Find("columnName" + i.ToString(), true).First();
@@ -774,7 +777,7 @@ namespace KWG_Geoenrichment
                 addedHeight += mergeRule.Height + contentPadding;
 
                 contentTotalSpacing -= addedHeight;
-                selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
+                //selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
                 requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - addedHeight);
                 saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - addedHeight);
                 saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - addedHeight);
@@ -825,7 +828,7 @@ namespace KWG_Geoenrichment
 
             //Pull all geometries from the area of interest
             List<Geometry> userGeos = new List<Geometry>() { };
-            for(int i = 0; i < currentLayerWKTs.Count; i++)
+            for (int i = 0; i < currentLayerWKTs.Count; i++)
             {
                 userGeos.Add(geoEngine.ImportFromWKT(0, currentLayerWKTs[i], sr));
             }
@@ -874,7 +877,7 @@ namespace KWG_Geoenrichment
                         labelToMergeRule[columnLabel] = mergeRule;
                         firstShape = false;
                     }
-                    
+
                     if (!columnLabel.StartsWith("NoAdditionalData"))
                         await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
                 }
@@ -985,8 +988,9 @@ namespace KWG_Geoenrichment
                             //Validate that our geometry actually intersects the original user area
                             //We do this because we originally used s2Cell approximation to find the entities
                             bool doesIntersectWithUserArea = false;
-                            for(int i = 0; i < userGeos.Count; i++) {
-                                if(GeometryEngine.Instance.Intersects(geo, userGeos[i]))
+                            for (int i = 0; i < userGeos.Count; i++)
+                            {
+                                if (GeometryEngine.Instance.Intersects(geo, userGeos[i]))
                                     doesIntersectWithUserArea = true;
                             }
                             if (!doesIntersectWithUserArea)
