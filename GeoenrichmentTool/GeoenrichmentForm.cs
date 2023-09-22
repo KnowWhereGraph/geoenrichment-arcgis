@@ -28,6 +28,7 @@ namespace KWG_Geoenrichment
         private List<String> entitiesFormatted;
         Dictionary<string, string> entitiesClasses;
 
+        private List<String> selectedClasses;
         private List<List<String>> content;
         private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
             { "concat", "Concatenate values together with a \" | \"" },
@@ -50,7 +51,7 @@ namespace KWG_Geoenrichment
         };
 
         private int contentTotalSpacing = 50;
-        private readonly int contentPadding = 11;
+        private readonly int contentPadding = 50;
 
         private readonly string helpText = "The entire KnowWhereGraph is available to explore. In the future, the Choose Knowledge Graph list will allow you to select specific repositories in the KnowWhereGraph to explore.\n\n" +
             "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the " + " button to manually draw a new polygon layer representing your area of interest.\n\n" +
@@ -63,6 +64,7 @@ namespace KWG_Geoenrichment
             InitializeComponent();
 
             content = new List<List<String>>() { };
+            selectedClasses = new List<String>() { };
 
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             foreach (var endpoint in queryClass.defaultEndpoints)
@@ -270,6 +272,7 @@ namespace KWG_Geoenrichment
             return newEntityList;
         }
 
+        //Creates sparql queries for finding s2Cells and all their entities in the search area
         public string SearchForEntities()
         {
             entities = new List<string>() { };
@@ -580,6 +583,65 @@ namespace KWG_Geoenrichment
             return "";
         }
 
+        //When user selects a feature of interest, add feature to the 
+        private void OnSelectFeature(object sender, EventArgs e) //TODO
+        {
+            String feature = featuresOfInterest.SelectedValue.ToString();
+            String featureLabel = featuresOfInterest.Text;
+
+            if (feature != "" && !selectedClasses.Contains(feature))
+            {
+                selectedClasses.Add(feature);
+
+                //Add the class label
+                Label labelObj = new Label();
+                labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
+                labelObj.BackColor = Color.FromName("ActiveCaption");
+                labelObj.Font = knowledgeGraphLabel.Font;
+                labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
+                labelObj.Margin = knowledgeGraphLabel.Margin;
+                labelObj.Name = "classLabel" + selectedClasses.Count.ToString();
+                labelObj.Size = knowledgeGraphLabel.Size;
+                labelObj.MaximumSize = new Size(780, 0);
+                labelObj.Text = featureLabel;
+                Controls.Add(labelObj);
+
+                //Add the remove class button
+                Button removeClass = new Button();
+                removeClass.BackColor = System.Drawing.Color.Transparent;
+                removeClass.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+                removeClass.Cursor = System.Windows.Forms.Cursors.Hand;
+                removeClass.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+                removeClass.FlatAppearance.BorderSize = 0;
+                removeClass.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                removeClass.Image = global::KWG_Geoenrichment.Properties.Resources.x;
+                removeClass.Name = "removeClass" + content.Count.ToString();
+                removeClass.Size = new System.Drawing.Size(25, 25);
+                removeClass.UseVisualStyleBackColor = false;
+                removeClass.Click += new System.EventHandler(this.RemoveSelectedContent);
+                Controls.Add(removeClass);
+
+                //Move the label and remove class button
+                labelObj.Location = new System.Drawing.Point(featuresOfInterest.Location.X, featuresOfInterest.Location.Y + contentTotalSpacing);
+                removeClass.Location = new System.Drawing.Point(labelObj.Width + labelObj.Location.X + 20, labelObj.Location.Y - 2);
+
+                //Adjust the total amount of spacing we've moved
+                contentTotalSpacing += contentPadding;
+
+                //Move things down
+                requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + contentPadding);
+                saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + contentPadding);
+                saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + contentPadding);
+                helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + contentPadding);
+                layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y + contentPadding);
+                runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + contentPadding);
+                Height += contentPadding;
+
+                //Reset feature box
+                featuresOfInterest.SelectedValue = "";
+            }
+        }
+
         private void SelectContent(object sender, EventArgs e) //TODO
         {
             var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entitiesFormatted, entitiesClasses);
@@ -587,7 +649,7 @@ namespace KWG_Geoenrichment
             exploreWindow.Show();
         }
 
-        public void AddSelectedContent(List<string> uris, List<string> labels)
+        public void AddSelectedContent(List<string> uris, List<string> labels) //TODO
         {
             Show();
 
@@ -699,7 +761,7 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
-        private void RemoveSelectedContent(object sender, EventArgs e)
+        private void RemoveSelectedContent(object sender, EventArgs e) //TODO
         {
             //get index
             Button clickedButton = sender as Button;
@@ -757,7 +819,7 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
-        private void ResetSelectedContent()
+        private void ResetSelectedContent() //TODO
         {
             for (int i = 1; i <= content.Count; i++)
             {
@@ -791,12 +853,13 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
+        //Triggers form validation when Save Layer As name changes
         private void OnFeatureNameChage(object sender, EventArgs e)
         {
             CheckCanRunGeoenrichment();
         }
 
-        public void CheckCanRunGeoenrichment()
+        public void CheckCanRunGeoenrichment() //TODO
         {
             if (
                 content.Count > 0 &&
@@ -811,7 +874,7 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private async void RunGeoenrichment(object sender, EventArgs e)
+        private async void RunGeoenrichment(object sender, EventArgs e) //TODO
         {
             runBtn.Enabled = false;
             runBtn.Text = "Running...";

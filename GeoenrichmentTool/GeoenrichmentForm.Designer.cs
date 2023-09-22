@@ -331,6 +331,7 @@ namespace KWG_Geoenrichment
             featuresOfInterest.Size = new System.Drawing.Size(900, 26);
             featuresOfInterest.TabIndex = 49;
             featuresOfInterest.ValueMember = "Key";
+            featuresOfInterest.SelectedIndexChanged += OnSelectFeature;
             // 
             // featuresOfInterestLabel
             // 
