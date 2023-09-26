@@ -589,7 +589,11 @@ namespace KWG_Geoenrichment
             String feature = featuresOfInterest.SelectedValue.ToString();
             String featureLabel = featuresOfInterest.Text;
 
-            if (feature != "" && !selectedClasses.Contains(feature))
+            if (selectedClasses.Contains(feature))
+            {
+                MessageBox.Show($@"Selected Feature of Interest is already in the list!");
+            }
+            else if (feature != "")
             {
                 selectedClasses.Add(feature);
 
@@ -606,6 +610,23 @@ namespace KWG_Geoenrichment
                 labelObj.Text = featureLabel;
                 Controls.Add(labelObj);
 
+                //Add the Add Property button
+                Button addProperty = new Button();
+                addProperty.BackColor = System.Drawing.Color.FromArgb(66, 214, 237);
+                addProperty.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+                addProperty.Cursor = System.Windows.Forms.Cursors.Hand;
+                addProperty.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(33, 111, 179);
+                addProperty.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                addProperty.Font = new System.Drawing.Font("Arial", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+                addProperty.ForeColor = System.Drawing.Color.Black;
+                addProperty.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+                addProperty.Name = "addProperties" + selectedClasses.Count.ToString();
+                addProperty.Size = new System.Drawing.Size(100, 25);
+                addProperty.Text = "Add Properties";
+                addProperty.UseVisualStyleBackColor = false;
+                addProperty.Click += new System.EventHandler(this.OpenTraverseWindow);
+                Controls.Add(addProperty);
+
                 //Add the remove class button
                 Button removeClass = new Button();
                 removeClass.BackColor = System.Drawing.Color.Transparent;
@@ -615,15 +636,16 @@ namespace KWG_Geoenrichment
                 removeClass.FlatAppearance.BorderSize = 0;
                 removeClass.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
                 removeClass.Image = global::KWG_Geoenrichment.Properties.Resources.x;
-                removeClass.Name = "removeClass" + content.Count.ToString();
+                removeClass.Name = "removeClass" + selectedClasses.Count.ToString();
                 removeClass.Size = new System.Drawing.Size(25, 25);
                 removeClass.UseVisualStyleBackColor = false;
-                removeClass.Click += new System.EventHandler(this.RemoveSelectedContent);
+                removeClass.Click += new System.EventHandler(this.RemoveSelectedClass);
                 Controls.Add(removeClass);
 
                 //Move the label and remove class button
                 labelObj.Location = new System.Drawing.Point(featuresOfInterest.Location.X, featuresOfInterest.Location.Y + contentTotalSpacing);
-                removeClass.Location = new System.Drawing.Point(labelObj.Width + labelObj.Location.X + 20, labelObj.Location.Y - 2);
+                addProperty.Location = new System.Drawing.Point(labelObj.Location.X + labelObj.Width + 20, labelObj.Location.Y - 1);
+                removeClass.Location = new System.Drawing.Point(addProperty.Location.X + addProperty.Width + 20, addProperty.Location.Y - 1);
 
                 //Adjust the total amount of spacing we've moved
                 contentTotalSpacing += contentPadding;
@@ -639,7 +661,66 @@ namespace KWG_Geoenrichment
 
                 //Reset feature box
                 featuresOfInterest.SelectedValue = "";
+
+                CheckCanRunGeoenrichment();
             }
+        }
+
+        private void OpenTraverseWindow(object sender, EventArgs e) //TODO
+        {
+
+        }
+
+        //Removes a class and its selected properties from the data and the UI
+        private void RemoveSelectedClass(object sender, EventArgs e)
+        {
+            //get index
+            Button clickedButton = sender as Button;
+            string buttonText = clickedButton.Name;
+            string index = buttonText.Replace("removeClass", "");
+            int idx = Int32.Parse(index);
+
+            //remove content from ui
+            Label classLabel = (Label)this.Controls.Find("classLabel" + index, true).First();
+            Button addPropBtn = (Button)this.Controls.Find("addProperties" + index, true).First();
+
+            this.Controls.Remove(classLabel);
+            this.Controls.Remove(addPropBtn);
+            this.Controls.Remove(clickedButton);
+
+            //remove content from array
+            int oldSize = selectedClasses.Count;
+            selectedClasses.RemoveAt(idx - 1);
+
+            //TODO::Remove Properties content as well
+
+            //remove the window height
+            contentTotalSpacing -= contentPadding;
+            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - contentPadding);
+            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - contentPadding);
+            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - contentPadding);
+            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y - contentPadding);
+            layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y - contentPadding);
+            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y - contentPadding);
+            Height -= contentPadding;
+
+            //remove any content that is listed after, and relabel with new index 
+            for (int i = idx + 1; i <= oldSize; i++)
+            {
+                Label oldClassLabel = (Label)this.Controls.Find("classLabel" + i.ToString(), true).First();
+                Button oldAddPropBtn = (Button)this.Controls.Find("addProperties" + i.ToString(), true).First();
+                Button oldRemoveClass = (Button)this.Controls.Find("removeClass" + i.ToString(), true).First();
+
+                oldClassLabel.Location = new System.Drawing.Point(oldClassLabel.Location.X, oldClassLabel.Location.Y - contentPadding);
+                oldAddPropBtn.Location = new System.Drawing.Point(oldAddPropBtn.Location.X, oldAddPropBtn.Location.Y - contentPadding);
+                oldRemoveClass.Location = new System.Drawing.Point(oldRemoveClass.Location.X, oldRemoveClass.Location.Y - contentPadding);
+
+                oldClassLabel.Name = "classLabel" + (i - 1).ToString();
+                oldAddPropBtn.Name = "addProperties" + (i - 1).ToString();
+                oldRemoveClass.Name = "removeClass" + (i - 1).ToString();
+            }
+
+            CheckCanRunGeoenrichment();
         }
 
         private void SelectContent(object sender, EventArgs e) //TODO
@@ -724,7 +805,7 @@ namespace KWG_Geoenrichment
             removeContent.Name = "removeContent" + content.Count.ToString();
             removeContent.Size = new System.Drawing.Size(26, 26);
             removeContent.UseVisualStyleBackColor = false;
-            removeContent.Click += new System.EventHandler(this.RemoveSelectedContent);
+            //removeContent.Click += new System.EventHandler(this.RemoveSelectedContent);
             Controls.Add(removeContent);
 
             //Move the label
@@ -757,64 +838,6 @@ namespace KWG_Geoenrichment
                 mergeBox.Enabled = false;
             }
 
-
-            CheckCanRunGeoenrichment();
-        }
-
-        private void RemoveSelectedContent(object sender, EventArgs e) //TODO
-        {
-            //get index
-            Button clickedButton = sender as Button;
-            string buttonText = clickedButton.Name;
-            string index = buttonText.Replace("removeContent", "");
-            int idx = Int32.Parse(index);
-
-            //remove content from ui
-            Label contentLabel = (Label)this.Controls.Find("contentLabel" + index, true).First();
-            TextBox columnName = (TextBox)this.Controls.Find("columnName" + index, true).First();
-            ComboBox mergeRule = (ComboBox)this.Controls.Find("mergeRule" + index, true).First();
-
-            this.Controls.Remove(contentLabel);
-            this.Controls.Remove(columnName);
-            this.Controls.Remove(mergeRule);
-            this.Controls.Remove(clickedButton);
-
-            //remove content from array
-            int oldSize = content.Count;
-            content.RemoveAt(idx - 1);
-
-            //remove the window height
-            int addedHeight = contentLabel.Height + contentPadding;
-            addedHeight += mergeRule.Height + contentPadding;
-
-            contentTotalSpacing -= addedHeight;
-            //selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
-            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - addedHeight);
-            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - addedHeight);
-            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - addedHeight);
-            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y - addedHeight);
-            layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y - addedHeight);
-            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y - addedHeight);
-            Height -= addedHeight;
-
-            //remove any content that is listed after, and relabel with new index 
-            for (int i = idx + 1; i <= oldSize; i++)
-            {
-                Label oldContentLabel = (Label)this.Controls.Find("contentLabel" + i.ToString(), true).First();
-                TextBox oldColumnName = (TextBox)this.Controls.Find("columnName" + i.ToString(), true).First();
-                ComboBox oldMergeRule = (ComboBox)this.Controls.Find("mergeRule" + i.ToString(), true).First();
-                Button oldRemoveContent = (Button)this.Controls.Find("removeContent" + i.ToString(), true).First();
-
-                oldContentLabel.Location = new System.Drawing.Point(oldContentLabel.Location.X, oldContentLabel.Location.Y - addedHeight);
-                oldColumnName.Location = new System.Drawing.Point(oldColumnName.Location.X, oldColumnName.Location.Y - addedHeight);
-                oldMergeRule.Location = new System.Drawing.Point(oldMergeRule.Location.X, oldMergeRule.Location.Y - addedHeight);
-                oldRemoveContent.Location = new System.Drawing.Point(oldRemoveContent.Location.X, oldRemoveContent.Location.Y - addedHeight);
-
-                oldContentLabel.Name = "contentLabel" + (i - 1).ToString();
-                oldColumnName.Name = "columnName" + (i - 1).ToString();
-                oldMergeRule.Name = "mergeRule" + (i - 1).ToString();
-                oldRemoveContent.Name = "removeContent" + (i - 1).ToString();
-            }
 
             CheckCanRunGeoenrichment();
         }
@@ -859,10 +882,11 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
-        public void CheckCanRunGeoenrichment() //TODO
+        //Checks to see if there is selected content before user is allowed to execute the form
+        public void CheckCanRunGeoenrichment()
         {
             if (
-                content.Count > 0 &&
+                selectedClasses.Count > 0 &&
                 saveLayerAs.Text != ""
               )
             {
