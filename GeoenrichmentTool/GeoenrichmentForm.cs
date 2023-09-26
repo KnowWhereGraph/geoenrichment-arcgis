@@ -5,6 +5,7 @@ using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Internal.Catalog;
+using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,6 +15,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ArcGIS.Desktop.Internal.Core.PortalTrafficDataService.ServiceErrorResponse;
 using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace KWG_Geoenrichment
@@ -584,7 +586,7 @@ namespace KWG_Geoenrichment
         }
 
         //When user selects a feature of interest, add feature to the 
-        private void OnSelectFeature(object sender, EventArgs e) //TODO
+        private void OnSelectFeature(object sender, EventArgs e)
         {
             String feature = featuresOfInterest.SelectedValue.ToString();
             String featureLabel = featuresOfInterest.Text;
@@ -668,7 +670,52 @@ namespace KWG_Geoenrichment
 
         private void OpenTraverseWindow(object sender, EventArgs e) //TODO
         {
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
+            bool queryFailed = false;
 
+            //get index
+            Button clickedButton = sender as Button;
+            string buttonText = clickedButton.Name;
+            string index = buttonText.Replace("addProperties", "");
+            int idx = Int32.Parse(index);
+
+            string classToTraverse = selectedClasses[idx - 1];
+            string classToTraverseLabel = entitiesClasses[classToTraverse];
+            List<string> traverseEntities = new List<string>() { };
+
+            //Grab only the entities that are of the class
+            //We don't need to paginate this query because each entitiesFormatted value list is no more than 10000 elements
+            for (int i = 0; i < entitiesFormatted.Count; i++)
+            {
+                var traverseEntitesQuery = "select ?entity where { " +
+                    entitiesFormatted[i] +
+                    "?entity a " + classToTraverse + ". " +
+                "} ";
+
+                try
+                {
+                    JToken s2Results = queryClass.SubmitQuery(currentRepository, traverseEntitesQuery);
+
+                    foreach (var item in s2Results)
+                    {
+                        traverseEntities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    queryFailed = true;
+                    queryClass.ReportGraphError("trav");
+                }
+            }
+
+            if (!queryFailed)
+            {
+                List<string> traverseEntitiesFormatted = SplitValueList(traverseEntities, "entity", 10000);
+
+                //var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel);
+                //Hide();
+                //exploreWindow.Show();
+            }
         }
 
         //Removes a class and its selected properties from the data and the UI
@@ -721,13 +768,6 @@ namespace KWG_Geoenrichment
             }
 
             CheckCanRunGeoenrichment();
-        }
-
-        private void SelectContent(object sender, EventArgs e) //TODO
-        {
-            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, entitiesFormatted, entitiesClasses);
-            Hide();
-            exploreWindow.Show();
         }
 
         public void AddSelectedContent(List<string> uris, List<string> labels) //TODO
@@ -1185,8 +1225,9 @@ namespace KWG_Geoenrichment
         {
             var helpWindow = new KWGHelp(helpText);
             helpWindow.Show();
-        }
+        } //TODO
 
+        //Closes the Geoenrichment window, which closes the plugin entirely
         private void CloseWindow(object sender, EventArgs e)
         {
             Close();
