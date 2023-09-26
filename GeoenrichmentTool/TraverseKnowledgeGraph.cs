@@ -11,10 +11,9 @@ namespace KWG_Geoenrichment
     public partial class TraverseKnowledgeGraph : Form
     {
         private GeoenrichmentForm originalWindow;
-        
         private string currentEndpoint;
         private List<string> entityVals;
-        private Dictionary<string, string> entityClasses;
+        private int returnIndex;
 
         protected int maxDegree = 1;
 
@@ -22,19 +21,21 @@ namespace KWG_Geoenrichment
 
         private readonly string helpText = "Select a geography feature from the first box.You may use successive boxes to explore additional information about that feature.\n\n" +
             "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
-            "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types.";
+            "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types."; //TODO
 
-        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, Dictionary<string, string> entitiesClasses)
+        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, string entityClassLabel, int originalIndex)
         {
             InitializeComponent();
 
             originalWindow = gf;
             currentEndpoint = endpoint;
             entityVals = entities;
-            entityClasses = entitiesClasses;
+            returnIndex = originalIndex;
 
-            PopulateClassBox(1);
-        }
+            exploreProperties.Text = "Explore " + entityClassLabel + " Properties";
+
+            //PopulateClassBox(1);
+        } //TODO
 
         private void PopulateClassBox(int degree)
         {
@@ -44,16 +45,16 @@ namespace KWG_Geoenrichment
 
             if (degree == 1)
             {
-                classes = entityClasses;
+                //classes = entityClasses;
 
-                edgeLoading.Visible = false;
+                propLoading.Visible = false;
                 runTraverseBtn.Enabled = true;
 
                 classBox.Enabled = true;
             }
             else
             {
-                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + (degree-1).ToString(), true).First();
+                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + (degree - 1).ToString(), true).First();
                 string objectVal = valueBox.SelectedValue.ToString();
                 string objectLabel = valueBox.Text;
 
@@ -62,7 +63,7 @@ namespace KWG_Geoenrichment
 
             classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
             classBox.DropDownWidth = classes.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, classBox.Font).Width);
-        }
+        } //TODO
 
         private async void PopulatePropertyBox(int degree)
         {
@@ -87,7 +88,7 @@ namespace KWG_Geoenrichment
                 propQuery += "optional {?p rdfs:label ?label} " + entityVals[j] + "}";
 
                 runTraverseBtn.Enabled = false;
-                edgeLoading.Visible = true;
+                propLoading.Visible = true;
                 string error = await QueuedTask.Run(() =>
                 {
                     try
@@ -124,21 +125,21 @@ namespace KWG_Geoenrichment
                     }
                     queryClass.ReportGraphError(error);
 
-                    edgeLoading.Visible = false;
+                    propLoading.Visible = false;
                     runTraverseBtn.Enabled = true;
 
                     return;
                 }
             }
 
-            edgeLoading.Visible = false;
+            propLoading.Visible = false;
             runTraverseBtn.Enabled = true;
 
             ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
             currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
             currPropBox.DropDownWidth = properties.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currPropBox.Font).Width);
             currPropBox.Enabled = true;
-        }
+        } //TODO
 
         private async void PopulateValueBox(int degree)
         {
@@ -164,7 +165,7 @@ namespace KWG_Geoenrichment
                 valueQuery += "?type rdfs:label ?label. " + entityVals[j] + "}";
 
                 runTraverseBtn.Enabled = false;
-                edgeLoading.Visible = true;
+                propLoading.Visible = true;
                 string error = await QueuedTask.Run(() =>
                 {
                     try
@@ -196,7 +197,7 @@ namespace KWG_Geoenrichment
                     propBox.SelectedValue = "";
                     queryClass.ReportGraphError(error);
 
-                    edgeLoading.Visible = false;
+                    propLoading.Visible = false;
                     runTraverseBtn.Enabled = true;
 
                     return;
@@ -210,13 +211,13 @@ namespace KWG_Geoenrichment
                 values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
             }
 
-            edgeLoading.Visible = false;
+            propLoading.Visible = false;
             runTraverseBtn.Enabled = true;
 
             currValueBox.Enabled = keepBoxEnabled;
             currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
             currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
-        }
+        } //TODO
 
         private void OnClassBoxChange(object sender, EventArgs e)
         {
@@ -237,7 +238,7 @@ namespace KWG_Geoenrichment
             {
                 PopulatePropertyBox(degree);
             }
-        }
+        } //TODO
 
         private void OnPropBoxChange(object sender, EventArgs e)
         {
@@ -255,7 +256,7 @@ namespace KWG_Geoenrichment
             {
                 PopulateValueBox(degree);
             }
-        }
+        } //TODO
 
         private void OnValueBoxChange(object sender, EventArgs e)
         {
@@ -268,17 +269,17 @@ namespace KWG_Geoenrichment
 
             if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
             {
-                addPropertyBtn.Enabled = (valueBox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
+                exploreFurtherBtn.Enabled = (valueBox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
             }
-        }
+        } //TODO
 
         private void RemoveRows(int newMax)
         {
-            for(int i = newMax+1; i <= maxDegree; i++)
+            for (int i = newMax + 1; i <= maxDegree; i++)
             {
                 //resize window and move main UI down
                 this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height - propertySpacing);
-                this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y - propertySpacing);
+                this.exploreFurtherBtn.Location = new System.Drawing.Point(this.exploreFurtherBtn.Location.X, this.exploreFurtherBtn.Location.Y - propertySpacing);
                 this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
                 this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
 
@@ -293,16 +294,16 @@ namespace KWG_Geoenrichment
             }
 
             maxDegree = newMax;
-        }
+        } //TODO
 
         private void LearnMore(object sender, EventArgs e)
         {
-            addPropertyBtn.Enabled = false;
+            exploreFurtherBtn.Enabled = false;
             int newDegree = maxDegree + 1;
 
             //Expand the form and move down the button elements
             this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
-            this.addPropertyBtn.Location = new System.Drawing.Point(this.addPropertyBtn.Location.X, this.addPropertyBtn.Location.Y + propertySpacing);
+            this.exploreFurtherBtn.Location = new System.Drawing.Point(this.exploreFurtherBtn.Location.X, this.exploreFurtherBtn.Location.Y + propertySpacing);
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
 
@@ -349,63 +350,64 @@ namespace KWG_Geoenrichment
             PopulatePropertyBox(newDegree);
 
             maxDegree++;
-        }
+        } //TODO
 
         private void RunTraverseGraph(object sender, EventArgs e)
         {
-            if (subject1.Text == "")
+            /*if (subject1.Text == "")
             {
                 MessageBox.Show($@"Required fields missing!");
-            }
-            else
+            }*/
+            //else
+            //{
+            List<string> uriList = new List<string>();
+            List<string> labelList = new List<string>();
+            for (int i = 1; i < maxDegree + 1; i++)
             {
-                List<string> uriList = new List<string>();
-                List<string> labelList = new List<string>();
-                for (int i = 1; i < maxDegree + 1; i++)
+                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
+                if (classBox.Text != null && classBox.Text != "")
                 {
-                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                    if (classBox.Text != null && classBox.Text != "")
-                    {
-                        uriList.Add(classBox.SelectedValue.ToString());
-                        labelList.Add(classBox.Text);
-                    }
-
-                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                    if (propBox.Text != null && propBox.Text != "")
-                    {
-                        uriList.Add(propBox.SelectedValue.ToString());
-                        labelList.Add(propBox.Text);
-                    }
-
-                    ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
-                    if (valueBox.Text != null && valueBox.Text != "")
-                    {
-                        uriList.Add(valueBox.SelectedValue.ToString());
-                        labelList.Add(valueBox.Text);
-                    } 
+                    uriList.Add(classBox.SelectedValue.ToString());
+                    labelList.Add(classBox.Text);
                 }
 
-                originalWindow.AddSelectedContent(uriList, labelList);
-                Close();
-            }
-        }
+                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
+                if (propBox.Text != null && propBox.Text != "")
+                {
+                    uriList.Add(propBox.SelectedValue.ToString());
+                    labelList.Add(propBox.Text);
+                }
 
+                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
+                if (valueBox.Text != null && valueBox.Text != "")
+                {
+                    uriList.Add(valueBox.SelectedValue.ToString());
+                    labelList.Add(valueBox.Text);
+                }
+            }
+
+            originalWindow.AddSelectedContent(uriList, labelList);
+            Close();
+            //}
+        } //TODO
+
+        //Toggles the help menu pop up
         private void ClickToggleHelpMenu(object sender, EventArgs e)
         {
             var helpWindow = new KWGHelp(helpText);
             helpWindow.Show();
-        }
+        } //TODO
 
         private void TraverseKnowledgeGraph_FormClosing(object sender, FormClosingEventArgs e)
         {
             //This is a catch all in case the window gets closed prematurely
             originalWindow.Show();
-        }
+        } //TODO
 
         private void CloseWindow(object sender, EventArgs e)
         {
             originalWindow.Show();
             Close();
-        }
+        } //TODO
     }
 }

@@ -7,6 +7,7 @@ using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Internal.Catalog;
 using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -58,7 +59,7 @@ namespace KWG_Geoenrichment
         private readonly string helpText = "The entire KnowWhereGraph is available to explore. In the future, the Choose Knowledge Graph list will allow you to select specific repositories in the KnowWhereGraph to explore.\n\n" +
             "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the " + " button to manually draw a new polygon layer representing your area of interest.\n\n" +
             "After selecting an area of interest, choose \"Select Content\" to learn about what happened in that area.You may run this feature as many times as desired.\n\n" +
-            "When you're ready to create your new Feature Class, provide a name for the new layer and hit \"RUN\".";
+            "When you're ready to create your new Feature Class, provide a name for the new layer and hit \"RUN\"."; //TODO
 
         //Initializes the form
         public GeoenrichmentForm()
@@ -712,9 +713,9 @@ namespace KWG_Geoenrichment
             {
                 List<string> traverseEntitiesFormatted = SplitValueList(traverseEntities, "entity", 10000);
 
-                //var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel);
-                //Hide();
-                //exploreWindow.Show();
+                var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel, idx);
+                Hide();
+                exploreWindow.Show();
             }
         }
 
@@ -1221,11 +1222,12 @@ namespace KWG_Geoenrichment
             Close();
         }
 
+        //Toggles the help menu pop up
         private void ClickToggleHelpMenu(object sender, EventArgs e)
         {
             var helpWindow = new KWGHelp(helpText);
             helpWindow.Show();
-        } //TODO
+        }
 
         //Closes the Geoenrichment window, which closes the plugin entirely
         private void CloseWindow(object sender, EventArgs e)
