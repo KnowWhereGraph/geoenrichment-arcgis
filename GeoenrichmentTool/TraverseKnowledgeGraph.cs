@@ -1,8 +1,10 @@
-﻿using ArcGIS.Desktop.Framework.Threading.Tasks;
+﻿using ArcGIS.Desktop.Core;
+using ArcGIS.Desktop.Framework.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -34,7 +36,7 @@ namespace KWG_Geoenrichment
 
             exploreProperties.Text = "Explore " + entityClassLabel + " Properties";
 
-            //PopulateClassBox(1);
+            PopulatePropertyBox(1);
         } //TODO
 
         private void PopulateClassBox(int degree)
@@ -72,22 +74,29 @@ namespace KWG_Geoenrichment
 
             for (int j = 0; j < entityVals.Count; j++)
             {
-                var propQuery = "select distinct ?p ?label where {  ";
+                var propQuery = "select distinct ?prop ?label where {  ";
 
                 for (int i = 1; i < degree + 1; i++)
                 {
-                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                    string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
-                    string classStr = classBox.SelectedValue.ToString();
-                    string predicateStr = (i == degree) ? "?p" : propBox.SelectedValue.ToString();
-                    string objectStr = "?o" + i.ToString();
+                    ComboBox prevValueBox = (degree > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
+                    ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
 
-                    propQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+                    if(i == 1) {
+                        string propVal = (i == degree) ? "?prop" : prevValueBox.SelectedValue.ToString();
+
+                        propQuery += "?entity " + propVal + " ?val1. ";
+                    } else {
+                        string prevVal = "?val" + (i - 1).ToString();
+                        string classVal = prevValueBox.SelectedValue.ToString();
+                        string propVal = (i == degree) ? "?prop" : propBox.SelectedValue.ToString();
+                        string newVal = "?val" + i.ToString();
+
+                        propQuery += prevVal + " a " + classVal + "; " + propVal + " " + newVal + ". ";
+                    }
                 }
-                propQuery += "optional {?p rdfs:label ?label} " + entityVals[j] + "}";
+                propQuery += "optional {?prop rdfs:label ?label} " + entityVals[j] + "}";
 
-                runTraverseBtn.Enabled = false;
+                //TODO::Lock buttons
                 propLoading.Visible = true;
                 string error = await QueuedTask.Run(() =>
                 {
@@ -97,7 +106,7 @@ namespace KWG_Geoenrichment
 
                         foreach (var item in propResults)
                         {
-                            string predicate = queryClass.IRIToPrefix(item["p"]["value"].ToString());
+                            string predicate = queryClass.IRIToPrefix(item["prop"]["value"].ToString());
                             string pLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : predicate;
 
                             if (!properties.ContainsKey(predicate))
@@ -116,26 +125,32 @@ namespace KWG_Geoenrichment
 
                 if (error != "")
                 {
-                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
-                    classBox.SelectedValue = "";
                     if (degree > 1)
                     {
-                        ComboBox valBox = (ComboBox)this.Controls.Find("object" + (degree - 1).ToString(), true).First();
-                        valBox.SelectedValue = "";
+                        //Reset the value that produced the property error
+                        ComboBox prevValueBox = (ComboBox)this.Controls.Find("value" + (degree - 1).ToString(), true).First();
+                        prevValueBox.SelectedValue = "";
                     }
                     queryClass.ReportGraphError(error);
 
+                    if(degree == 1)
+                    {
+                        //If the original feature of interest class caused the error, exit out of Traverse window
+                        originalWindow.Show();
+                        Close();
+                    }
+
                     propLoading.Visible = false;
-                    runTraverseBtn.Enabled = true;
+                    //TODO::Unlock buttons
 
                     return;
                 }
             }
 
             propLoading.Visible = false;
-            runTraverseBtn.Enabled = true;
+            //TODO::Unlock buttons
 
-            ComboBox currPropBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+            ComboBox currPropBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
             currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
             currPropBox.DropDownWidth = properties.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currPropBox.Font).Width);
             currPropBox.Enabled = true;
@@ -243,14 +258,14 @@ namespace KWG_Geoenrichment
         private void OnPropBoxChange(object sender, EventArgs e)
         {
             ComboBox propBox = (ComboBox)sender;
-            int degree = int.Parse(propBox.Name.Replace("predicate", ""));
+            int degree = int.Parse(propBox.Name.Replace("prop", ""));
 
-            //We need to clear out any boxes later in the chain
-            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
-            valueBox.SelectedValue = "";
-            valueBox.Enabled = false;
-            if (degree < maxDegree)
-                RemoveRows(degree);
+            //TODO::We need to clear out any boxes later in the chain
+            //ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            //valueBox.SelectedValue = "";
+            //valueBox.Enabled = false;
+            //if (degree < maxDegree)
+                //RemoveRows(degree);
 
             if (propBox.SelectedValue != null && propBox.SelectedValue.ToString() != "")
             {
