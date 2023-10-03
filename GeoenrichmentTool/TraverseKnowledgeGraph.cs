@@ -15,7 +15,7 @@ namespace KWG_Geoenrichment
         private GeoenrichmentForm originalWindow;
         private string currentEndpoint;
         private List<string> entityVals;
-        private int returnIndex;
+        private int returnIndex; //TODO
 
         protected int maxDegree = 1;
 
@@ -37,35 +37,7 @@ namespace KWG_Geoenrichment
             exploreProperties.Text = "Explore " + entityClassLabel + " Properties";
 
             PopulatePropertyBox(1);
-        } //TODO
-
-        private void PopulateClassBox(int degree)
-        {
-            var queryClass = KwgGeoModule.Current.GetQueryClass();
-            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + degree.ToString(), true).First();
-            Dictionary<string, string> classes = new Dictionary<string, string>() { { "", "" } };
-
-            if (degree == 1)
-            {
-                //classes = entityClasses;
-
-                propLoading.Visible = false;
-                runTraverseBtn.Enabled = true;
-
-                classBox.Enabled = true;
-            }
-            else
-            {
-                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + (degree - 1).ToString(), true).First();
-                string objectVal = valueBox.SelectedValue.ToString();
-                string objectLabel = valueBox.Text;
-
-                classes = new Dictionary<string, string>() { { objectVal, objectLabel } };
-            }
-
-            classBox.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
-            classBox.DropDownWidth = classes.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, classBox.Font).Width);
-        } //TODO
+        }
 
         private async void PopulatePropertyBox(int degree)
         {
@@ -154,12 +126,12 @@ namespace KWG_Geoenrichment
             currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
             currPropBox.DropDownWidth = properties.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currPropBox.Font).Width);
             currPropBox.Enabled = true;
-        } //TODO
+        }
 
         private async void PopulateValueBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
-            ComboBox currValueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
+            ComboBox currValueBox = (ComboBox)this.Controls.Find("value" + degree.ToString(), true).First();
             Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } };
 
             for (int j = 0; j < entityVals.Count; j++)
@@ -168,19 +140,30 @@ namespace KWG_Geoenrichment
 
                 for (int i = 1; i < degree + 1; i++)
                 {
-                    ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                    string subjectStr = (i == 1) ? "?entity" : "?o" + (i - 1).ToString();
-                    string classStr = classBox.SelectedValue.ToString();
-                    string predicateStr = propBox.SelectedValue.ToString();
-                    string objectStr = (i == degree) ? "?o. ?o a ?type" : "?o" + i.ToString();
+                    ComboBox prevValueBox = (degree > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
+                    ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
 
-                    valueQuery += subjectStr + " a " + classStr + "; " + predicateStr + " " + objectStr + ". ";
+                    if (i == 1)
+                    {
+                        string propVal = propBox.SelectedValue.ToString();
+
+                        valueQuery += "?entity " + propVal + " ?val1. ";
+                    }
+                    else
+                    {
+                        string prevVal = "?val" + (i - 1).ToString();
+                        string classVal = prevValueBox.SelectedValue.ToString();
+                        string propVal = propBox.SelectedValue.ToString();
+                        string newVal = "?val" + i.ToString();
+
+                        valueQuery += prevVal + " a " + classVal + "; " + propVal + " " + newVal + ". ";
+                    }
                 }
-                valueQuery += "?type rdfs:label ?label. " + entityVals[j] + "}";
+                valueQuery += "?val" + degree.ToString() + " a ?type. ";
+                valueQuery += "optional {?type rdfs:label ?label} " + entityVals[j] + "}";
 
-                runTraverseBtn.Enabled = false;
-                propLoading.Visible = true;
+                //TODO::Lock buttons
+                valueLoading.Visible = true;
                 string error = await QueuedTask.Run(() =>
                 {
                     try
@@ -200,7 +183,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "cls";
+                        return "val";
                     }
 
                     return "";
@@ -208,17 +191,18 @@ namespace KWG_Geoenrichment
 
                 if (error != "")
                 {
-                    ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
+                    ComboBox propBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
                     propBox.SelectedValue = "";
                     queryClass.ReportGraphError(error);
 
-                    propLoading.Visible = false;
-                    runTraverseBtn.Enabled = true;
+                    valueLoading.Visible = false;
+                    //TODO::Unlock buttons
 
                     return;
                 }
             }
 
+            //TODO::Literal data
             bool keepBoxEnabled = true;
             if (values.Count == 1)
             {
@@ -226,34 +210,13 @@ namespace KWG_Geoenrichment
                 values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
             }
 
-            propLoading.Visible = false;
-            runTraverseBtn.Enabled = true;
+            valueLoading.Visible = false;
+            //TODO::Unlock buttons
 
-            currValueBox.Enabled = keepBoxEnabled;
             currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
             currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
-        } //TODO
-
-        private void OnClassBoxChange(object sender, EventArgs e)
-        {
-            ComboBox classBox = (ComboBox)sender;
-            int degree = int.Parse(classBox.Name.Replace("subject", ""));
-
-            //We need to clear out any boxes later in the chain
-            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + degree.ToString(), true).First();
-            propBox.SelectedValue = "";
-            propBox.Enabled = false;
-            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
-            valueBox.SelectedValue = "";
-            valueBox.Enabled = false;
-            if (degree < maxDegree)
-                RemoveRows(degree);
-
-            if (classBox.SelectedValue != null && classBox.SelectedValue.ToString() != "")
-            {
-                PopulatePropertyBox(degree);
-            }
-        } //TODO
+            currValueBox.Enabled = keepBoxEnabled;
+        }
 
         private void OnPropBoxChange(object sender, EventArgs e)
         {
@@ -271,22 +234,22 @@ namespace KWG_Geoenrichment
             {
                 PopulateValueBox(degree);
             }
-        } //TODO
+        }
 
         private void OnValueBoxChange(object sender, EventArgs e)
         {
             ComboBox valueBox = (ComboBox)sender;
-            int degree = int.Parse(valueBox.Name.Replace("object", ""));
+            int degree = int.Parse(valueBox.Name.Replace("value", ""));
 
-            //We need to clear out any boxes later in the chain
-            if (degree < maxDegree)
-                RemoveRows(degree);
+            //TODO:://We need to clear out any boxes later in the chain
+            //if (degree < maxDegree)
+                //RemoveRows(degree);
 
             if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
             {
                 exploreFurtherBtn.Enabled = (valueBox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
             }
-        } //TODO
+        }
 
         private void RemoveRows(int newMax)
         {
@@ -361,7 +324,6 @@ namespace KWG_Geoenrichment
             this.Controls.Add(valueBox_copy);
 
             //Populate list options and enable
-            PopulateClassBox(newDegree);
             PopulatePropertyBox(newDegree);
 
             maxDegree++;
