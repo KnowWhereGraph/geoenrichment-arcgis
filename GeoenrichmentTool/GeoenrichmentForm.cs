@@ -43,7 +43,7 @@ namespace KWG_Geoenrichment
             { "low", " Get the lowest value (numeric)" },
             { "avg", "Get the average of all values (numeric)" },
             { "stdev", "Get the standard deviation of all values (numeric)" },
-        };
+        }; //TODO
 
 
         //List of supported geometries

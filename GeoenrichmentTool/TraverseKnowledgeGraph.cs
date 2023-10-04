@@ -1,4 +1,5 @@
-﻿using ArcGIS.Desktop.Core;
+﻿using ArcGIS.Core.Internal.Data.KnowledgeGraph;
+using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Internal.Mapping;
 using ArcGIS.Desktop.Mapping;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Windows.Forms;
 
 namespace KWG_Geoenrichment
@@ -21,8 +23,19 @@ namespace KWG_Geoenrichment
 
         protected int maxDegree = 1;
 
-        private Dictionary<string, List<string>> selectedProperties;
         private int propertySpacing = 50;
+        private int propertyMargins = 25;
+        private Dictionary<string, List<string>> selectedProperties;
+        private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
+            { "concat", "Concatenate values together with a \" | \"" },
+            { "first", "Get the first value found" },
+            { "count", "Get the number of values found" },
+            { "total", "Get the total of all values (numeric)" },
+            { "high", "Get the highest value (numeric)" },
+            { "low", " Get the lowest value (numeric)" },
+            { "avg", "Get the average of all values (numeric)" },
+            { "stdev", "Get the standard deviation of all values (numeric)" },
+        };
 
         private readonly string helpText = "Select a geography feature from the first box.You may use successive boxes to explore additional information about that feature.\n\n" +
             "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
@@ -217,7 +230,7 @@ namespace KWG_Geoenrichment
             if (values.Count == 1)
             {
                 keepBoxEnabled = false;
-                values = new Dictionary<string, string>() { { "LiteralDataFound", "Literal Data Found" } };
+                values = new Dictionary<string, string>() { { "LiteralDataFound", "Textual or Numerical data found" } };
             }
 
             valueLoading.Visible = false;
@@ -378,17 +391,58 @@ namespace KWG_Geoenrichment
                 labelObj.Margin = propLabel.Margin;
                 labelObj.Name = "addedPropertyLabel" + selectedProperties.Count.ToString();
                 labelObj.Size = propLabel.Size;
-                labelObj.MaximumSize = new Size(440, 26);
+                labelObj.MaximumSize = new Size(300, 26);
                 labelObj.AutoEllipsis = true;
                 labelObj.Text = labelJoined;
                 Controls.Add(labelObj);
 
-                //Add box for column name
-                //Add box for merge rule
-                //Add button for removing the property
+                //Since the chain label can be very long, lets make a tooltip for it
+                ToolTip labelFullTooltip = new ToolTip();
+                labelFullTooltip.ToolTipIcon = ToolTipIcon.Info;
+                labelFullTooltip.IsBalloon = true;
+                labelFullTooltip.ShowAlways = true;
+                labelFullTooltip.SetToolTip(labelObj, labelJoined);
+
+                //TODO::Add column name textbox
+                TextBox columnText = new TextBox();
+                columnText.Font = prop1.Font;
+                columnText.Name = "addedPropertyColumn" + selectedProperties.Count.ToString();
+                columnText.Text = (uriList.Last() == "LiteralDataFound") ? labelList[labelList.Count - 2] : labelList.Last();
+                columnText.Size = new System.Drawing.Size(300, 26);
+                Controls.Add(columnText);
+
+                //TODO::Add the merge dropdown
+                ComboBox mergeBox = new ComboBox();
+                mergeBox.Font = prop1.Font;
+                mergeBox.FormattingEnabled = prop1.FormattingEnabled;
+                mergeBox.Name = "addedPropertyMerge" + selectedProperties.Count.ToString();
+                mergeBox.Size = new System.Drawing.Size(300, 26);
+                mergeBox.DisplayMember = "Value";
+                mergeBox.ValueMember = "Key";
+                mergeBox.DataSource = new BindingSource(mergeRules, null);
+                mergeBox.DropDownWidth = mergeRules.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, mergeBox.Font).Width);
+                Controls.Add(mergeBox);
+
+                //TODO::Add the remove property button
+                Button removeContent = new Button();
+                removeContent.BackColor = System.Drawing.Color.Transparent;
+                removeContent.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+                removeContent.Cursor = System.Windows.Forms.Cursors.Hand;
+                removeContent.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+                removeContent.FlatAppearance.BorderSize = 0;
+                removeContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                removeContent.Image = global::KWG_Geoenrichment.Properties.Resources.x;
+                removeContent.Name = "removeAddedProperty" + selectedProperties.Count.ToString();
+                removeContent.Size = new System.Drawing.Size(26, 26);
+                removeContent.UseVisualStyleBackColor = false;
+                removeContent.Click += new System.EventHandler(this.RemoveValueFromList);
+                Controls.Add(removeContent);
 
                 //Move the label, add property button, and remove class button
                 labelObj.Location = new System.Drawing.Point(propertyValueLabel.Location.X, propertyValueLabel.Location.Y + propertySpacing);
+                columnText.Location = new System.Drawing.Point(labelObj.Location.X + propertyMargins + labelObj.Width, labelObj.Location.Y);
+                mergeBox.Location = new System.Drawing.Point(columnText.Location.X + propertyMargins + columnText.Width, labelObj.Location.Y);
+                removeContent.Location = new System.Drawing.Point(mergeBox.Location.X + propertyMargins + mergeBox.Width, labelObj.Location.Y);
             }
             else
             {
@@ -402,6 +456,11 @@ namespace KWG_Geoenrichment
             valueBoxOne.SelectedValue = "";
             valueBoxOne.Enabled = false;
             RemoveRows(1);*/
+        } //TODO
+
+        private void RemoveValueFromList(object sender, EventArgs e)
+        {
+            
         } //TODO
 
         private void RunTraverseGraph(object sender, EventArgs e)
