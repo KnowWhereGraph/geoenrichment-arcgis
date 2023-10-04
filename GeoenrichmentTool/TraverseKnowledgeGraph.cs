@@ -378,6 +378,12 @@ namespace KWG_Geoenrichment
             }
 
             //Clear all rows
+            ComboBox propBoxOne = (ComboBox)this.Controls.Find("prop1", true).First();
+            ComboBox valueBoxOne = (ComboBox)this.Controls.Find("value1", true).First();
+            propBoxOne.SelectedValue = "";
+            valueBoxOne.SelectedValue = "";
+            valueBoxOne.Enabled = false;
+            RemoveRows(1);
         } //TODO
 
         private void RunTraverseGraph(object sender, EventArgs e)
