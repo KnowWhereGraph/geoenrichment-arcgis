@@ -646,7 +646,7 @@ namespace KWG_Geoenrichment
                 removeClass.Click += new System.EventHandler(this.RemoveSelectedClass);
                 Controls.Add(removeClass);
 
-                //Move the label and remove class button
+                //Move the label, add property button, and remove class button
                 labelObj.Location = new System.Drawing.Point(featuresOfInterest.Location.X, featuresOfInterest.Location.Y + contentTotalSpacing);
                 addProperty.Location = new System.Drawing.Point(labelObj.Location.X + labelObj.Width + 20, labelObj.Location.Y - 1);
                 removeClass.Location = new System.Drawing.Point(addProperty.Location.X + addProperty.Width + 20, addProperty.Location.Y - 1);

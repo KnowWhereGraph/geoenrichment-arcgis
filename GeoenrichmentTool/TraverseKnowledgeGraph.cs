@@ -1,5 +1,7 @@
 ﻿using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Internal.Mapping;
+using ArcGIS.Desktop.Mapping;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -367,23 +369,39 @@ namespace KWG_Geoenrichment
                 this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
                 this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
 
-                //Add chain label to property box
+                //Add chain label to property list
+                Label labelObj = new Label();
+                labelObj.AutoSize = propLabel.AutoSize;
+                labelObj.BackColor = Color.FromName("ActiveCaption");
+                labelObj.Font = propLabel.Font;
+                labelObj.ForeColor = propLabel.ForeColor;
+                labelObj.Margin = propLabel.Margin;
+                labelObj.Name = "addedPropertyLabel" + selectedProperties.Count.ToString();
+                labelObj.Size = propLabel.Size;
+                labelObj.MaximumSize = new Size(440, 26);
+                labelObj.AutoEllipsis = true;
+                labelObj.Text = labelJoined;
+                Controls.Add(labelObj);
+
                 //Add box for column name
                 //Add box for merge rule
                 //Add button for removing the property
-            } 
+
+                //Move the label, add property button, and remove class button
+                labelObj.Location = new System.Drawing.Point(propertyValueLabel.Location.X, propertyValueLabel.Location.Y + propertySpacing);
+            }
             else
             {
                 MessageBox.Show($@"Selected property value is already in the list!");
             }
 
             //Clear all rows
-            ComboBox propBoxOne = (ComboBox)this.Controls.Find("prop1", true).First();
+            /*ComboBox propBoxOne = (ComboBox)this.Controls.Find("prop1", true).First();
             ComboBox valueBoxOne = (ComboBox)this.Controls.Find("value1", true).First();
             propBoxOne.SelectedValue = "";
             valueBoxOne.SelectedValue = "";
             valueBoxOne.Enabled = false;
-            RemoveRows(1);
+            RemoveRows(1);*/
         } //TODO
 
         private void RunTraverseGraph(object sender, EventArgs e)
