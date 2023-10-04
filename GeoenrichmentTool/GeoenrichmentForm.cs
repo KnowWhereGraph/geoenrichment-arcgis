@@ -33,7 +33,7 @@ namespace KWG_Geoenrichment
         Dictionary<string, string> entitiesClasses;
 
         private List<String> selectedClasses;
-        private List<List<String>> content;
+        private List<List<String>> content;  //TODO
         private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
             { "concat", "Concatenate values together with a \" | \"" },
             { "first", "Get the first value found" },
@@ -109,7 +109,7 @@ namespace KWG_Geoenrichment
             if (knowledgeGraph.Text == currentRepository)
                 return;
 
-            if (content.Count > 0)
+            if (selectedClasses.Count > 0)
             {
                 DialogResult dialogResult = MessageBox.Show("Changing graph repositories will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
@@ -134,7 +134,7 @@ namespace KWG_Geoenrichment
             if (selectedLayer.Text == currentLayer)
                 return;
 
-            if (content.Count > 0)
+            if (selectedClasses.Count > 0)
             {
                 DialogResult dialogResult = MessageBox.Show("Changing layers will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
@@ -161,7 +161,7 @@ namespace KWG_Geoenrichment
         //We are adding a new layer, so open the custom draw tool to do so
         private void DrawAreaOfInterest(object sender, EventArgs e)
         {
-            if (content.Count > 0)
+            if (selectedClasses.Count > 0)
             {
                 DialogResult dialogResult = MessageBox.Show("Drawing a new layer will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
@@ -191,7 +191,7 @@ namespace KWG_Geoenrichment
         //Once layer file is loaded, the layer is added to the map and is set as the active layer
         private async void UploadLayer(object sender, EventArgs e)
         {
-            if (content.Count > 0)
+            if (selectedClasses.Count > 0)
             {
                 DialogResult dialogResult = MessageBox.Show("Loading a layer will remove any selected content. Are you sure you want to continue?", "Reset Content", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
@@ -670,7 +670,7 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private void OpenTraverseWindow(object sender, EventArgs e) //TODO
+        private void OpenTraverseWindow(object sender, EventArgs e)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             bool queryFailed = false;
@@ -726,6 +726,7 @@ namespace KWG_Geoenrichment
         //Removes a class and its selected properties from the data and the UI
         private void RemoveSelectedClass(object sender, EventArgs e)
         {
+            //NOTE::Some code shared in ResetSelectedContent so double check your changes mirror there if necessary
             //get index
             Button clickedButton = sender as Button;
             string buttonText = clickedButton.Name;
@@ -887,37 +888,34 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
-        private void ResetSelectedContent() //TODO
+        private void ResetSelectedContent()
         {
-            for (int i = 1; i <= content.Count; i++)
+            //NOTE::Some code shared in RemoveSelectedClass so double check your changes mirror there if necessary
+            for (int i = 1; i <= selectedClasses.Count; i++)
             {
                 //remove content from ui
-                Label contentLabel = (Label)this.Controls.Find("contentLabel" + i.ToString(), true).First();
-                TextBox columnName = (TextBox)this.Controls.Find("columnName" + i.ToString(), true).First();
-                ComboBox mergeRule = (ComboBox)this.Controls.Find("mergeRule" + i.ToString(), true).First();
-                Button removeContent = (Button)this.Controls.Find("removeContent" + i.ToString(), true).First();
+                Label classLabel = (Label)this.Controls.Find("classLabel" + i.ToString(), true).First();
+                Button addPropBtn = (Button)this.Controls.Find("addProperties" + i.ToString(), true).First();
+                Button removeContent = (Button)this.Controls.Find("removeClass" + i.ToString(), true).First();
 
-                this.Controls.Remove(contentLabel);
-                this.Controls.Remove(columnName);
-                this.Controls.Remove(mergeRule);
+                this.Controls.Remove(classLabel);
+                this.Controls.Remove(addPropBtn);
                 this.Controls.Remove(removeContent);
 
                 //remove the window height
-                int addedHeight = contentLabel.Height + contentPadding;
-                addedHeight += mergeRule.Height + contentPadding;
-
-                contentTotalSpacing -= addedHeight;
-                //selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y - addedHeight);
-                requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - addedHeight);
-                saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - addedHeight);
-                saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - addedHeight);
-                helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y - addedHeight);
-                layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y - addedHeight);
-                runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y - addedHeight);
-                Height -= addedHeight;
+                contentTotalSpacing -= contentPadding;
+                requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y - contentPadding);
+                saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y - contentPadding);
+                saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y - contentPadding);
+                helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y - contentPadding);
+                layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y - contentPadding);
+                runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y - contentPadding);
+                Height -= contentPadding;
             }
 
-            content = new List<List<String>>() { };
+            selectedClasses = new List<String>() { };
+            //TODO::Reset properties as well
+
             CheckCanRunGeoenrichment();
         }
 
