@@ -19,6 +19,7 @@ namespace KWG_Geoenrichment
 
         protected int maxDegree = 1;
 
+        private Dictionary<string, List<string>> selectedProperties;
         private int propertySpacing = 50;
 
         private readonly string helpText = "Select a geography feature from the first box.You may use successive boxes to explore additional information about that feature.\n\n" +
@@ -34,6 +35,8 @@ namespace KWG_Geoenrichment
             currentEndpoint = endpoint;
             entityVals = entities;
             returnIndex = originalIndex;
+
+            selectedProperties = new Dictionary<string, List<string>>();
 
             exploreProperties.Text = "Explore " + entityClassLabel + " Properties";
 
@@ -334,7 +337,47 @@ namespace KWG_Geoenrichment
 
         private void AddValueToList(object sender, EventArgs e)
         {
+            //Get the full chain of Key Value pairs
+            List<string> uriList = new List<string>();
+            List<string> labelList = new List<string>();
+            for (int i = 1; i < maxDegree + 1; i++)
+            {
+                ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
+                if (propBox.Text != null && propBox.Text != "")
+                {
+                    uriList.Add(propBox.SelectedValue.ToString());
+                    labelList.Add(propBox.Text);
+                }
 
+                ComboBox valueBox = (ComboBox)this.Controls.Find("value" + i.ToString(), true).First();
+                if (valueBox.Text != null && valueBox.Text != "")
+                {
+                    uriList.Add(valueBox.SelectedValue.ToString());
+                    labelList.Add(valueBox.Text);
+                }
+            }
+            string labelJoined = String.Join(" -> ", labelList);
+
+            if (!selectedProperties.ContainsKey(labelJoined)) {
+                selectedProperties.Add(labelJoined, uriList);
+
+                //Expand the form and move down the button elements
+                this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
+                //TODO::Move properties that were added
+                this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
+                this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
+
+                //Add chain label to property box
+                //Add box for column name
+                //Add box for merge rule
+                //Add button for removing the property
+            } 
+            else
+            {
+                MessageBox.Show($@"Selected property value is already in the list!");
+            }
+
+            //Clear all rows
         } //TODO
 
         private void RunTraverseGraph(object sender, EventArgs e)
