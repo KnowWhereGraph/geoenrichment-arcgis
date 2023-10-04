@@ -25,6 +25,7 @@ namespace KWG_Geoenrichment
             "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
             "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types."; //TODO
 
+        //Initializes the form
         public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, string entityClassLabel, int originalIndex)
         {
             InitializeComponent();
@@ -39,6 +40,7 @@ namespace KWG_Geoenrichment
             PopulatePropertyBox(1);
         }
 
+        //Populates the property lists at each level of exploration
         private async void PopulatePropertyBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
@@ -53,11 +55,14 @@ namespace KWG_Geoenrichment
                     ComboBox prevValueBox = (i > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
                     ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
 
-                    if(i == 1) {
+                    if (i == 1)
+                    {
                         string propVal = (i == degree) ? "?prop" : propBox.SelectedValue.ToString();
 
                         propQuery += "?entity " + propVal + " ?val1. ";
-                    } else {
+                    }
+                    else
+                    {
                         string prevVal = "?val" + (i - 1).ToString();
                         string classVal = prevValueBox.SelectedValue.ToString();
                         string propVal = (i == degree) ? "?prop" : propBox.SelectedValue.ToString();
@@ -105,7 +110,7 @@ namespace KWG_Geoenrichment
                     }
                     queryClass.ReportGraphError(error);
 
-                    if(degree == 1)
+                    if (degree == 1)
                     {
                         //If the original feature of interest class caused the error, exit out of Traverse window
                         originalWindow.Show();
@@ -128,6 +133,7 @@ namespace KWG_Geoenrichment
             currPropBox.Enabled = true;
         }
 
+        //Populates the value lists at each level of exploration
         private async void PopulateValueBox(int degree)
         {
             var queryClass = KwgGeoModule.Current.GetQueryClass();
@@ -219,6 +225,7 @@ namespace KWG_Geoenrichment
                 this.BeginInvoke(new Action(() => { currValueBox.Select(0, 0); })); //This unhighlights the text after the box is disabled so Literal Data Found can actually be read
         }
 
+        //Determines what happens when a user selects a property box value
         private void OnPropBoxChange(object sender, EventArgs e)
         {
             ComboBox propBox = (ComboBox)sender;
@@ -237,6 +244,7 @@ namespace KWG_Geoenrichment
             }
         }
 
+        //Determines what happens when a user selects a value box value
         private void OnValueBoxChange(object sender, EventArgs e)
         {
             ComboBox valueBox = (ComboBox)sender;
@@ -252,6 +260,7 @@ namespace KWG_Geoenrichment
             }
         }
 
+        //If a user changes a box on an earlier level, we remove the property and value boxes at all levels above that
         private void RemoveRows(int newMax)
         {
             for (int i = newMax + 1; i <= maxDegree; i++)
@@ -276,6 +285,7 @@ namespace KWG_Geoenrichment
             maxDegree = newMax;
         }
 
+        //Expands the exploration of the selected value box by adding a new row of property/value boxes
         private void LearnMore(object sender, EventArgs e)
         {
             exploreFurtherBtn.Enabled = false;
@@ -322,6 +332,11 @@ namespace KWG_Geoenrichment
             maxDegree++;
         }
 
+        private void AddValueToList(object sender, EventArgs e)
+        {
+
+        } //TODO
+
         private void RunTraverseGraph(object sender, EventArgs e)
         {
             /*if (subject1.Text == "")
@@ -366,19 +381,9 @@ namespace KWG_Geoenrichment
         {
             var helpWindow = new KWGHelp(helpText);
             helpWindow.Show();
-        } //TODO
+        }
 
-        private void TraverseKnowledgeGraph_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            //This is a catch all in case the window gets closed prematurely
-            originalWindow.Show();
-            foreach (Control ctrl in originalWindow.Controls)
-            {
-                ctrl.Enabled = true;
-            }
-            originalWindow.CheckCanRunGeoenrichment();
-        } //TODO
-
+        //Closes the Traverse window and returns the user to the original window
         private void CloseWindow(object sender, EventArgs e)
         {
             originalWindow.Show();
@@ -388,6 +393,17 @@ namespace KWG_Geoenrichment
             }
             originalWindow.CheckCanRunGeoenrichment();
             Close();
-        } //TODO
+        }
+
+        //This is a catch all in case the window gets closed prematurely
+        private void TraverseKnowledgeGraph_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            originalWindow.Show();
+            foreach (Control ctrl in originalWindow.Controls)
+            {
+                ctrl.Enabled = true;
+            }
+            originalWindow.CheckCanRunGeoenrichment();
+        }
     }
 }

@@ -255,6 +255,7 @@ namespace KWG_Geoenrichment
             addValueBtn.TabIndex = 51;
             addValueBtn.Text = "Add Value";
             addValueBtn.UseVisualStyleBackColor = false;
+            addValueBtn.Click += AddValueToList;
             // 
             // propertyValueLabel
             // 
