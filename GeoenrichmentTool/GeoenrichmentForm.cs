@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static ArcGIS.Desktop.Internal.Core.PortalTrafficDataService.ServiceErrorResponse;
@@ -714,7 +715,10 @@ namespace KWG_Geoenrichment
                 List<string> traverseEntitiesFormatted = SplitValueList(traverseEntities, "entity", 10000);
 
                 var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel, idx);
-                Hide();
+                foreach(Control ctrl in this.Controls)
+                {
+                    ctrl.Enabled = false;
+                }
                 exploreWindow.Show();
             }
         }

@@ -19,7 +19,7 @@ namespace KWG_Geoenrichment
 
         protected int maxDegree = 1;
 
-        private int propertySpacing = 30;
+        private int propertySpacing = 50;
 
         private readonly string helpText = "Select a geography feature from the first box.You may use successive boxes to explore additional information about that feature.\n\n" +
             "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
@@ -50,11 +50,11 @@ namespace KWG_Geoenrichment
 
                 for (int i = 1; i < degree + 1; i++)
                 {
-                    ComboBox prevValueBox = (degree > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
+                    ComboBox prevValueBox = (i > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
                     ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
 
                     if(i == 1) {
-                        string propVal = (i == degree) ? "?prop" : prevValueBox.SelectedValue.ToString();
+                        string propVal = (i == degree) ? "?prop" : propBox.SelectedValue.ToString();
 
                         propQuery += "?entity " + propVal + " ?val1. ";
                     } else {
@@ -140,7 +140,7 @@ namespace KWG_Geoenrichment
 
                 for (int i = 1; i < degree + 1; i++)
                 {
-                    ComboBox prevValueBox = (degree > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
+                    ComboBox prevValueBox = (i > 1) ? (ComboBox)this.Controls.Find("value" + (i - 1).ToString(), true).First() : null;
                     ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
 
                     if (i == 1)
@@ -173,7 +173,7 @@ namespace KWG_Geoenrichment
                         foreach (var item in valueResults)
                         {
                             string oType = queryClass.IRIToPrefix(item["type"]["value"].ToString());
-                            string oLabel = queryClass.IRIToPrefix(item["label"]["value"].ToString());
+                            string oLabel = (item["label"] != null) ? queryClass.IRIToPrefix(item["label"]["value"].ToString()) : oType;
 
                             if (!values.ContainsKey(oType))
                             {
@@ -202,7 +202,6 @@ namespace KWG_Geoenrichment
                 }
             }
 
-            //TODO::Literal data
             bool keepBoxEnabled = true;
             if (values.Count == 1)
             {
@@ -216,6 +215,8 @@ namespace KWG_Geoenrichment
             currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
             currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
             currValueBox.Enabled = keepBoxEnabled;
+            if (values.Count == 1)
+                this.BeginInvoke(new Action(() => { currValueBox.Select(0, 0); })); //This unhighlights the text after the box is disabled so Literal Data Found can actually be read
         }
 
         private void OnPropBoxChange(object sender, EventArgs e)
@@ -223,12 +224,12 @@ namespace KWG_Geoenrichment
             ComboBox propBox = (ComboBox)sender;
             int degree = int.Parse(propBox.Name.Replace("prop", ""));
 
-            //TODO::We need to clear out any boxes later in the chain
-            //ComboBox valueBox = (ComboBox)this.Controls.Find("object" + degree.ToString(), true).First();
-            //valueBox.SelectedValue = "";
-            //valueBox.Enabled = false;
-            //if (degree < maxDegree)
-                //RemoveRows(degree);
+            //We need to clear out any boxes later in the chain
+            ComboBox valueBox = (ComboBox)this.Controls.Find("value" + degree.ToString(), true).First();
+            valueBox.SelectedValue = "";
+            valueBox.Enabled = false;
+            if (degree < maxDegree)
+                RemoveRows(degree);
 
             if (propBox.SelectedValue != null && propBox.SelectedValue.ToString() != "")
             {
@@ -241,9 +242,9 @@ namespace KWG_Geoenrichment
             ComboBox valueBox = (ComboBox)sender;
             int degree = int.Parse(valueBox.Name.Replace("value", ""));
 
-            //TODO:://We need to clear out any boxes later in the chain
-            //if (degree < maxDegree)
-                //RemoveRows(degree);
+            //We need to clear out any boxes later in the chain
+            if (degree < maxDegree)
+                RemoveRows(degree);
 
             if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
             {
@@ -255,24 +256,25 @@ namespace KWG_Geoenrichment
         {
             for (int i = newMax + 1; i <= maxDegree; i++)
             {
-                //resize window and move main UI down
+                //resize window and move main UI up
                 this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height - propertySpacing);
                 this.exploreFurtherBtn.Location = new System.Drawing.Point(this.exploreFurtherBtn.Location.X, this.exploreFurtherBtn.Location.Y - propertySpacing);
+                this.addValueBtn.Location = new System.Drawing.Point(this.addValueBtn.Location.X, this.addValueBtn.Location.Y - propertySpacing);
+                this.propertyValueLabel.Location = new System.Drawing.Point(this.propertyValueLabel.Location.X, this.propertyValueLabel.Location.Y - propertySpacing);
+                //TODO::Move properties that were added
                 this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
                 this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
 
                 //delete property boxes for this degree
-                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
+                ComboBox propBox = (ComboBox)this.Controls.Find("prop" + i.ToString(), true).First();
+                ComboBox valueBox = (ComboBox)this.Controls.Find("value" + i.ToString(), true).First();
 
-                this.Controls.Remove(classBox);
                 this.Controls.Remove(propBox);
                 this.Controls.Remove(valueBox);
             }
 
             maxDegree = newMax;
-        } //TODO
+        }
 
         private void LearnMore(object sender, EventArgs e)
         {
@@ -282,41 +284,32 @@ namespace KWG_Geoenrichment
             //Expand the form and move down the button elements
             this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
             this.exploreFurtherBtn.Location = new System.Drawing.Point(this.exploreFurtherBtn.Location.X, this.exploreFurtherBtn.Location.Y + propertySpacing);
+            this.addValueBtn.Location = new System.Drawing.Point(this.addValueBtn.Location.X, this.addValueBtn.Location.Y + propertySpacing);
+            this.propertyValueLabel.Location = new System.Drawing.Point(this.propertyValueLabel.Location.X, this.propertyValueLabel.Location.Y + propertySpacing);
+            //TODO::Move properties that were added
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
 
-            ComboBox classBox = (ComboBox)this.Controls.Find("subject" + maxDegree.ToString(), true).First();
-            ComboBox classBox_copy = new ComboBox();
-            classBox_copy.Enabled = false;
-            classBox_copy.Font = classBox.Font;
-            classBox_copy.FormattingEnabled = classBox.FormattingEnabled;
-            classBox_copy.Location = new System.Drawing.Point(classBox.Location.X, classBox.Location.Y + propertySpacing);
-            classBox_copy.Name = "subject" + newDegree.ToString();
-            classBox_copy.Size = classBox.Size;
-            classBox_copy.DisplayMember = "Value";
-            classBox_copy.ValueMember = "Key";
-            this.Controls.Add(classBox_copy);
-
-            ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + maxDegree.ToString(), true).First();
+            ComboBox propBox = (ComboBox)this.Controls.Find("prop" + maxDegree.ToString(), true).First();
             ComboBox propBox_copy = new ComboBox();
             propBox_copy.Enabled = false;
             propBox_copy.Font = propBox.Font;
             propBox_copy.FormattingEnabled = propBox.FormattingEnabled;
             propBox_copy.Location = new System.Drawing.Point(propBox.Location.X, propBox.Location.Y + propertySpacing);
-            propBox_copy.Name = "predicate" + newDegree.ToString();
+            propBox_copy.Name = "prop" + newDegree.ToString();
             propBox_copy.Size = propBox.Size;
             propBox_copy.DisplayMember = "Value";
             propBox_copy.ValueMember = "Key";
             propBox_copy.SelectedIndexChanged += new System.EventHandler(this.OnPropBoxChange);
             this.Controls.Add(propBox_copy);
 
-            ComboBox valueBox = (ComboBox)this.Controls.Find("object" + maxDegree.ToString(), true).First();
+            ComboBox valueBox = (ComboBox)this.Controls.Find("value" + maxDegree.ToString(), true).First();
             ComboBox valueBox_copy = new ComboBox();
             valueBox_copy.Enabled = false;
             valueBox_copy.Font = valueBox.Font;
             valueBox_copy.FormattingEnabled = valueBox.FormattingEnabled;
             valueBox_copy.Location = new System.Drawing.Point(valueBox.Location.X, valueBox.Location.Y + propertySpacing);
-            valueBox_copy.Name = "object" + newDegree.ToString();
+            valueBox_copy.Name = "value" + newDegree.ToString();
             valueBox_copy.Size = valueBox.Size;
             valueBox_copy.DisplayMember = "Value";
             valueBox_copy.ValueMember = "Key";
@@ -327,7 +320,7 @@ namespace KWG_Geoenrichment
             PopulatePropertyBox(newDegree);
 
             maxDegree++;
-        } //TODO
+        }
 
         private void RunTraverseGraph(object sender, EventArgs e)
         {
@@ -379,11 +372,21 @@ namespace KWG_Geoenrichment
         {
             //This is a catch all in case the window gets closed prematurely
             originalWindow.Show();
+            foreach (Control ctrl in originalWindow.Controls)
+            {
+                ctrl.Enabled = true;
+            }
+            originalWindow.CheckCanRunGeoenrichment();
         } //TODO
 
         private void CloseWindow(object sender, EventArgs e)
         {
             originalWindow.Show();
+            foreach (Control ctrl in originalWindow.Controls)
+            {
+                ctrl.Enabled = true;
+            }
+            originalWindow.CheckCanRunGeoenrichment();
             Close();
         } //TODO
     }
