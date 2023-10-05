@@ -1,15 +1,10 @@
-﻿using ArcGIS.Core.Internal.Data.KnowledgeGraph;
-using ArcGIS.Desktop.Core;
-using ArcGIS.Desktop.Framework.Threading.Tasks;
-using ArcGIS.Desktop.Internal.Mapping;
-using ArcGIS.Desktop.Mapping;
+﻿using ArcGIS.Desktop.Framework.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Windows.Forms;
 
 namespace KWG_Geoenrichment
@@ -288,7 +283,18 @@ namespace KWG_Geoenrichment
                 this.exploreFurtherBtn.Location = new System.Drawing.Point(this.exploreFurtherBtn.Location.X, this.exploreFurtherBtn.Location.Y - propertySpacing);
                 this.addValueBtn.Location = new System.Drawing.Point(this.addValueBtn.Location.X, this.addValueBtn.Location.Y - propertySpacing);
                 this.propertyValueLabel.Location = new System.Drawing.Point(this.propertyValueLabel.Location.X, this.propertyValueLabel.Location.Y - propertySpacing);
-                //TODO::Move properties that were added
+                for (int j = 1; j <= selectedProperties.Count(); j++)
+                {
+                    Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                    TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                    ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
+                    Button removeProperty = (Button)this.Controls.Find("removeAddedProperty" + j.ToString(), true).First();
+
+                    propertyLabel.Location = new System.Drawing.Point(propertyLabel.Location.X, propertyLabel.Location.Y - propertySpacing);
+                    propertyColumn.Location = new System.Drawing.Point(propertyColumn.Location.X, propertyColumn.Location.Y - propertySpacing);
+                    propertyMerge.Location = new System.Drawing.Point(propertyMerge.Location.X, propertyMerge.Location.Y - propertySpacing);
+                    removeProperty.Location = new System.Drawing.Point(removeProperty.Location.X, removeProperty.Location.Y - propertySpacing);
+                }
                 this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
                 this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
 
@@ -314,7 +320,18 @@ namespace KWG_Geoenrichment
             this.exploreFurtherBtn.Location = new System.Drawing.Point(this.exploreFurtherBtn.Location.X, this.exploreFurtherBtn.Location.Y + propertySpacing);
             this.addValueBtn.Location = new System.Drawing.Point(this.addValueBtn.Location.X, this.addValueBtn.Location.Y + propertySpacing);
             this.propertyValueLabel.Location = new System.Drawing.Point(this.propertyValueLabel.Location.X, this.propertyValueLabel.Location.Y + propertySpacing);
-            //TODO::Move properties that were added
+            for (int j = 1; j <= selectedProperties.Count(); j++)
+            {
+                Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
+                Button removeProperty = (Button)this.Controls.Find("removeAddedProperty" + j.ToString(), true).First();
+
+                propertyLabel.Location = new System.Drawing.Point(propertyLabel.Location.X, propertyLabel.Location.Y + propertySpacing);
+                propertyColumn.Location = new System.Drawing.Point(propertyColumn.Location.X, propertyColumn.Location.Y + propertySpacing);
+                propertyMerge.Location = new System.Drawing.Point(propertyMerge.Location.X, propertyMerge.Location.Y + propertySpacing);
+                removeProperty.Location = new System.Drawing.Point(removeProperty.Location.X, removeProperty.Location.Y + propertySpacing);
+            }
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
 
@@ -374,13 +391,25 @@ namespace KWG_Geoenrichment
             string labelJoined = String.Join(" -> ", labelList);
 
             if (!selectedProperties.ContainsKey(labelJoined)) {
-                selectedProperties.Add(labelJoined, uriList);
-
                 //Expand the form and move down the button elements
                 this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
-                //TODO::Move properties that were added
+                for (int j = 1; j <= selectedProperties.Count(); j++)
+                {
+                    Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                    TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                    ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
+                    Button removeProperty = (Button)this.Controls.Find("removeAddedProperty" + j.ToString(), true).First();
+
+                    propertyLabel.Location = new System.Drawing.Point(propertyLabel.Location.X, propertyLabel.Location.Y + propertySpacing);
+                    propertyColumn.Location = new System.Drawing.Point(propertyColumn.Location.X, propertyColumn.Location.Y + propertySpacing);
+                    propertyMerge.Location = new System.Drawing.Point(propertyMerge.Location.X, propertyMerge.Location.Y + propertySpacing);
+                    removeProperty.Location = new System.Drawing.Point(removeProperty.Location.X, removeProperty.Location.Y + propertySpacing);
+                }
                 this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
                 this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
+
+                //Add new property value
+                selectedProperties.Add(labelJoined, uriList);
 
                 //Add chain label to property list
                 Label labelObj = new Label();
@@ -403,7 +432,7 @@ namespace KWG_Geoenrichment
                 labelFullTooltip.ShowAlways = true;
                 labelFullTooltip.SetToolTip(labelObj, labelJoined);
 
-                //TODO::Add column name textbox
+                //Add column name textbox
                 TextBox columnText = new TextBox();
                 columnText.Font = prop1.Font;
                 columnText.Name = "addedPropertyColumn" + selectedProperties.Count.ToString();
@@ -411,7 +440,7 @@ namespace KWG_Geoenrichment
                 columnText.Size = new System.Drawing.Size(300, 26);
                 Controls.Add(columnText);
 
-                //TODO::Add the merge dropdown
+                //Add the merge dropdown
                 ComboBox mergeBox = new ComboBox();
                 mergeBox.Font = prop1.Font;
                 mergeBox.FormattingEnabled = prop1.FormattingEnabled;
@@ -423,7 +452,7 @@ namespace KWG_Geoenrichment
                 mergeBox.DropDownWidth = mergeRules.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, mergeBox.Font).Width);
                 Controls.Add(mergeBox);
 
-                //TODO::Add the remove property button
+                //Add the remove property button
                 Button removeContent = new Button();
                 removeContent.BackColor = System.Drawing.Color.Transparent;
                 removeContent.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
@@ -440,7 +469,7 @@ namespace KWG_Geoenrichment
 
                 //Move the label, add property button, and remove class button
                 labelObj.Location = new System.Drawing.Point(propertyValueLabel.Location.X, propertyValueLabel.Location.Y + propertySpacing);
-                columnText.Location = new System.Drawing.Point(labelObj.Location.X + propertyMargins + labelObj.Width, labelObj.Location.Y);
+                columnText.Location = new System.Drawing.Point(labelObj.Location.X + propertyMargins + labelObj.MaximumSize.Width, labelObj.Location.Y);
                 mergeBox.Location = new System.Drawing.Point(columnText.Location.X + propertyMargins + columnText.Width, labelObj.Location.Y);
                 removeContent.Location = new System.Drawing.Point(mergeBox.Location.X + propertyMargins + mergeBox.Width, labelObj.Location.Y);
             }
@@ -450,18 +479,70 @@ namespace KWG_Geoenrichment
             }
 
             //Clear all rows
-            /*ComboBox propBoxOne = (ComboBox)this.Controls.Find("prop1", true).First();
+            ComboBox propBoxOne = (ComboBox)this.Controls.Find("prop1", true).First();
             ComboBox valueBoxOne = (ComboBox)this.Controls.Find("value1", true).First();
             propBoxOne.SelectedValue = "";
             valueBoxOne.SelectedValue = "";
             valueBoxOne.Enabled = false;
-            RemoveRows(1);*/
-        } //TODO
+            RemoveRows(1);
+        }
 
         private void RemoveValueFromList(object sender, EventArgs e)
         {
-            
-        } //TODO
+            //get index
+            Button clickedButton = sender as Button;
+            string buttonText = clickedButton.Name;
+            string index = buttonText.Replace("removeAddedProperty", "");
+            int idx = Int32.Parse(index);
+
+            //remove content from ui
+            Label oldPropertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + idx, true).First();
+            TextBox oldPropertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + idx, true).First();
+            ComboBox oldPropertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + idx, true).First();
+
+            //remove content from array
+            int oldSize = selectedProperties.Count;
+            string oldLabelInx = oldPropertyLabel.Text;
+            selectedProperties.Remove(oldLabelInx);
+
+            this.Controls.Remove(oldPropertyLabel);
+            this.Controls.Remove(oldPropertyColumn);
+            this.Controls.Remove(oldPropertyMerge);
+            this.Controls.Remove(clickedButton);
+
+            //Resize window and move main UI up
+            this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height - propertySpacing);
+            this.propertyValueLabel.Location = new System.Drawing.Point(this.propertyValueLabel.Location.X, this.propertyValueLabel.Location.Y - propertySpacing);
+            for (int j = 1; j <= oldSize; j++)
+            {
+                //This is the row we just deleted, so skip it
+                if (j == idx)
+                    continue;
+
+                Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
+                Button removeProperty = (Button)this.Controls.Find("removeAddedProperty" + j.ToString(), true).First();
+
+                if (j < idx)
+                {
+                    //UI elements below the deleted row need to be moved up
+                    propertyLabel.Location = new System.Drawing.Point(propertyLabel.Location.X, propertyLabel.Location.Y - propertySpacing);
+                    propertyColumn.Location = new System.Drawing.Point(propertyColumn.Location.X, propertyColumn.Location.Y - propertySpacing);
+                    propertyMerge.Location = new System.Drawing.Point(propertyMerge.Location.X, propertyMerge.Location.Y - propertySpacing);
+                    removeProperty.Location = new System.Drawing.Point(removeProperty.Location.X, removeProperty.Location.Y - propertySpacing);
+                } else
+                {
+                    //UI elements above the deleted row need to be reindexed
+                    propertyLabel.Name = "addedPropertyLabel" + (j - 1).ToString();
+                    propertyColumn.Name = "addedPropertyColumn" + (j - 1).ToString();
+                    propertyMerge.Name = "addedPropertyMerge" + (j - 1).ToString();
+                    removeProperty.Name = "removeAddedProperty" + (j - 1).ToString();
+                }
+            }
+            this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
+            this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
+        }
 
         private void RunTraverseGraph(object sender, EventArgs e)
         {

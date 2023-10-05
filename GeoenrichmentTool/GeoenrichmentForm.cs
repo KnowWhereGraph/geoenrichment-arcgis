@@ -4,20 +4,14 @@ using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
-using ArcGIS.Desktop.Internal.Catalog;
-using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static ArcGIS.Desktop.Internal.Core.PortalTrafficDataService.ServiceErrorResponse;
 using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace KWG_Geoenrichment
