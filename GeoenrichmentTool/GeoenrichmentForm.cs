@@ -1,6 +1,5 @@
 ﻿using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
-using ArcGIS.Core.Internal.CIM;
 using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
@@ -589,7 +588,7 @@ namespace KWG_Geoenrichment
                 //Add the class label
                 Label labelObj = new Label();
                 labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
-                labelObj.BackColor = System.Drawing.Color.FromName("ActiveCaption");
+                labelObj.BackColor = Color.FromName("ActiveCaption");
                 labelObj.Font = knowledgeGraphLabel.Font;
                 labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
                 labelObj.Margin = knowledgeGraphLabel.Margin;
@@ -840,7 +839,7 @@ namespace KWG_Geoenrichment
 
         private async void RunGeoenrichment(object sender, EventArgs e) //TODO
         {
-            /*runBtn.Enabled = false;
+            runBtn.Enabled = false;
             runBtn.Text = "Running...";
             layerLoading.Visible = true;
 
@@ -861,10 +860,10 @@ namespace KWG_Geoenrichment
             }
 
             //build the table and its columns
-            for (int j = 0; j < content.Count; j++)
+            for (int j = 0; j < selectedClasses.Count; j++)
             {
                 var firstShape = true;
-                var className = content[j][0].Contains(':') ? content[j][0].Split(':')[1] : content[j][0];
+                var className = selectedClasses[j].Contains(':') ? selectedClasses[j].Split(':')[1] : selectedClasses[j];
 
                 if (!tables.ContainsKey(className))
                     tables[className] = new Dictionary<string, BasicFeatureLayer>();
@@ -891,8 +890,8 @@ namespace KWG_Geoenrichment
                         }
                     }
 
-                    //Add the additional data column to our feature tables
-                    ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j + 1).ToString(), true).First();
+                    //TODO::Add the additional data column to our feature tables
+                    /*ComboBox mergeBox = (ComboBox)this.Controls.Find("mergeRule" + (j + 1).ToString(), true).First();
                     string mergeRule = mergeBox.SelectedValue.ToString();
                     string columnLabel = this.Controls.Find("columnName" + (j + 1).ToString(), true).First().Text.Replace(' ', '_') + '_' + mergeRule;
 
@@ -906,13 +905,13 @@ namespace KWG_Geoenrichment
                     }
 
                     if (!columnLabel.StartsWith("NoAdditionalData"))
-                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
+                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");*/
                 }
             }
 
             if (!layerFailed)
             {
-                //Build and run query for base classes
+                /*//Build and run query for base classes
                 var finalContent = new Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>>() { }; //entityType -> entity -> column label -> data
                 var finalContentLabels = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
@@ -1100,7 +1099,7 @@ namespace KWG_Geoenrichment
                     }
 
                     MapView.Active.Redraw(false);
-                });
+                });*/
             }
 
             ////Check each table, and delete any empty ones
@@ -1118,7 +1117,7 @@ namespace KWG_Geoenrichment
             }
 
             layerLoading.Visible = false;
-            Close();*/
+            Close();
         }
 
         //Toggles the help menu pop up
