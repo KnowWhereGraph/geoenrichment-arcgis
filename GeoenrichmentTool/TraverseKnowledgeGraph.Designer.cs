@@ -105,7 +105,6 @@ namespace KWG_Geoenrichment
             // 
             runTraverseBtn.BackColor = System.Drawing.Color.FromArgb(66, 214, 237);
             runTraverseBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            runTraverseBtn.Enabled = false;
             runTraverseBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(33, 111, 179);
             runTraverseBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             runTraverseBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);

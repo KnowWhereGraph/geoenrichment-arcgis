@@ -29,17 +29,6 @@ namespace KWG_Geoenrichment
 
         private List<String> selectedClasses;
         private List<List<List<String>>> classProperties;
-        private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
-            { "concat", "Concatenate values together with a \" | \"" },
-            { "first", "Get the first value found" },
-            { "count", "Get the number of values found" },
-            { "total", "Get the total of all values (numeric)" },
-            { "high", "Get the highest value (numeric)" },
-            { "low", " Get the lowest value (numeric)" },
-            { "avg", "Get the average of all values (numeric)" },
-            { "stdev", "Get the standard deviation of all values (numeric)" },
-        }; //TODO
-
 
         //List of supported geometries
         //On execution, we build one of each to 
@@ -710,7 +699,7 @@ namespace KWG_Geoenrichment
             {
                 List<string> traverseEntitiesFormatted = SplitValueList(traverseEntities, "entity", 10000);
 
-                var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel, idx);
+                var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel, idx, classProperties[idx-1]);
                 foreach(Control ctrl in this.Controls)
                 {
                     ctrl.Enabled = false;
@@ -741,8 +730,6 @@ namespace KWG_Geoenrichment
             int oldSize = selectedClasses.Count;
             selectedClasses.RemoveAt(idx - 1);
             classProperties.RemoveAt(idx - 1);
-
-            //TODO::Remove Properties content as well
 
             //remove the window height
             contentTotalSpacing -= contentPadding;
@@ -824,7 +811,7 @@ namespace KWG_Geoenrichment
             }
 
             selectedClasses = new List<String>() { };
-            //TODO::Reset properties as well
+            classProperties = new List<List<List<String>>>() { };
 
             CheckCanRunGeoenrichment();
         }

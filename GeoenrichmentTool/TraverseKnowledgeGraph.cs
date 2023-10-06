@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -14,7 +15,7 @@ namespace KWG_Geoenrichment
         private GeoenrichmentForm originalWindow;
         private string currentEndpoint;
         private List<string> entityVals;
-        private int returnIndex; //TODO
+        private int returnIndex;
 
         protected int maxDegree = 1;
 
@@ -37,7 +38,7 @@ namespace KWG_Geoenrichment
             "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types."; //TODO
 
         //Initializes the form
-        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, string entityClassLabel, int originalIndex)
+        public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, string entityClassLabel, int originalIndex, List<List<string>> previouslySelected)
         {
             InitializeComponent();
 
@@ -47,6 +48,17 @@ namespace KWG_Geoenrichment
             returnIndex = originalIndex;
 
             selectedProperties = new Dictionary<string, List<string>>();
+
+            //Load previous selected properties when returning if applicable
+            foreach (var prop in previouslySelected)
+            {
+                string label = prop[0];
+                List<string> uris = prop[1].Split("||").ToList();
+                string column = prop[2];
+                string merge = prop[3];
+
+                AddPrevValueToList(label, uris, column, merge);
+            }
 
             exploreProperties.Text = "Explore " + entityClassLabel + " Properties";
 
@@ -253,7 +265,8 @@ namespace KWG_Geoenrichment
             {
                 exploreFurtherBtn.Enabled = (lastValuebox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
                 addValueBtn.Enabled = true;
-            } else
+            }
+            else
             {
                 DisableActionButtons();
             }
@@ -505,8 +518,94 @@ namespace KWG_Geoenrichment
             valueBoxOne.SelectedValue = "";
             valueBoxOne.Enabled = false;
             RemoveRows(1);
+        }
 
-            runTraverseBtn.Enabled = (selectedProperties.Count > 0);
+        //Alt function for adding a previous selected property value to the final list
+        //A lot of duplicate code
+        private void AddPrevValueToList(string labelJoined, List<string> uriList, string column, string merge)
+        {
+            //Expand the form and move down the button elements
+            this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
+            for (int j = 1; j <= selectedProperties.Count(); j++)
+            {
+                Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
+                Button removeProperty = (Button)this.Controls.Find("removeAddedProperty" + j.ToString(), true).First();
+
+                propertyLabel.Location = new System.Drawing.Point(propertyLabel.Location.X, propertyLabel.Location.Y + propertySpacing);
+                propertyColumn.Location = new System.Drawing.Point(propertyColumn.Location.X, propertyColumn.Location.Y + propertySpacing);
+                propertyMerge.Location = new System.Drawing.Point(propertyMerge.Location.X, propertyMerge.Location.Y + propertySpacing);
+                removeProperty.Location = new System.Drawing.Point(removeProperty.Location.X, removeProperty.Location.Y + propertySpacing);
+            }
+            this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y + propertySpacing);
+            this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y + propertySpacing);
+
+            //Add new property value
+            selectedProperties.Add(labelJoined, uriList);
+
+            //Add chain label to property list
+            Label labelObj = new Label();
+            labelObj.AutoSize = propLabel.AutoSize;
+            labelObj.BackColor = Color.FromName("ActiveCaption");
+            labelObj.Font = propLabel.Font;
+            labelObj.ForeColor = propLabel.ForeColor;
+            labelObj.Margin = propLabel.Margin;
+            labelObj.Name = "addedPropertyLabel" + selectedProperties.Count.ToString();
+            labelObj.Size = propLabel.Size;
+            labelObj.MaximumSize = new Size(300, 26);
+            labelObj.AutoEllipsis = true;
+            labelObj.Text = labelJoined;
+            Controls.Add(labelObj);
+
+            //Since the chain label can be very long, lets make a tooltip for it
+            ToolTip labelFullTooltip = new ToolTip();
+            labelFullTooltip.ToolTipIcon = ToolTipIcon.Info;
+            labelFullTooltip.IsBalloon = true;
+            labelFullTooltip.ShowAlways = true;
+            labelFullTooltip.SetToolTip(labelObj, labelJoined);
+
+            //Add column name textbox
+            TextBox columnText = new TextBox();
+            columnText.Font = prop1.Font;
+            columnText.Name = "addedPropertyColumn" + selectedProperties.Count.ToString();
+            columnText.Text = column;
+            columnText.Size = new System.Drawing.Size(300, 26);
+            Controls.Add(columnText);
+
+            //Add the merge dropdown
+            ComboBox mergeBox = new ComboBox();
+            mergeBox.Font = prop1.Font;
+            mergeBox.FormattingEnabled = prop1.FormattingEnabled;
+            mergeBox.Name = "addedPropertyMerge" + selectedProperties.Count.ToString();
+            mergeBox.Size = new System.Drawing.Size(300, 26);
+            mergeBox.DisplayMember = "Value";
+            mergeBox.ValueMember = "Key";
+            mergeBox.DataSource = new BindingSource(mergeRules, null);
+            mergeBox.DropDownWidth = mergeRules.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, mergeBox.Font).Width);
+            //TODO::Figure out how to set prev merge value
+            Controls.Add(mergeBox);
+
+            //Add the remove property button
+            Button removeContent = new Button();
+            removeContent.BackColor = System.Drawing.Color.Transparent;
+            removeContent.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            removeContent.Cursor = System.Windows.Forms.Cursors.Hand;
+            removeContent.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            removeContent.FlatAppearance.BorderSize = 0;
+            removeContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            removeContent.Image = global::KWG_Geoenrichment.Properties.Resources.x;
+            removeContent.Name = "removeAddedProperty" + selectedProperties.Count.ToString();
+            removeContent.Size = new System.Drawing.Size(26, 26);
+            removeContent.UseVisualStyleBackColor = false;
+            removeContent.Click += new System.EventHandler(this.RemoveValueFromList);
+            Controls.Add(removeContent);
+
+            //Move the label, add property button, and remove class button
+            labelObj.Location = new System.Drawing.Point(propertyValueLabel.Location.X, propertyValueLabel.Location.Y + propertySpacing);
+            columnText.Location = new System.Drawing.Point(labelObj.Location.X + propertyMargins + labelObj.MaximumSize.Width, labelObj.Location.Y);
+            mergeBox.Location = new System.Drawing.Point(columnText.Location.X + propertyMargins + columnText.Width, labelObj.Location.Y);
+            removeContent.Location = new System.Drawing.Point(mergeBox.Location.X + propertyMargins + mergeBox.Width, labelObj.Location.Y);
         }
 
         //Remove a selected property value to the final list
@@ -565,38 +664,29 @@ namespace KWG_Geoenrichment
             }
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
-
-            runTraverseBtn.Enabled = (selectedProperties.Count > 0);
         }
 
         //Close window, and return to main window with the selected property data
         private void RunTraverseGraph(object sender, EventArgs e)
         {
-            if (selectedProperties.Count() == 0)
+            Dictionary<string, List<string>> propertyDetails = new Dictionary<string, List<string>>();
+            //For each property, gather the column name and merge rule, and store information into new List
+            for (int j = 1; j <= selectedProperties.Count(); j++)
             {
-                MessageBox.Show($@"No values selected!");
+                Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
+
+                string labelStr = propertyLabel.Text;
+                string columnStr = propertyColumn.Text;
+                string mergeStr = propertyMerge.SelectedValue.ToString();
+
+                propertyDetails[labelStr] = new List<string>() { columnStr, mergeStr };
             }
-            else
-            {
-                Dictionary<string, List<string>> propertyDetails = new Dictionary<string, List<string>>();
-                //For each property, gather the column name and merge rule, and store information into new List
-                for (int j = 1; j <= selectedProperties.Count(); j++)
-                {
-                    Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
-                    TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
-                    ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
 
-                    string labelStr = propertyLabel.Text;
-                    string columnStr = propertyColumn.Text;
-                    string mergeStr = propertyMerge.SelectedValue.ToString();
-
-                    propertyDetails[labelStr] = new List<string>() { columnStr, mergeStr };
-                }
-
-                originalWindow.AddSelectedProperties(returnIndex, selectedProperties, propertyDetails);
-                Close();
-            }
-        } //TODO
+            originalWindow.AddSelectedProperties(returnIndex, selectedProperties, propertyDetails);
+            Close();
+        }
 
         //Toggles the help menu pop up
         private void ClickToggleHelpMenu(object sender, EventArgs e)
