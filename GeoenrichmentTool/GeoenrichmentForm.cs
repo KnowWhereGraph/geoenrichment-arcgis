@@ -1,5 +1,6 @@
 ﻿using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
+using ArcGIS.Core.Internal.CIM;
 using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
@@ -27,7 +28,7 @@ namespace KWG_Geoenrichment
         Dictionary<string, string> entitiesClasses;
 
         private List<String> selectedClasses;
-        private List<List<String>> classProperties;
+        private List<List<List<String>>> classProperties;
         private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
             { "concat", "Concatenate values together with a \" | \"" },
             { "first", "Get the first value found" },
@@ -62,7 +63,7 @@ namespace KWG_Geoenrichment
             InitializeComponent();
 
             selectedClasses = new List<String>() { };
-            classProperties = new List<String>() { };
+            classProperties = new List<List<List<String>>>() { };
 
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             foreach (var endpoint in queryClass.defaultEndpoints)
@@ -594,12 +595,12 @@ namespace KWG_Geoenrichment
             else if (feature != "")
             {
                 selectedClasses.Add(feature);
-                classProperties.Add(new List<string>() { });
+                classProperties.Add(new List<List<String>>() { });
 
                 //Add the class label
                 Label labelObj = new Label();
                 labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
-                labelObj.BackColor = Color.FromName("ActiveCaption");
+                labelObj.BackColor = System.Drawing.Color.FromName("ActiveCaption");
                 labelObj.Font = knowledgeGraphLabel.Font;
                 labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
                 labelObj.Margin = knowledgeGraphLabel.Margin;
@@ -776,15 +777,26 @@ namespace KWG_Geoenrichment
         {
             Show();
 
+            //Reset properties
+            classProperties[returnIndex - 1] = new List<List<String>>() { };
+
             //foreach label => uris as uris
-                //Use label to get details
+            foreach (var prop in selectedProperties)
+            {
+                string label = prop.Key;
+                List<string> uris = prop.Value;
+                string column = propertyDetails[label][0];
+                string merge = propertyDetails[label][1];
 
-                //Store uri list, label, column name, and merge rule to classProperties
+                classProperties[returnIndex - 1].Add(new List<string>() { label, String.Join("||", uris), column, merge });
+            }
 
-                //Update label to show how many properties selected
+            int propCnt = classProperties[returnIndex - 1].Count();
+            Button addPropBtn = (Button)this.Controls.Find("addProperties" + returnIndex, true).First();
+            addPropBtn.Text = (propCnt > 0) ? "Properties (" + propCnt.ToString() + ")" : "Add Properties";
 
             CheckCanRunGeoenrichment();
-        } //TODO
+        }
 
         private void ResetSelectedContent()
         {
