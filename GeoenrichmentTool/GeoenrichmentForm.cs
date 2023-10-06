@@ -27,7 +27,7 @@ namespace KWG_Geoenrichment
         Dictionary<string, string> entitiesClasses;
 
         private List<String> selectedClasses;
-        private List<List<String>> content;  //TODO
+        private List<List<String>> classProperties;
         private readonly Dictionary<string, string> mergeRules = new Dictionary<string, string>() {
             { "concat", "Concatenate values together with a \" | \"" },
             { "first", "Get the first value found" },
@@ -61,8 +61,8 @@ namespace KWG_Geoenrichment
         {
             InitializeComponent();
 
-            content = new List<List<String>>() { };
             selectedClasses = new List<String>() { };
+            classProperties = new List<String>() { };
 
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             foreach (var endpoint in queryClass.defaultEndpoints)
@@ -594,6 +594,7 @@ namespace KWG_Geoenrichment
             else if (feature != "")
             {
                 selectedClasses.Add(feature);
+                classProperties.Add(new List<string>() { });
 
                 //Add the class label
                 Label labelObj = new Label();
@@ -738,6 +739,7 @@ namespace KWG_Geoenrichment
             //remove content from array
             int oldSize = selectedClasses.Count;
             selectedClasses.RemoveAt(idx - 1);
+            classProperties.RemoveAt(idx - 1);
 
             //TODO::Remove Properties content as well
 
@@ -770,117 +772,19 @@ namespace KWG_Geoenrichment
             CheckCanRunGeoenrichment();
         }
 
-        public void AddSelectedContent(List<string> uris, List<string> labels) //TODO
+        public void AddSelectedProperties(int returnIndex, Dictionary<string, List<string>> selectedProperties, Dictionary<string, List<string>> propertyDetails)
         {
             Show();
 
-            //We need to eliminate doubles since the value box in one line is the same as the class box in the next line
-            var uniqueUris = new List<string>() { };
-            var uniqueLabels = new List<string>() { };
+            //foreach label => uris as uris
+                //Use label to get details
 
-            for (int i = 0; i < uris.Count; i++)
-            {
-                if (
-                    i == 0 ||
-                    (uris[i] != uris[i - 1] && uris[i] != "LiteralDataFound")
-                )
-                {
-                    uniqueUris.Add(uris[i]);
-                    uniqueLabels.Add(labels[i]);
-                }
-            }
+                //Store uri list, label, column name, and merge rule to classProperties
 
-            //Capture the data
-            content.Add(uniqueUris);
-
-
-            string labelString = String.Join(" -> ", uniqueLabels);
-            string columnString = "NoAdditionalData";
-            int labelCnt = uniqueLabels.Count;
-            if (labelCnt > 1)
-                columnString = (labelCnt % 2 == 0) ? uniqueLabels[labelCnt - 1] : uniqueLabels[labelCnt - 2];
-
-            //Add the label
-            Label labelObj = new Label();
-            labelObj.AutoSize = knowledgeGraphLabel.AutoSize;
-            labelObj.BackColor = Color.FromName("ActiveCaption");
-            labelObj.Font = knowledgeGraphLabel.Font;
-            labelObj.ForeColor = knowledgeGraphLabel.ForeColor;
-            labelObj.Margin = knowledgeGraphLabel.Margin;
-            labelObj.Name = "contentLabel" + content.Count.ToString();
-            labelObj.Size = knowledgeGraphLabel.Size;
-            labelObj.MaximumSize = new Size(780, 0);
-            labelObj.Text = labelString;
-            Controls.Add(labelObj);
-
-            //Add column name textbox
-            TextBox columnText = new TextBox();
-            columnText.BorderStyle = saveLayerAs.BorderStyle;
-            columnText.Font = saveLayerAs.Font;
-            columnText.Name = "columnName" + content.Count.ToString();
-            columnText.Text = columnString;
-            columnText.Size = new System.Drawing.Size(200, 26);
-            Controls.Add(columnText);
-
-            //Add the merge dropdown
-            ComboBox mergeBox = new ComboBox();
-            mergeBox.Font = knowledgeGraph.Font;
-            mergeBox.FormattingEnabled = knowledgeGraph.FormattingEnabled;
-            mergeBox.Name = "mergeRule" + content.Count.ToString();
-            mergeBox.Size = new System.Drawing.Size(400, 26);
-            mergeBox.DisplayMember = "Value";
-            mergeBox.ValueMember = "Key";
-            mergeBox.DataSource = new BindingSource(mergeRules, null);
-            Controls.Add(mergeBox);
-
-            //Add the remove content button
-            Button removeContent = new Button();
-            removeContent.BackColor = System.Drawing.Color.Transparent;
-            removeContent.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            removeContent.Cursor = System.Windows.Forms.Cursors.Hand;
-            removeContent.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            removeContent.FlatAppearance.BorderSize = 0;
-            removeContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            removeContent.Image = global::KWG_Geoenrichment.Properties.Resources.x;
-            removeContent.Name = "removeContent" + content.Count.ToString();
-            removeContent.Size = new System.Drawing.Size(26, 26);
-            removeContent.UseVisualStyleBackColor = false;
-            //removeContent.Click += new System.EventHandler(this.RemoveSelectedContent);
-            Controls.Add(removeContent);
-
-            //Move the label
-            labelObj.Location = new System.Drawing.Point(selectedLayer.Location.X, selectedLayer.Location.Y + contentTotalSpacing);
-            int addedHeight = labelObj.Height + contentPadding;
-
-            //Move the merge dropdown, the remove content button, and the column text
-            columnText.Location = new System.Drawing.Point(labelObj.Location.X, labelObj.Location.Y + labelObj.Height + contentPadding);
-            mergeBox.Location = new System.Drawing.Point(labelObj.Location.X + 206, labelObj.Location.Y + labelObj.Height + contentPadding);
-            removeContent.Location = new System.Drawing.Point(labelObj.Location.X + 612, labelObj.Location.Y + labelObj.Height + contentPadding);
-            addedHeight += mergeBox.Height + contentPadding;
-
-            //Adjust the total amount of spacing we've moved
-            contentTotalSpacing += addedHeight;
-
-            //Move things down
-            //selectContentBtn.Location = new System.Drawing.Point(selectContentBtn.Location.X, selectContentBtn.Location.Y + addedHeight);
-            requiredSaveLayerAs.Location = new System.Drawing.Point(requiredSaveLayerAs.Location.X, requiredSaveLayerAs.Location.Y + addedHeight);
-            saveLayerAsLabel.Location = new System.Drawing.Point(saveLayerAsLabel.Location.X, saveLayerAsLabel.Location.Y + addedHeight);
-            saveLayerAs.Location = new System.Drawing.Point(saveLayerAs.Location.X, saveLayerAs.Location.Y + addedHeight);
-            helpButton.Location = new System.Drawing.Point(helpButton.Location.X, helpButton.Location.Y + addedHeight);
-            layerLoading.Location = new System.Drawing.Point(layerLoading.Location.X, layerLoading.Location.Y + addedHeight);
-            runBtn.Location = new System.Drawing.Point(runBtn.Location.X, runBtn.Location.Y + addedHeight);
-            Height += addedHeight;
-
-            //Disable boxes if needed
-            if (columnString == "NoAdditionalData")
-            {
-                columnText.Enabled = false;
-                mergeBox.Enabled = false;
-            }
-
+                //Update label to show how many properties selected
 
             CheckCanRunGeoenrichment();
-        }
+        } //TODO
 
         private void ResetSelectedContent()
         {
@@ -937,7 +841,7 @@ namespace KWG_Geoenrichment
 
         private async void RunGeoenrichment(object sender, EventArgs e) //TODO
         {
-            runBtn.Enabled = false;
+            /*runBtn.Enabled = false;
             runBtn.Text = "Running...";
             layerLoading.Visible = true;
 
@@ -1215,7 +1119,7 @@ namespace KWG_Geoenrichment
             }
 
             layerLoading.Visible = false;
-            Close();
+            Close();*/
         }
 
         //Toggles the help menu pop up

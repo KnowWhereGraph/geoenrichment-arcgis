@@ -569,43 +569,33 @@ namespace KWG_Geoenrichment
             runTraverseBtn.Enabled = (selectedProperties.Count > 0);
         }
 
+        //Close window, and return to main window with the selected property data
         private void RunTraverseGraph(object sender, EventArgs e)
         {
-            /*if (subject1.Text == "")
+            if (selectedProperties.Count() == 0)
             {
-                MessageBox.Show($@"Required fields missing!");
-            }*/
-            //else
-            //{
-            List<string> uriList = new List<string>();
-            List<string> labelList = new List<string>();
-            for (int i = 1; i < maxDegree + 1; i++)
-            {
-                ComboBox classBox = (ComboBox)this.Controls.Find("subject" + i.ToString(), true).First();
-                if (classBox.Text != null && classBox.Text != "")
-                {
-                    uriList.Add(classBox.SelectedValue.ToString());
-                    labelList.Add(classBox.Text);
-                }
-
-                ComboBox propBox = (ComboBox)this.Controls.Find("predicate" + i.ToString(), true).First();
-                if (propBox.Text != null && propBox.Text != "")
-                {
-                    uriList.Add(propBox.SelectedValue.ToString());
-                    labelList.Add(propBox.Text);
-                }
-
-                ComboBox valueBox = (ComboBox)this.Controls.Find("object" + i.ToString(), true).First();
-                if (valueBox.Text != null && valueBox.Text != "")
-                {
-                    uriList.Add(valueBox.SelectedValue.ToString());
-                    labelList.Add(valueBox.Text);
-                }
+                MessageBox.Show($@"No values selected!");
             }
+            else
+            {
+                Dictionary<string, List<string>> propertyDetails = new Dictionary<string, List<string>>();
+                //For each property, gather the column name and merge rule, and store information into new List
+                for (int j = 1; j <= selectedProperties.Count(); j++)
+                {
+                    Label propertyLabel = (Label)this.Controls.Find("addedPropertyLabel" + j.ToString(), true).First();
+                    TextBox propertyColumn = (TextBox)this.Controls.Find("addedPropertyColumn" + j.ToString(), true).First();
+                    ComboBox propertyMerge = (ComboBox)this.Controls.Find("addedPropertyMerge" + j.ToString(), true).First();
 
-            originalWindow.AddSelectedContent(uriList, labelList);
-            Close();
-            //}
+                    string labelStr = propertyLabel.Text;
+                    string columnStr = propertyColumn.Text;
+                    string mergeStr = propertyMerge.SelectedValue.ToString();
+
+                    propertyDetails[labelStr] = new List<string>() { columnStr, mergeStr };
+                }
+
+                originalWindow.AddSelectedProperties(returnIndex, selectedProperties, propertyDetails);
+                Close();
+            }
         } //TODO
 
         //Toggles the help menu pop up
