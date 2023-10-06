@@ -59,6 +59,8 @@ namespace KWG_Geoenrichment
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             Dictionary<string, string> properties = new Dictionary<string, string>() { { "", "" } };
 
+            DisableActionButtons();
+            propLoading.Visible = true;
             for (int j = 0; j < entityVals.Count; j++)
             {
                 var propQuery = "select distinct ?prop ?label where {  ";
@@ -86,8 +88,6 @@ namespace KWG_Geoenrichment
                 }
                 propQuery += "optional {?prop rdfs:label ?label} " + entityVals[j] + "}";
 
-                //TODO::Lock buttons
-                propLoading.Visible = true;
                 string error = await QueuedTask.Run(() =>
                 {
                     try
@@ -131,14 +131,14 @@ namespace KWG_Geoenrichment
                     }
 
                     propLoading.Visible = false;
-                    //TODO::Unlock buttons
+                    EnableActionButtons();
 
                     return;
                 }
             }
 
             propLoading.Visible = false;
-            //TODO::Unlock buttons
+            EnableActionButtons();
 
             ComboBox currPropBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
             currPropBox.DataSource = new BindingSource(properties.OrderBy(key => key.Value), null);
@@ -153,6 +153,8 @@ namespace KWG_Geoenrichment
             ComboBox currValueBox = (ComboBox)this.Controls.Find("value" + degree.ToString(), true).First();
             Dictionary<string, string> values = new Dictionary<string, string>() { { "", "" } };
 
+            DisableActionButtons();
+            valueLoading.Visible = true;
             for (int j = 0; j < entityVals.Count; j++)
             {
                 var valueQuery = "select distinct ?type ?label where {  ";
@@ -181,8 +183,6 @@ namespace KWG_Geoenrichment
                 valueQuery += "?val" + degree.ToString() + " a ?type. ";
                 valueQuery += "optional {?type rdfs:label ?label} " + entityVals[j] + "}";
 
-                //TODO::Lock buttons
-                valueLoading.Visible = true;
                 string error = await QueuedTask.Run(() =>
                 {
                     try
@@ -215,7 +215,7 @@ namespace KWG_Geoenrichment
                     queryClass.ReportGraphError(error);
 
                     valueLoading.Visible = false;
-                    //TODO::Unlock buttons
+                    EnableActionButtons();
 
                     return;
                 }
@@ -229,13 +229,34 @@ namespace KWG_Geoenrichment
             }
 
             valueLoading.Visible = false;
-            //TODO::Unlock buttons
+            EnableActionButtons();
 
             currValueBox.DataSource = new BindingSource(values.OrderBy(key => key.Value), null);
             currValueBox.DropDownWidth = values.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, currValueBox.Font).Width);
             currValueBox.Enabled = keepBoxEnabled;
             if (values.Count == 1)
                 this.BeginInvoke(new Action(() => { currValueBox.Select(0, 0); })); //This unhighlights the text after the box is disabled so Literal Data Found can actually be read
+        }
+
+        //Disable buttons while data is loading
+        private void DisableActionButtons()
+        {
+            exploreFurtherBtn.Enabled = false;
+            addValueBtn.Enabled = false;
+        }
+
+        //Check if buttons should be enabled
+        private void EnableActionButtons()
+        {
+            ComboBox lastValuebox = (ComboBox)this.Controls.Find("value" + maxDegree, true).First();
+            if (lastValuebox.SelectedValue != null && lastValuebox.SelectedValue.ToString() != "")
+            {
+                exploreFurtherBtn.Enabled = (lastValuebox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
+                addValueBtn.Enabled = true;
+            } else
+            {
+                DisableActionButtons();
+            }
         }
 
         //Determines what happens when a user selects a property box value
@@ -267,10 +288,7 @@ namespace KWG_Geoenrichment
             if (degree < maxDegree)
                 RemoveRows(degree);
 
-            if (valueBox.SelectedValue != null && valueBox.SelectedValue.ToString() != "")
-            {
-                exploreFurtherBtn.Enabled = (valueBox.SelectedValue.ToString() != "LiteralDataFound") ? true : false;
-            }
+            EnableActionButtons();
         }
 
         //If a user changes a box on an earlier level, we remove the property and value boxes at all levels above that
@@ -367,6 +385,7 @@ namespace KWG_Geoenrichment
             maxDegree++;
         }
 
+        //Add a selected property value to the final list
         private void AddValueToList(object sender, EventArgs e)
         {
             //Get the full chain of Key Value pairs
@@ -390,7 +409,8 @@ namespace KWG_Geoenrichment
             }
             string labelJoined = String.Join(" -> ", labelList);
 
-            if (!selectedProperties.ContainsKey(labelJoined)) {
+            if (!selectedProperties.ContainsKey(labelJoined))
+            {
                 //Expand the form and move down the button elements
                 this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height + propertySpacing);
                 for (int j = 1; j <= selectedProperties.Count(); j++)
@@ -485,8 +505,11 @@ namespace KWG_Geoenrichment
             valueBoxOne.SelectedValue = "";
             valueBoxOne.Enabled = false;
             RemoveRows(1);
+
+            runTraverseBtn.Enabled = (selectedProperties.Count > 0);
         }
 
+        //Remove a selected property value to the final list
         private void RemoveValueFromList(object sender, EventArgs e)
         {
             //get index
@@ -512,7 +535,6 @@ namespace KWG_Geoenrichment
 
             //Resize window and move main UI up
             this.Size = new System.Drawing.Size(this.Size.Width, this.Size.Height - propertySpacing);
-            this.propertyValueLabel.Location = new System.Drawing.Point(this.propertyValueLabel.Location.X, this.propertyValueLabel.Location.Y - propertySpacing);
             for (int j = 1; j <= oldSize; j++)
             {
                 //This is the row we just deleted, so skip it
@@ -531,7 +553,8 @@ namespace KWG_Geoenrichment
                     propertyColumn.Location = new System.Drawing.Point(propertyColumn.Location.X, propertyColumn.Location.Y - propertySpacing);
                     propertyMerge.Location = new System.Drawing.Point(propertyMerge.Location.X, propertyMerge.Location.Y - propertySpacing);
                     removeProperty.Location = new System.Drawing.Point(removeProperty.Location.X, removeProperty.Location.Y - propertySpacing);
-                } else
+                }
+                else
                 {
                     //UI elements above the deleted row need to be reindexed
                     propertyLabel.Name = "addedPropertyLabel" + (j - 1).ToString();
@@ -542,6 +565,8 @@ namespace KWG_Geoenrichment
             }
             this.runTraverseBtn.Location = new System.Drawing.Point(this.runTraverseBtn.Location.X, this.runTraverseBtn.Location.Y - propertySpacing);
             this.helpButton.Location = new System.Drawing.Point(this.helpButton.Location.X, this.helpButton.Location.Y - propertySpacing);
+
+            runTraverseBtn.Enabled = (selectedProperties.Count > 0);
         }
 
         private void RunTraverseGraph(object sender, EventArgs e)

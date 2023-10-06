@@ -105,6 +105,7 @@ namespace KWG_Geoenrichment
             // 
             runTraverseBtn.BackColor = System.Drawing.Color.FromArgb(66, 214, 237);
             runTraverseBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            runTraverseBtn.Enabled = false;
             runTraverseBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(33, 111, 179);
             runTraverseBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             runTraverseBtn.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
@@ -244,6 +245,7 @@ namespace KWG_Geoenrichment
             // 
             addValueBtn.BackColor = System.Drawing.Color.FromArgb(66, 214, 237);
             addValueBtn.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            addValueBtn.Enabled = false;
             addValueBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(33, 111, 179);
             addValueBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             addValueBtn.Font = new System.Drawing.Font("Arial", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
