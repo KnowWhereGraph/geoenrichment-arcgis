@@ -24,11 +24,12 @@ namespace KWG_Geoenrichment
         private List<string> currentLayerWKTs;
 
         private List<String> entities;
-        private List<String> entitiesFormatted;
-        Dictionary<string, string> entitiesClasses;
+        private List<String> entitiesFormatted; //TODO
+        Dictionary<string, string> entitiesClasses; //TODO
 
-        private List<String> selectedClasses;
-        private List<List<List<String>>> classProperties;
+        private List<String> selectedClasses; //idx -> class
+        private List<List<String>> classEntities; //cIdx -> entities
+        private List<List<List<String>>> classProperties; //cIdx -> properties -> [label, uris, column, merge]
 
         //List of supported geometries
         //On execution, we build one of each to 
@@ -52,6 +53,7 @@ namespace KWG_Geoenrichment
             InitializeComponent();
 
             selectedClasses = new List<String>() { };
+            classEntities = new List<List<String>>() { };
             classProperties = new List<List<List<String>>>() { };
 
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
@@ -574,6 +576,7 @@ namespace KWG_Geoenrichment
         //When user selects a feature of interest, add feature to the 
         private void OnSelectFeature(object sender, EventArgs e)
         {
+            var queryClass = KwgGeoModule.Current.GetQueryClass();
             String feature = featuresOfInterest.SelectedValue.ToString();
             String featureLabel = featuresOfInterest.Text;
 
@@ -583,7 +586,38 @@ namespace KWG_Geoenrichment
             }
             else if (feature != "")
             {
+                List<string> subSetEntities = new List<string>() { };
+
+                //Grab only the entities that are of the class so we don't need to do so later
+                //We don't need to paginate this query because each entitiesFormatted value list is no more than 10000 elements
+                for (int i = 0; i < entitiesFormatted.Count; i++)
+                {
+                    var traverseEntitesQuery = "select ?entity where { " +
+                        entitiesFormatted[i] +
+                        "?entity a " + feature + ". " +
+                    "} ";
+
+                    try
+                    {
+                        JToken s2Results = queryClass.SubmitQuery(currentRepository, traverseEntitesQuery);
+
+                        foreach (var item in s2Results)
+                        {
+                            subSetEntities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        queryClass.ReportGraphError("feat");
+                        //Reset feature box
+                        featuresOfInterest.SelectedValue = "";
+                        CheckCanRunGeoenrichment();
+                        return;
+                    }
+                }
+
                 selectedClasses.Add(feature);
+                classEntities.Add(subSetEntities);
                 classProperties.Add(new List<List<String>>() { });
 
                 //Add the class label
@@ -650,16 +684,12 @@ namespace KWG_Geoenrichment
 
                 //Reset feature box
                 featuresOfInterest.SelectedValue = "";
-
                 CheckCanRunGeoenrichment();
             }
         }
 
         private void OpenTraverseWindow(object sender, EventArgs e)
         {
-            var queryClass = KwgGeoModule.Current.GetQueryClass();
-            bool queryFailed = false;
-
             //get index
             Button clickedButton = sender as Button;
             string buttonText = clickedButton.Name;
@@ -668,44 +698,15 @@ namespace KWG_Geoenrichment
 
             string classToTraverse = selectedClasses[idx - 1];
             string classToTraverseLabel = entitiesClasses[classToTraverse];
-            List<string> traverseEntities = new List<string>() { };
+            List<string> traverseEntities = classEntities[idx-1];
+            List<string> traverseEntitiesFormatted = SplitValueList(traverseEntities, "entity", 10000);
 
-            //Grab only the entities that are of the class
-            //We don't need to paginate this query because each entitiesFormatted value list is no more than 10000 elements
-            for (int i = 0; i < entitiesFormatted.Count; i++)
+            var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel, idx, classProperties[idx-1]);
+            foreach(Control ctrl in this.Controls)
             {
-                var traverseEntitesQuery = "select ?entity where { " +
-                    entitiesFormatted[i] +
-                    "?entity a " + classToTraverse + ". " +
-                "} ";
-
-                try
-                {
-                    JToken s2Results = queryClass.SubmitQuery(currentRepository, traverseEntitesQuery);
-
-                    foreach (var item in s2Results)
-                    {
-                        traverseEntities.Add(queryClass.IRIToPrefix(item["entity"]["value"].ToString()));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    queryFailed = true;
-                    queryClass.ReportGraphError("trav");
-                }
+                ctrl.Enabled = false;
             }
-
-            if (!queryFailed)
-            {
-                List<string> traverseEntitiesFormatted = SplitValueList(traverseEntities, "entity", 10000);
-
-                var exploreWindow = new TraverseKnowledgeGraph(this, currentRepository, traverseEntitiesFormatted, classToTraverseLabel, idx, classProperties[idx-1]);
-                foreach(Control ctrl in this.Controls)
-                {
-                    ctrl.Enabled = false;
-                }
-                exploreWindow.Show();
-            }
+            exploreWindow.Show();
         }
 
         //Removes a class and its selected properties from the data and the UI
@@ -905,193 +906,160 @@ namespace KWG_Geoenrichment
                 var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
                 string entityName; string nextEntityName;
 
-                ////TODO
-                //for (int j = 0; j < selectedClasses.Count; j++)
-                //{
-                //    var classNameForTableArray = selectedClasses[j].Contains(':') ? selectedClasses[j].Split(':')[1] : selectedClasses[j]; //We use this to divide all the content into class type so they go to the appropriate table later
+                //TODO
+                for (int j = 0; j < selectedClasses.Count; j++)
+                {
+                    var classNameForTableArray = selectedClasses[j].Contains(':') ? selectedClasses[j].Split(':')[1] : selectedClasses[j]; //We use this to divide all the content into class type so they go to the appropriate table later
 
-                //    //TODO
-                //    for (int k = 0; k < entitiesFormatted.Count; k++)
-                //    {
-                //        var contentResultsQuery = "select distinct ?entity ?entityLabel ?o ?wkt where { ?entity rdfs:label ?entityLabel. ";
+                    //Set entity type key for arrays if needed
+                    finalContent[classNameForTableArray] = new Dictionary<string, Dictionary<string, List<string>>>();
+                    finalContentLabels[classNameForTableArray] = new Dictionary<string, string>();
+                    finalContentGeometry[classNameForTableArray] = new Dictionary<string, string>();
 
-                //        //Set entity type key for arrays if needed
-                //        if (!finalContent.ContainsKey(classNameForTableArray))
-                //            finalContent[classNameForTableArray] = new Dictionary<string, Dictionary<string, List<string>>>();
-                //        if (!finalContentLabels.ContainsKey(classNameForTableArray))
-                //            finalContentLabels[classNameForTableArray] = new Dictionary<string, string>();
-                //        if (!finalContentGeometry.ContainsKey(classNameForTableArray))
-                //            finalContentGeometry[classNameForTableArray] = new Dictionary<string, string>();
+                    //Get label and WKT value of the respected entities
+                    var ents = classEntities[j];
+                    var entFormatted = SplitValueList(ents, "entity", 10000);
+                    for (int k = 0; k < entFormatted.Count; k++)
+                    {
+                        //Grab the entities
+                        var entityGeoQuery = "select distinct ?entity ?entityLabel ?wkt where { " +
+                            entFormatted[k] +
+                            "?entity a " + selectedClasses[j] + ". " +
+                            "?entity rdfs:label ?entityLabel. " +
+                            "?entity geo:hasGeometry ?geo. " +
+                            "?geo geo:asWKT ?wkt. " +
+                        "} ORDER BY ?entity LIMIT 10000 OFFSET 0";
 
-                //        //TODO
-                //        for (int i = 0; i < content[j].Count; i++)
-                //        {
-                //            //Even indices are classes, odd are predicates
-                //            if (i % 2 == 0)
-                //            {
-                //                if (i == 0)
-                //                    entityName = "?entity";
-                //                else
-                //                    entityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2).ToString();
-                //                var className = content[j][i];
-                //                contentResultsQuery += entityName + " a " + className + ". ";
-                //            }
-                //            else
-                //            {
-                //                if (i == 1)
-                //                {
-                //                    entityName = "?entity";
-                //                    nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o1";
-                //                }
-                //                else
-                //                {
-                //                    entityName = "?o" + (i / 2).ToString();
-                //                    nextEntityName = (i + 1 == content[j].Count) ? "?o" : "?o" + (i / 2 + 1).ToString();
-                //                }
-                //                var propName = content[j][i];
-                //                contentResultsQuery += entityName + " " + propName + " " + nextEntityName + ". ";
-                //            }
-                //        }
+                        //TODO
+                        try
+                        {
+                            JToken geoResults = queryClass.SubmitQuery(currentRepository, entityGeoQuery);
 
-                //        contentResultsQuery += "optional {?entity geo:hasGeometry ?geo. ?geo geo:asWKT ?wkt} " + entitiesFormatted[k] + "}";
+                            foreach (var item in geoResults)
+                            {
+                                var entityVal = item["entity"]["value"].ToString();
 
-                //        //TODO
-                //        try
-                //        {
-                //            JToken contentResults = queryClass.SubmitQuery(currentRepository, contentResultsQuery);
+                                //Check to see if we this entity exists, if not, set it up
+                                finalContent[classNameForTableArray][entityVal] = new Dictionary<string, List<string>>() { };
+                                finalContentLabels[classNameForTableArray][entityVal] = item["entityLabel"]["value"].ToString();
+                                finalContentGeometry[classNameForTableArray][entityVal] = item["wkt"]["value"].ToString();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            runBtn.Enabled = true;
+                            runBtn.Text = "Run";
+                            layerLoading.Visible = false;
+                            queryClass.ReportGraphError("res");
+                            return;
+                        }
+                    }
 
-                //            foreach (var item in contentResults)
-                //            {
-                //                var entityVal = item["entity"]["value"].ToString();
+                    //TODO::Now that we have the specific entities, gather the data for any selected properties about the class
 
-                //                //Check to see if we this entity exists, if not, set it up
-                //                if (!finalContent[classNameForTableArray].ContainsKey(entityVal))
-                //                    finalContent[classNameForTableArray][entityVal] = new Dictionary<string, List<string>>() { };
-                //                if (!finalContentLabels[classNameForTableArray].ContainsKey(entityVal))
-                //                    finalContentLabels[classNameForTableArray][entityVal] = item["entityLabel"]["value"].ToString();
-                //                if (!finalContentGeometry[classNameForTableArray].ContainsKey(entityVal))
-                //                    finalContentGeometry[classNameForTableArray][entityVal] = item["wkt"]["value"].ToString();
+                }
 
-                //                //Let's prep and store the result content
-                //                if (!finalContent[classNameForTableArray][entityVal].ContainsKey(columnLabels[j]))
-                //                    finalContent[classNameForTableArray][entityVal][columnLabels[j]] = new List<string>() { };
+                //Use data to populate table
+                await QueuedTask.Run(() =>
+                {
+                    foreach (var entityType in finalContent)
+                    {
+                        foreach (var entityPair in finalContent[entityType.Key])
+                        {
+                            string currEntity = entityPair.Key;
 
-                //                if (item["o"] != null && item["o"]["value"].ToString() != "")
-                //                    finalContent[classNameForTableArray][entityVal][columnLabels[j]].Add(item["o"]["value"].ToString());
-                //            }
-                //        }
-                //        catch (Exception ex)
-                //        {
-                //            runBtn.Enabled = true;
-                //            runBtn.Text = "Run";
-                //            layerLoading.Visible = false;
-                //            queryClass.ReportGraphError("res");
-                //            return;
-                //        }
-                //    }
-                //}
+                            string wkt = finalContentGeometry[entityType.Key][currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
+                            Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
 
-                ////Use data to populate table
-                //await QueuedTask.Run(() =>
-                //{
-                //    foreach (var entityType in finalContent)
-                //    {
-                //        foreach (var entityPair in finalContent[entityType.Key])
-                //        {
-                //            string currEntity = entityPair.Key;
+                            //Validate that our geometry actually intersects the original user area
+                            //We do this because we originally used s2Cell approximation to find the entities
+                            bool doesIntersectWithUserArea = false;
+                            for (int i = 0; i < userGeos.Count; i++)
+                            {
+                                if (GeometryEngine.Instance.Intersects(geo, userGeos[i]))
+                                    doesIntersectWithUserArea = true;
+                            }
+                            if (!doesIntersectWithUserArea)
+                                continue;
 
-                //            string wkt = finalContentGeometry[entityType.Key][currEntity].Replace("<http://www.opengis.net/def/crs/OGC/1.3/CRS84>", "");
-                //            Geometry geo = geoEngine.ImportFromWKT(0, wkt, sr);
+                            InsertCursor cursor = tables[entityType.Key][geo.GetType().Name].GetTable().CreateInsertCursor();
+                            RowBuffer buff = tables[entityType.Key][geo.GetType().Name].GetTable().CreateRowBuffer();
 
-                //            //Validate that our geometry actually intersects the original user area
-                //            //We do this because we originally used s2Cell approximation to find the entities
-                //            bool doesIntersectWithUserArea = false;
-                //            for (int i = 0; i < userGeos.Count; i++)
-                //            {
-                //                if (GeometryEngine.Instance.Intersects(geo, userGeos[i]))
-                //                    doesIntersectWithUserArea = true;
-                //            }
-                //            if (!doesIntersectWithUserArea)
-                //                continue;
+                            buff["Label"] = finalContentLabels[entityType.Key][currEntity];
+                            buff["URL"] = currEntity;
+                            buff["Shape"] = geo;
 
-                //            InsertCursor cursor = tables[entityType.Key][geo.GetType().Name].GetTable().CreateInsertCursor();
-                //            RowBuffer buff = tables[entityType.Key][geo.GetType().Name].GetTable().CreateRowBuffer();
+                            //Add column data based on merge rule
+                            foreach (var dataPair in entityPair.Value)
+                            {
+                                string currLabel = dataPair.Key;
+                                if (currLabel.StartsWith("NoAdditionalData"))
+                                    continue;
 
-                //            buff["Label"] = finalContentLabels[entityType.Key][currEntity];
-                //            buff["URL"] = currEntity;
-                //            buff["Shape"] = geo;
+                                switch (labelToMergeRule[currLabel])
+                                {
+                                    case "first":
+                                        buff[currLabel] = dataPair.Value[0];
+                                        break;
+                                    case "count":
+                                        buff[currLabel] = dataPair.Value.Count;
+                                        break;
+                                    case "total":
+                                        float total = 0;
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            total += float.Parse(val);
+                                        }
+                                        buff[currLabel] = total;
+                                        break;
+                                    case "high":
+                                        float high = float.Parse(dataPair.Value[0]);
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            if (float.Parse(val) > high)
+                                                high = float.Parse(val);
+                                        }
+                                        buff[currLabel] = high;
+                                        break;
+                                    case "low":
+                                        float low = float.Parse(dataPair.Value[0]);
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            if (float.Parse(val) < low)
+                                                low = float.Parse(val);
+                                        }
+                                        buff[currLabel] = low;
+                                        break;
+                                    case "avg":
+                                        List<float> avgValues = new List<float>() { };
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            avgValues.Add(float.Parse(val));
+                                        }
+                                        buff[currLabel] = avgValues.Average();
+                                        break;
+                                    case "stdev":
+                                        List<float> stdDevValues = new List<float>() { };
+                                        foreach (string val in dataPair.Value)
+                                        {
+                                            stdDevValues.Add(float.Parse(val));
+                                        }
+                                        buff[currLabel] = Math.Sqrt(stdDevValues.Average(v => Math.Pow(v - stdDevValues.Average(), 2)));
+                                        break;
+                                    case "concat":
+                                    default:
+                                        buff[currLabel] = String.Join(" | ", dataPair.Value);
+                                        break;
+                                }
+                            }
 
-                //            //Add column data based on merge rule
-                //            foreach (var dataPair in entityPair.Value)
-                //            {
-                //                string currLabel = dataPair.Key;
-                //                if (currLabel.StartsWith("NoAdditionalData"))
-                //                    continue;
+                            cursor.Insert(buff);
+                            cursor.Dispose();
+                        }
+                    }
 
-                //                switch (labelToMergeRule[currLabel])
-                //                {
-                //                    case "first":
-                //                        buff[currLabel] = dataPair.Value[0];
-                //                        break;
-                //                    case "count":
-                //                        buff[currLabel] = dataPair.Value.Count;
-                //                        break;
-                //                    case "total":
-                //                        float total = 0;
-                //                        foreach (string val in dataPair.Value)
-                //                        {
-                //                            total += float.Parse(val);
-                //                        }
-                //                        buff[currLabel] = total;
-                //                        break;
-                //                    case "high":
-                //                        float high = float.Parse(dataPair.Value[0]);
-                //                        foreach (string val in dataPair.Value)
-                //                        {
-                //                            if (float.Parse(val) > high)
-                //                                high = float.Parse(val);
-                //                        }
-                //                        buff[currLabel] = high;
-                //                        break;
-                //                    case "low":
-                //                        float low = float.Parse(dataPair.Value[0]);
-                //                        foreach (string val in dataPair.Value)
-                //                        {
-                //                            if (float.Parse(val) < low)
-                //                                low = float.Parse(val);
-                //                        }
-                //                        buff[currLabel] = low;
-                //                        break;
-                //                    case "avg":
-                //                        List<float> avgValues = new List<float>() { };
-                //                        foreach (string val in dataPair.Value)
-                //                        {
-                //                            avgValues.Add(float.Parse(val));
-                //                        }
-                //                        buff[currLabel] = avgValues.Average();
-                //                        break;
-                //                    case "stdev":
-                //                        List<float> stdDevValues = new List<float>() { };
-                //                        foreach (string val in dataPair.Value)
-                //                        {
-                //                            stdDevValues.Add(float.Parse(val));
-                //                        }
-                //                        buff[currLabel] = Math.Sqrt(stdDevValues.Average(v => Math.Pow(v - stdDevValues.Average(), 2)));
-                //                        break;
-                //                    case "concat":
-                //                    default:
-                //                        buff[currLabel] = String.Join(" | ", dataPair.Value);
-                //                        break;
-                //                }
-                //            }
-
-                //            cursor.Insert(buff);
-                //            cursor.Dispose();
-                //        }
-                //    }
-
-                //    MapView.Active.Redraw(false);
-                //});
+                    MapView.Active.Redraw(false);
+                });
             }
 
             ////Check each table, and delete any empty ones
