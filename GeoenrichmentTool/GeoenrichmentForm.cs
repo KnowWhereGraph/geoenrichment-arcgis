@@ -12,8 +12,6 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Windows.Shapes;
-using ComboBox = System.Windows.Forms.ComboBox;
 
 namespace KWG_Geoenrichment
 {
@@ -730,6 +728,7 @@ namespace KWG_Geoenrichment
             //remove content from array
             int oldSize = selectedClasses.Count;
             selectedClasses.RemoveAt(idx - 1);
+            classEntities.RemoveAt(idx - 1);
             classProperties.RemoveAt(idx - 1);
 
             //remove the window height
@@ -811,6 +810,7 @@ namespace KWG_Geoenrichment
             }
 
             selectedClasses = new List<String>() { };
+            classEntities = new List<List<String>>() { };
             classProperties = new List<List<List<String>>>() { };
 
             CheckCanRunGeoenrichment();
@@ -847,7 +847,6 @@ namespace KWG_Geoenrichment
             var queryClass = KwgGeoModule.Current.GetQueryClass();
             bool layerFailed = false;
             Dictionary<string, Dictionary<string, BasicFeatureLayer>> tables = new Dictionary<string, Dictionary<string, BasicFeatureLayer>>() { }; //entityType -> shape -> layer
-            var columnLabels = new List<string>() { };
             var labelToMergeRule = new Dictionary<string, string>() { }; //column label -> merge rule
 
             IGeometryEngine geoEngine = GeometryEngine.Instance;
@@ -890,7 +889,6 @@ namespace KWG_Geoenrichment
                     {
                         string mergeRule = prop[3];
                         string columnLabel = prop[2].Replace(' ', '_') + '_' + mergeRule;
-                        columnLabels.Add(columnLabel);
                         labelToMergeRule[columnLabel] = mergeRule;
                         await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
                     }
@@ -904,12 +902,12 @@ namespace KWG_Geoenrichment
                 var finalContent = new Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>>() { }; //entityType -> entity -> column label -> data
                 var finalContentLabels = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
-                string entityName; string nextEntityName;
 
                 //TODO
                 for (int j = 0; j < selectedClasses.Count; j++)
                 {
                     var classNameForTableArray = selectedClasses[j].Contains(':') ? selectedClasses[j].Split(':')[1] : selectedClasses[j]; //We use this to divide all the content into class type so they go to the appropriate table later
+                    var props = classProperties[j];
 
                     //Set entity type key for arrays if needed
                     finalContent[classNameForTableArray] = new Dictionary<string, Dictionary<string, List<string>>>();
@@ -930,7 +928,6 @@ namespace KWG_Geoenrichment
                             "?geo geo:asWKT ?wkt. " +
                         "} ORDER BY ?entity LIMIT 10000 OFFSET 0";
 
-                        //TODO
                         try
                         {
                             JToken geoResults = queryClass.SubmitQuery(currentRepository, entityGeoQuery);
@@ -939,7 +936,6 @@ namespace KWG_Geoenrichment
                             {
                                 var entityVal = item["entity"]["value"].ToString();
 
-                                //Check to see if we this entity exists, if not, set it up
                                 finalContent[classNameForTableArray][entityVal] = new Dictionary<string, List<string>>() { };
                                 finalContentLabels[classNameForTableArray][entityVal] = item["entityLabel"]["value"].ToString();
                                 finalContentGeometry[classNameForTableArray][entityVal] = item["wkt"]["value"].ToString();
@@ -953,10 +949,62 @@ namespace KWG_Geoenrichment
                             queryClass.ReportGraphError("res");
                             return;
                         }
+
+                        //Gather the data for any selected properties about the class
+                        foreach (var prop in props)
+                        {
+                            string columnLabel = prop[2].Replace(' ', '_') + '_' + prop[3];
+                            var uris = prop[1].Split("||");
+                            int currDegree = 1;
+                            int maxDegree = uris.Count() / 2;
+                            var valueQuery = "select ?entity ?val" + maxDegree.ToString() + " where {  ";
+
+                            for (int i = 0; i < uris.Count(); i += 2)
+                            {
+                                string classVal = (i > 0) ? uris[i-1] : null;
+                                string propVal = uris[i];
+
+                                if (i == 0)
+                                {
+                                    valueQuery += "?entity " + propVal + " ?val1. ";
+                                }
+                                else
+                                {
+                                    string prevVal = "?val" + (currDegree - 1).ToString();
+                                    string newVal = "?val" + currDegree.ToString();
+
+                                    valueQuery += prevVal + " a " + classVal + "; " + propVal + " " + newVal + ". ";
+                                }
+
+                                currDegree++;
+                            }
+                            valueQuery += entFormatted[k] + "}";
+
+                            try
+                            {
+                                JToken valueResults = queryClass.SubmitQuery(currentRepository, valueQuery);
+
+                                foreach (var item in valueResults)
+                                {
+                                    string propEntity = item["entity"]["value"].ToString();
+                                    string propVal = item["val"+ maxDegree.ToString()]["value"].ToString();
+
+                                    if (!finalContent[classNameForTableArray][propEntity].ContainsKey(columnLabel))
+                                        finalContent[classNameForTableArray][propEntity][columnLabel] = new List<string> { propVal };
+                                    else
+                                        finalContent[classNameForTableArray][propEntity][columnLabel].Add(propVal);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                runBtn.Enabled = true;
+                                runBtn.Text = "Run";
+                                layerLoading.Visible = false;
+                                queryClass.ReportGraphError("rPrp");
+                                return;
+                            }
+                        }
                     }
-
-                    //TODO::Now that we have the specific entities, gather the data for any selected properties about the class
-
                 }
 
                 //Use data to populate table
@@ -993,8 +1041,6 @@ namespace KWG_Geoenrichment
                             foreach (var dataPair in entityPair.Value)
                             {
                                 string currLabel = dataPair.Key;
-                                if (currLabel.StartsWith("NoAdditionalData"))
-                                    continue;
 
                                 switch (labelToMergeRule[currLabel])
                                 {
