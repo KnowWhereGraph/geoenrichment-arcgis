@@ -1,18 +1,11 @@
-﻿using ArcGIS.Core.Data.UtilityNetwork.Trace;
-using ArcGIS.Core.Data;
-using ArcGIS.Desktop.Framework.Threading.Tasks;
+﻿using ArcGIS.Desktop.Framework.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Windows.Documents;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Menu;
-using System.Windows.Markup;
 
 namespace KWG_Geoenrichment
 {
@@ -34,7 +27,7 @@ namespace KWG_Geoenrichment
             { "count", "Get the number of values found" },
             { "total", "Get the total of all values (numeric)" },
             { "high", "Get the highest value (numeric)" },
-            { "low", " Get the lowest value (numeric)" },
+            { "low", "Get the lowest value (numeric)" },
             { "avg", "Get the average of all values (numeric)" },
             { "stdev", "Get the standard deviation of all values (numeric)" },
         };
@@ -587,7 +580,7 @@ namespace KWG_Geoenrichment
             mergeBox.ValueMember = "Key";
             mergeBox.DataSource = new BindingSource(mergeRules, null);
             mergeBox.DropDownWidth = mergeRules.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, mergeBox.Font).Width);
-            //TODO::Figure out how to set prev merge value
+            mergeBox.SelectedValue = merge;
             Controls.Add(mergeBox);
 
             //Add the remove property button
