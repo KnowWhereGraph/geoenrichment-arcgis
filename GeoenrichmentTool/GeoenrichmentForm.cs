@@ -890,7 +890,7 @@ namespace KWG_Geoenrichment
                         string mergeRule = prop[3];
                         string columnLabel = prop[2].Replace(' ', '_') + '_' + mergeRule;
                         labelToMergeRule[columnLabel] = mergeRule;
-                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
+                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT", 10000);
                     }
                 }
                     
@@ -916,7 +916,7 @@ namespace KWG_Geoenrichment
 
                     //Get label and WKT value of the respected entities
                     var ents = classEntities[j];
-                    var entFormatted = SplitValueList(ents, "entity", 10000);
+                    var entFormatted = SplitValueList(ents, "entity", 10000); //TODO::Make this dynamic based on largest value
                     for (int k = 0; k < entFormatted.Count; k++)
                     {
                         //Grab the entities

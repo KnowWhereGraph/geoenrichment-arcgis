@@ -62,7 +62,7 @@ namespace KWG_Geoenrichment
             return tableName;
         }
 
-        public static async Task AddField(BasicFeatureLayer featureLayer, string fieldName, string fieldType)
+        public static async Task AddField(BasicFeatureLayer featureLayer, string fieldName, string fieldType, int stringSize = 254)
         {
             List<object> arguments = new List<object>
             {
@@ -71,7 +71,10 @@ namespace KWG_Geoenrichment
                 // name of the data field
                 fieldName,
                 // type of data field
-                fieldType
+                fieldType,
+                null,
+                null,
+                stringSize
             };
 
             IGPResult result = await Geoprocessing.ExecuteToolAsync("AddField_management", Geoprocessing.MakeValueArray(arguments.ToArray()));
