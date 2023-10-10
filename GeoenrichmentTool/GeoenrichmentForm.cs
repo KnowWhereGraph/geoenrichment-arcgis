@@ -35,24 +35,21 @@ namespace KWG_Geoenrichment
             "Polyline",
             "Polygon"
         };
-
         private int contentTotalSpacing = 50;
         private readonly int contentPadding = 50;
-
-        private readonly string helpText = "The entire KnowWhereGraph is available to explore. In the future, the Choose Knowledge Graph list will allow you to select specific repositories in the KnowWhereGraph to explore.\n\n" +
-            "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the " + " button to manually draw a new polygon layer representing your area of interest.\n\n" +
-            "After selecting an area of interest, choose \"Select Content\" to learn about what happened in that area.You may run this feature as many times as desired.\n\n" +
-            "When you're ready to create your new Feature Class, provide a name for the new layer and hit \"RUN\"."; //TODO
+        private readonly string helpText = "The Geoenrichment tool interfaces ArcGIS with the KnowWhereGraph to solve the question 'What happened here?'.\n\n" +
+            "The entire KnowWhereGraph is available to explore. In the future, the 'Choose Knowledge Graph' dropdown will allow you to select specific repositories to explore.\n\n" +
+            "To begin exploring, use the 'Select Polygon Feature Layer' dropdown to choose an area of interest. The dropdown will list all active polygon feature layers in the MapView. The toolbar next to the dropdown can be used to refresh the list, draw a new polygon, or load a polygon feature layer from disk.\n\n" +
+            "After selecting an area of interest, use the 'Select Feature(s) of Interest' dropdown to choose a feature you would like to save to the final feature layer. Any number of features can be selected. Once a feature is selected, the 'Add Properties' button can be used to gather more information about that feature.\n\n" +
+            "Once all desired features and properties are confirmed, provide a name for the final feature layer and select the 'RUN' button. This will fetch the data from the KnowWhereGraph and create the final feature layer in the MapView.";
 
         //Initializes the form
         public GeoenrichmentForm()
         {
             InitializeComponent();
-
             selectedClasses = new List<String>() { };
             classEntities = new List<List<String>>() { };
             classProperties = new List<List<List<String>>>() { };
-
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             foreach (var endpoint in queryClass.defaultEndpoints)
             {
@@ -899,7 +896,6 @@ namespace KWG_Geoenrichment
                 var finalContentLabels = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
 
-                //TODO
                 for (int j = 0; j < selectedClasses.Count; j++)
                 {
                     var classNameForTableArray = selectedClasses[j].Contains(':') ? selectedClasses[j].Split(':')[1] : selectedClasses[j]; //We use this to divide all the content into class type so they go to the appropriate table later
