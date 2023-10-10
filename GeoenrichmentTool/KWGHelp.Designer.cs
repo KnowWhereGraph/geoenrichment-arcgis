@@ -28,70 +28,75 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.helpText = new System.Windows.Forms.Label();
-            this.helpPanelLogo = new System.Windows.Forms.PictureBox();
-            this.closeForm = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).BeginInit();
-            this.SuspendLayout();
+            helpText = new System.Windows.Forms.Label();
+            helpPanelLogo = new System.Windows.Forms.PictureBox();
+            closeForm = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)helpPanelLogo).BeginInit();
+            SuspendLayout();
             // 
             // helpText
             // 
-            this.helpText.AutoSize = true;
-            this.helpText.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.helpText.ForeColor = System.Drawing.Color.White;
-            this.helpText.Location = new System.Drawing.Point(8, 79);
-            this.helpText.MaximumSize = new System.Drawing.Size(325, 0);
-            this.helpText.Name = "helpText";
-            this.helpText.Size = new System.Drawing.Size(121, 19);
-            this.helpText.TabIndex = 4;
-            this.helpText.Text = "Text goes here";
+            helpText.AutoSize = true;
+            helpText.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            helpText.ForeColor = System.Drawing.Color.White;
+            helpText.Location = new System.Drawing.Point(9, 91);
+            helpText.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            helpText.MaximumSize = new System.Drawing.Size(379, 0);
+            helpText.Name = "helpText";
+            helpText.Size = new System.Drawing.Size(121, 19);
+            helpText.TabIndex = 4;
+            helpText.Text = "Text goes here";
             // 
             // helpPanelLogo
             // 
-            this.helpPanelLogo.Image = global::KWG_Geoenrichment.Properties.Resources.help_circle;
-            this.helpPanelLogo.Location = new System.Drawing.Point(12, 12);
-            this.helpPanelLogo.Name = "helpPanelLogo";
-            this.helpPanelLogo.Size = new System.Drawing.Size(66, 64);
-            this.helpPanelLogo.TabIndex = 3;
-            this.helpPanelLogo.TabStop = false;
+            helpPanelLogo.Image = Properties.Resources.help_circle;
+            helpPanelLogo.Location = new System.Drawing.Point(14, 14);
+            helpPanelLogo.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            helpPanelLogo.Name = "helpPanelLogo";
+            helpPanelLogo.Size = new System.Drawing.Size(77, 74);
+            helpPanelLogo.TabIndex = 3;
+            helpPanelLogo.TabStop = false;
             // 
             // closeForm
             // 
-            this.closeForm.BackColor = System.Drawing.Color.Transparent;
-            this.closeForm.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.closeForm.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.closeForm.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(111)))), ((int)(((byte)(179)))));
-            this.closeForm.FlatAppearance.BorderSize = 0;
-            this.closeForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.closeForm.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold);
-            this.closeForm.ForeColor = System.Drawing.Color.Black;
-            this.closeForm.Image = global::KWG_Geoenrichment.Properties.Resources.x;
-            this.closeForm.Location = new System.Drawing.Point(289, 12);
-            this.closeForm.Name = "closeForm";
-            this.closeForm.Size = new System.Drawing.Size(36, 36);
-            this.closeForm.TabIndex = 47;
-            this.closeForm.UseVisualStyleBackColor = false;
-            this.closeForm.Click += new System.EventHandler(this.CloseWindow);
+            closeForm.BackColor = System.Drawing.Color.Transparent;
+            closeForm.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            closeForm.Cursor = System.Windows.Forms.Cursors.Hand;
+            closeForm.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(33, 111, 179);
+            closeForm.FlatAppearance.BorderSize = 0;
+            closeForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            closeForm.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            closeForm.ForeColor = System.Drawing.Color.Black;
+            closeForm.Image = Properties.Resources.x;
+            closeForm.Location = new System.Drawing.Point(337, 14);
+            closeForm.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            closeForm.Name = "closeForm";
+            closeForm.Size = new System.Drawing.Size(42, 42);
+            closeForm.TabIndex = 47;
+            closeForm.UseVisualStyleBackColor = false;
+            closeForm.Click += CloseWindow;
             // 
             // KWGHelp
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(54)))), ((int)(((byte)(56)))), ((int)(((byte)(91)))));
-            this.ClientSize = new System.Drawing.Size(337, 479);
-            this.ControlBox = false;
-            this.Controls.Add(this.closeForm);
-            this.Controls.Add(this.helpText);
-            this.Controls.Add(this.helpPanelLogo);
-            this.HelpButton = true;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "KWGHelp";
-            this.Text = "KWG Help";
-            ((System.ComponentModel.ISupportInitialize)(this.helpPanelLogo)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            AutoSize = true;
+            AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            BackColor = System.Drawing.Color.FromArgb(54, 56, 91);
+            ClientSize = new System.Drawing.Size(393, 553);
+            ControlBox = false;
+            Controls.Add(closeForm);
+            Controls.Add(helpText);
+            Controls.Add(helpPanelLogo);
+            HelpButton = true;
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "KWGHelp";
+            Text = "KWG Help";
+            ((System.ComponentModel.ISupportInitialize)helpPanelLogo).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

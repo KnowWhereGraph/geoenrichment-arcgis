@@ -237,7 +237,7 @@ namespace KWG_Geoenrichment
                 {
                     selectedLayer.SelectedItem = null;
                     featuresOfInterest.Enabled = false;
-                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(error);
+                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(error); //TODO::Better error reporting
                 }
             }
             else
