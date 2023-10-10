@@ -22,8 +22,7 @@ namespace KWG_Geoenrichment
         private List<string> currentLayerWKTs;
 
         private List<String> entities;
-        private List<String> entitiesFormatted; //TODO
-        Dictionary<string, string> entitiesClasses; //TODO
+        Dictionary<string, string> entitiesClasses; //class -> class label
 
         private List<String> selectedClasses; //idx -> class
         private List<List<String>> classEntities; //cIdx -> entities
@@ -221,12 +220,9 @@ namespace KWG_Geoenrichment
                 {
                     if (entities.Count > 0)
                     {
-                        Dictionary<string, string> classes = new Dictionary<string, string>() { { "", "" } };
-                        classes = entitiesClasses;
-
                         featuresOfInterest.Enabled = true;
-                        featuresOfInterest.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
-                        featuresOfInterest.DropDownWidth = classes.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, featuresOfInterest.Font).Width);
+                        featuresOfInterest.DataSource = new BindingSource(entitiesClasses.OrderBy(key => key.Value), null);
+                        featuresOfInterest.DropDownWidth = entitiesClasses.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, featuresOfInterest.Font).Width);
                     }
                     else
                     {
@@ -264,7 +260,6 @@ namespace KWG_Geoenrichment
         public string SearchForEntities()
         {
             entities = new List<string>() { };
-            entitiesFormatted = new List<string>() { };
             entitiesClasses = new Dictionary<string, string>() { { "", "" } };
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
@@ -523,7 +518,7 @@ namespace KWG_Geoenrichment
                 }
             }
 
-            entitiesFormatted = SplitValueList(entities, "entity", 10000);
+            List<String> entitiesFormatted = SplitValueList(entities, "entity", 10000);
 
             for (int i = 0; i < entitiesFormatted.Count; i++)
             {
@@ -584,6 +579,7 @@ namespace KWG_Geoenrichment
             }
             else if (feature != "")
             {
+                List<String> entitiesFormatted = SplitValueList(entities, "entity", 10000);
                 List<string> subSetEntities = new List<string>() { };
 
                 //Grab only the entities that are of the class so we don't need to do so later
@@ -838,7 +834,7 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private async void RunGeoenrichment(object sender, EventArgs e) //TODO
+        private async void RunGeoenrichment(object sender, EventArgs e)
         {
             runBtn.Enabled = false;
             runBtn.Text = "Running...";
