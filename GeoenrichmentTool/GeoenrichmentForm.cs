@@ -621,7 +621,7 @@ namespace KWG_Geoenrichment
                 labelObj.Name = "classLabel" + selectedClasses.Count.ToString();
                 labelObj.Size = knowledgeGraphLabel.Size;
                 labelObj.MaximumSize = new Size(780, 0);
-                labelObj.Text = featureLabel;
+                labelObj.Text = featureLabel + " (" + subSetEntities.Count() + ")";
                 Controls.Add(labelObj);
 
                 //Add the Add Property button
