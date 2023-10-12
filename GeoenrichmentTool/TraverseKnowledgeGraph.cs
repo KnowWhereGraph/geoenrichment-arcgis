@@ -116,7 +116,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "prp";
+                        return "trvProp";
                     }
 
                     return "";
@@ -130,7 +130,7 @@ namespace KWG_Geoenrichment
                         ComboBox prevValueBox = (ComboBox)this.Controls.Find("value" + (degree - 1).ToString(), true).First();
                         prevValueBox.SelectedValue = "";
                     }
-                    queryClass.ReportGraphError(error);
+                    queryClass.ReportGraphError(error, propQuery);
 
                     if (degree == 1)
                     {
@@ -211,7 +211,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "val";
+                        return "trvVal";
                     }
 
                     return "";
@@ -221,7 +221,7 @@ namespace KWG_Geoenrichment
                 {
                     ComboBox propBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
                     propBox.SelectedValue = "";
-                    queryClass.ReportGraphError(error);
+                    queryClass.ReportGraphError(error, valueQuery);
 
                     valueLoading.Visible = false;
                     EnableActionButtons();

@@ -230,7 +230,8 @@ namespace KWG_Geoenrichment
                 {
                     selectedLayer.SelectedItem = null;
                     featuresOfInterest.Enabled = false;
-                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(error); //TODO::Better error reporting
+                    var errParts = error.Split("||");
+                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(errParts[0], errParts[1]);
                 }
             }
             else
@@ -323,7 +324,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "s2c4";
+                        return "s2c4||" + s2CellQuery;
                     }
                 }
 
@@ -390,7 +391,7 @@ namespace KWG_Geoenrichment
                         }
                         catch (Exception ex)
                         {
-                            return "s2c8";
+                            return "s2c8||" + s2CellQuery;
                         }
                     }
                 }
@@ -464,7 +465,7 @@ namespace KWG_Geoenrichment
                         }
                         catch (Exception ex)
                         {
-                            return "s2c13";
+                            return "s2c13||" + s2CellQuery;
                         }
                     }
                 }
@@ -509,7 +510,7 @@ namespace KWG_Geoenrichment
                         }
                         catch (Exception ex)
                         {
-                            return "ent";
+                            return "s2ent||" + entityQuery;
                         }
                     }
                 }
@@ -555,7 +556,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "type";
+                        return "entType||" + typeQuery;
                     }
                 }
             }
@@ -599,7 +600,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        queryClass.ReportGraphError("feat");
+                        queryClass.ReportGraphError("selFeat", traverseEntitesQuery);
                         //Reset feature box
                         featuresOfInterest.SelectedValue = "";
                         CheckCanRunGeoenrichment();
@@ -938,7 +939,7 @@ namespace KWG_Geoenrichment
                             runBtn.Enabled = true;
                             runBtn.Text = "Run";
                             layerLoading.Visible = false;
-                            queryClass.ReportGraphError("res");
+                            queryClass.ReportGraphError("entGeo", entityGeoQuery);
                             return;
                         }
 
@@ -992,7 +993,7 @@ namespace KWG_Geoenrichment
                                 runBtn.Enabled = true;
                                 runBtn.Text = "Run";
                                 layerLoading.Visible = false;
-                                queryClass.ReportGraphError("rPrp");
+                                queryClass.ReportGraphError("propData", valueQuery);
                                 return;
                             }
                         }
