@@ -123,7 +123,6 @@ namespace KWG_Geoenrichment
                 List<string> coorArray = new List<string>();
                 foreach (Coordinate2D coor in coordinates)
                 {
-                    MapPoint geoCoor = coor.ToMapPoint();
                     coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
                 }
                 string polygonString = "Polygon((" + String.Join(", ", coorArray) + "))";
@@ -131,6 +130,22 @@ namespace KWG_Geoenrichment
             }
 
             return wkts;
+        }
+        public static async Task<string> GetSimplifiedPolygonGeometry(string polyWKT)
+        {
+            IGeometryEngine geoEngine = GeometryEngine.Instance;
+            SpatialReference sr = SpatialReferenceBuilder.CreateSpatialReference(4326);
+            Polygon complex = (Polygon)geoEngine.ImportFromWKT(0, polyWKT, sr);
+            Polygon simple = (Polygon)geoEngine.Generalize(complex, .01);
+
+            var coordinates = simple.Copy2DCoordinatesToList();
+            List<string> coorArray = new List<string>();
+            foreach (Coordinate2D coor in coordinates)
+            {
+                coorArray.Add(coor.X.ToString() + " " + coor.Y.ToString());
+            }
+
+            return "Polygon((" + String.Join(", ", coorArray) + "))";
         }
     }
 }

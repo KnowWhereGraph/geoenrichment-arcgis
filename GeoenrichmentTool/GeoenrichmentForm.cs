@@ -263,14 +263,17 @@ namespace KWG_Geoenrichment
 
             currentLayerWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
 
-            foreach (var wkt in currentLayerWKTs)
+            foreach (var layerWkt in currentLayerWKTs)
             {
                 List<string> s2CellFourList = new List<string>() { };
                 List<string> s2CellEightList = new List<string>() { };
                 List<string> s2CellThirteenList = new List<string>() { };
 
+                string wkt = layerWkt; //we copy this so that we can change it to a simplified geometry without affecting the foreach loop
+
                 //Get s2 Cells at level 4
                 bool pagination = true;
+                bool firstFail = true;
                 int offset = 0;
                 while (pagination)
                 {
@@ -324,7 +327,18 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "s2c4||" + s2CellQuery;
+
+                        //If this query fails, it could be because the geometry WKT is too long for the Graph API
+                        //Simplify the geometry and try this query again
+                        if (firstFail)
+                        {
+                            wkt = FeatureClassHelper.GetSimplifiedPolygonGeometry(wkt).Result;
+                            firstFail = false;
+                        } 
+                        else
+                        {
+                            return "s2c4||" + s2CellQuery;
+                        }
                     }
                 }
 
