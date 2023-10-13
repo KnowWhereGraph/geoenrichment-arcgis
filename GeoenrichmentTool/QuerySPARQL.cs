@@ -85,9 +85,10 @@ namespace KWG_Geoenrichment
             return (result != "") ? result : iri;
         }
 
-        public void ReportGraphError(string errCode)
+        public void ReportGraphError(string errCode, string query)
         {
-            string error = "Graph Error: Either query failed or connection was not established (code: " + errCode + ")";
+            string error = "Graph Error: Either query failed or connection was not established (code: " + errCode + ")\n\n";
+            error += "`" + query + "`";
 
             MessageBox.Show($@"{error}");
         }

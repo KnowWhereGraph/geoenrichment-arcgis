@@ -3,7 +3,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -28,25 +27,25 @@ namespace KWG_Geoenrichment
             { "count", "Get the number of values found" },
             { "total", "Get the total of all values (numeric)" },
             { "high", "Get the highest value (numeric)" },
-            { "low", " Get the lowest value (numeric)" },
+            { "low", "Get the lowest value (numeric)" },
             { "avg", "Get the average of all values (numeric)" },
             { "stdev", "Get the standard deviation of all values (numeric)" },
         };
 
-        private readonly string helpText = "Select a geography feature from the first box.You may use successive boxes to explore additional information about that feature.\n\n" +
-            "Select \"Explore Further\" to expand your exploration, or \"Add Content\" to add the feature to your new Feature Class.\n\n" +
-            "You can return to this menu multiple times to either learn more about your selected feature, or to explore additional feature types."; //TODO
+        private readonly string helpText = "Use the 'Select Property' dropdown to choose a property for your Feature of Interest, to learn additional information about it. Then use the 'Select Value' dropdown to choose a value for that property.\n\n" +
+            "If the return data from the value is expected to result in textual/numerical data, the 'Select Value' dropdown will auto-populate with a note explaining this.\n\n" +
+            "If the return data results in an object, then the 'Explore Further' button can be used to add new property/value dropdowns to further explore the properties of that object. The 'Explore Further' button can be used indefinitely, or until textual/numerical data is reached.\n\n" +
+            "'Add Value' will take the value of the last 'Select Value' dropdown and add it to the 'Selected Property Values' list. Once added you can specify a column name for that value which will be used in the final Feature Layer table. There is also a dropdown to decide how data will be merged in the final table (i.e. if you expect the value to have multiple data points per specific entity of your Feature of Interest).\n\n" +
+            "To complete this form and submit your properties back to the main Geoenrichment window, select 'Add Properties'.";
 
         //Initializes the form
         public TraverseKnowledgeGraph(GeoenrichmentForm gf, string endpoint, List<string> entities, string entityClassLabel, int originalIndex, List<List<string>> previouslySelected)
         {
             InitializeComponent();
-
             originalWindow = gf;
             currentEndpoint = endpoint;
             entityVals = entities;
             returnIndex = originalIndex;
-
             selectedProperties = new Dictionary<string, List<string>>();
 
             //Load previous selected properties when returning if applicable
@@ -56,10 +55,8 @@ namespace KWG_Geoenrichment
                 List<string> uris = prop[1].Split("||").ToList();
                 string column = prop[2];
                 string merge = prop[3];
-
                 AddPrevValueToList(label, uris, column, merge);
             }
-
             exploreProperties.Text = "Explore " + entityClassLabel + " Properties";
 
             PopulatePropertyBox(1);
@@ -119,7 +116,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "prp";
+                        return "trvProp";
                     }
 
                     return "";
@@ -133,7 +130,7 @@ namespace KWG_Geoenrichment
                         ComboBox prevValueBox = (ComboBox)this.Controls.Find("value" + (degree - 1).ToString(), true).First();
                         prevValueBox.SelectedValue = "";
                     }
-                    queryClass.ReportGraphError(error);
+                    queryClass.ReportGraphError(error, propQuery);
 
                     if (degree == 1)
                     {
@@ -214,7 +211,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "val";
+                        return "trvVal";
                     }
 
                     return "";
@@ -224,7 +221,7 @@ namespace KWG_Geoenrichment
                 {
                     ComboBox propBox = (ComboBox)this.Controls.Find("prop" + degree.ToString(), true).First();
                     propBox.SelectedValue = "";
-                    queryClass.ReportGraphError(error);
+                    queryClass.ReportGraphError(error, valueQuery);
 
                     valueLoading.Visible = false;
                     EnableActionButtons();
@@ -583,7 +580,7 @@ namespace KWG_Geoenrichment
             mergeBox.ValueMember = "Key";
             mergeBox.DataSource = new BindingSource(mergeRules, null);
             mergeBox.DropDownWidth = mergeRules.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, mergeBox.Font).Width);
-            //TODO::Figure out how to set prev merge value
+            mergeBox.SelectedValue = merge;
             Controls.Add(mergeBox);
 
             //Add the remove property button

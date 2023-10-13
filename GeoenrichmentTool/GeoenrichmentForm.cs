@@ -22,8 +22,7 @@ namespace KWG_Geoenrichment
         private List<string> currentLayerWKTs;
 
         private List<String> entities;
-        private List<String> entitiesFormatted; //TODO
-        Dictionary<string, string> entitiesClasses; //TODO
+        Dictionary<string, string> entitiesClasses; //class -> class label
 
         private List<String> selectedClasses; //idx -> class
         private List<List<String>> classEntities; //cIdx -> entities
@@ -36,24 +35,21 @@ namespace KWG_Geoenrichment
             "Polyline",
             "Polygon"
         };
-
         private int contentTotalSpacing = 50;
         private readonly int contentPadding = 50;
-
-        private readonly string helpText = "The entire KnowWhereGraph is available to explore. In the future, the Choose Knowledge Graph list will allow you to select specific repositories in the KnowWhereGraph to explore.\n\n" +
-            "To begin exploring, select any polygonal feature layer as an area of interest.You can even use the " + " button to manually draw a new polygon layer representing your area of interest.\n\n" +
-            "After selecting an area of interest, choose \"Select Content\" to learn about what happened in that area.You may run this feature as many times as desired.\n\n" +
-            "When you're ready to create your new Feature Class, provide a name for the new layer and hit \"RUN\"."; //TODO
+        private readonly string helpText = "The Geoenrichment tool interfaces ArcGIS with the KnowWhereGraph to solve the question 'What happened here?'.\n\n" +
+            "The entire KnowWhereGraph is available to explore. In the future, the 'Choose Knowledge Graph' dropdown will allow you to select specific repositories to explore.\n\n" +
+            "To begin exploring, use the 'Select Polygon Feature Layer' dropdown to choose an area of interest. The dropdown will list all active polygon feature layers in the MapView. The toolbar next to the dropdown can be used to refresh the list, draw a new polygon, or load a polygon feature layer from disk.\n\n" +
+            "After selecting an area of interest, use the 'Select Feature(s) of Interest' dropdown to choose a feature you would like to save to the final feature layer. Any number of features can be selected. Once a feature is selected, the 'Add Properties' button can be used to gather more information about that feature.\n\n" +
+            "Once all desired features and properties are confirmed, provide a name for the final feature layer and select the 'RUN' button. This will fetch the data from the KnowWhereGraph and create the final feature layer in the MapView.";
 
         //Initializes the form
         public GeoenrichmentForm()
         {
             InitializeComponent();
-
             selectedClasses = new List<String>() { };
             classEntities = new List<List<String>>() { };
             classProperties = new List<List<List<String>>>() { };
-
             QuerySPARQL queryClass = KwgGeoModule.Current.GetQueryClass();
             foreach (var endpoint in queryClass.defaultEndpoints)
             {
@@ -221,12 +217,9 @@ namespace KWG_Geoenrichment
                 {
                     if (entities.Count > 0)
                     {
-                        Dictionary<string, string> classes = new Dictionary<string, string>() { { "", "" } };
-                        classes = entitiesClasses;
-
                         featuresOfInterest.Enabled = true;
-                        featuresOfInterest.DataSource = new BindingSource(classes.OrderBy(key => key.Value), null);
-                        featuresOfInterest.DropDownWidth = classes.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, featuresOfInterest.Font).Width);
+                        featuresOfInterest.DataSource = new BindingSource(entitiesClasses.OrderBy(key => key.Value), null);
+                        featuresOfInterest.DropDownWidth = entitiesClasses.Values.Cast<string>().Max(x => TextRenderer.MeasureText(x, featuresOfInterest.Font).Width);
                     }
                     else
                     {
@@ -237,7 +230,8 @@ namespace KWG_Geoenrichment
                 {
                     selectedLayer.SelectedItem = null;
                     featuresOfInterest.Enabled = false;
-                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(error);
+                    var errParts = error.Split("||");
+                    KwgGeoModule.Current.GetQueryClass().ReportGraphError(errParts[0], errParts[1]);
                 }
             }
             else
@@ -264,20 +258,22 @@ namespace KWG_Geoenrichment
         public string SearchForEntities()
         {
             entities = new List<string>() { };
-            entitiesFormatted = new List<string>() { };
             entitiesClasses = new Dictionary<string, string>() { { "", "" } };
             var queryClass = KwgGeoModule.Current.GetQueryClass();
 
             currentLayerWKTs = FeatureClassHelper.GetPolygonStringsFromActiveLayer(currentLayer);
 
-            foreach (var wkt in currentLayerWKTs)
+            foreach (var layerWkt in currentLayerWKTs)
             {
                 List<string> s2CellFourList = new List<string>() { };
                 List<string> s2CellEightList = new List<string>() { };
                 List<string> s2CellThirteenList = new List<string>() { };
 
+                string wkt = layerWkt; //we copy this so that we can change it to a simplified geometry without affecting the foreach loop
+
                 //Get s2 Cells at level 4
                 bool pagination = true;
+                bool firstFail = true;
                 int offset = 0;
                 while (pagination)
                 {
@@ -331,7 +327,18 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "s2c4";
+
+                        //If this query fails, it could be because the geometry WKT is too long for the Graph API
+                        //Simplify the geometry and try this query again
+                        if (firstFail)
+                        {
+                            wkt = FeatureClassHelper.GetSimplifiedPolygonGeometry(wkt).Result;
+                            firstFail = false;
+                        } 
+                        else
+                        {
+                            return "s2c4||" + s2CellQuery;
+                        }
                     }
                 }
 
@@ -398,7 +405,7 @@ namespace KWG_Geoenrichment
                         }
                         catch (Exception ex)
                         {
-                            return "s2c8";
+                            return "s2c8||" + s2CellQuery;
                         }
                     }
                 }
@@ -472,7 +479,7 @@ namespace KWG_Geoenrichment
                         }
                         catch (Exception ex)
                         {
-                            return "s2c13";
+                            return "s2c13||" + s2CellQuery;
                         }
                     }
                 }
@@ -517,13 +524,13 @@ namespace KWG_Geoenrichment
                         }
                         catch (Exception ex)
                         {
-                            return "ent";
+                            return "s2ent||" + entityQuery;
                         }
                     }
                 }
             }
 
-            entitiesFormatted = SplitValueList(entities, "entity", 10000);
+            List<String> entitiesFormatted = SplitValueList(entities, "entity", 10000);
 
             for (int i = 0; i < entitiesFormatted.Count; i++)
             {
@@ -563,7 +570,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        return "type";
+                        return "entType||" + typeQuery;
                     }
                 }
             }
@@ -584,6 +591,7 @@ namespace KWG_Geoenrichment
             }
             else if (feature != "")
             {
+                List<String> entitiesFormatted = SplitValueList(entities, "entity", 10000);
                 List<string> subSetEntities = new List<string>() { };
 
                 //Grab only the entities that are of the class so we don't need to do so later
@@ -606,7 +614,7 @@ namespace KWG_Geoenrichment
                     }
                     catch (Exception ex)
                     {
-                        queryClass.ReportGraphError("feat");
+                        queryClass.ReportGraphError("selFeat", traverseEntitesQuery);
                         //Reset feature box
                         featuresOfInterest.SelectedValue = "";
                         CheckCanRunGeoenrichment();
@@ -628,7 +636,7 @@ namespace KWG_Geoenrichment
                 labelObj.Name = "classLabel" + selectedClasses.Count.ToString();
                 labelObj.Size = knowledgeGraphLabel.Size;
                 labelObj.MaximumSize = new Size(780, 0);
-                labelObj.Text = featureLabel;
+                labelObj.Text = featureLabel + " (" + subSetEntities.Count() + ")";
                 Controls.Add(labelObj);
 
                 //Add the Add Property button
@@ -838,7 +846,7 @@ namespace KWG_Geoenrichment
             }
         }
 
-        private async void RunGeoenrichment(object sender, EventArgs e) //TODO
+        private async void RunGeoenrichment(object sender, EventArgs e)
         {
             runBtn.Enabled = false;
             runBtn.Text = "Running...";
@@ -890,7 +898,7 @@ namespace KWG_Geoenrichment
                         string mergeRule = prop[3];
                         string columnLabel = prop[2].Replace(' ', '_') + '_' + mergeRule;
                         labelToMergeRule[columnLabel] = mergeRule;
-                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT");
+                        await FeatureClassHelper.AddField(tables[className][shape], columnLabel, "TEXT", 10000);
                     }
                 }
                     
@@ -903,7 +911,6 @@ namespace KWG_Geoenrichment
                 var finalContentLabels = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> entityLabel
                 var finalContentGeometry = new Dictionary<string, Dictionary<string, string>>() { }; //entityType -> entity -> wkt
 
-                //TODO
                 for (int j = 0; j < selectedClasses.Count; j++)
                 {
                     var classNameForTableArray = selectedClasses[j].Contains(':') ? selectedClasses[j].Split(':')[1] : selectedClasses[j]; //We use this to divide all the content into class type so they go to the appropriate table later
@@ -916,7 +923,7 @@ namespace KWG_Geoenrichment
 
                     //Get label and WKT value of the respected entities
                     var ents = classEntities[j];
-                    var entFormatted = SplitValueList(ents, "entity", 10000);
+                    var entFormatted = SplitValueList(ents, "entity", 10000); //TODO::Make this dynamic based on largest value
                     for (int k = 0; k < entFormatted.Count; k++)
                     {
                         //Grab the entities
@@ -946,7 +953,7 @@ namespace KWG_Geoenrichment
                             runBtn.Enabled = true;
                             runBtn.Text = "Run";
                             layerLoading.Visible = false;
-                            queryClass.ReportGraphError("res");
+                            queryClass.ReportGraphError("entGeo", entityGeoQuery);
                             return;
                         }
 
@@ -1000,7 +1007,7 @@ namespace KWG_Geoenrichment
                                 runBtn.Enabled = true;
                                 runBtn.Text = "Run";
                                 layerLoading.Visible = false;
-                                queryClass.ReportGraphError("rPrp");
+                                queryClass.ReportGraphError("propData", valueQuery);
                                 return;
                             }
                         }
